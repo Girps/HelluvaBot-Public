@@ -1,0 +1,5 @@
+package CharactersPack;
+
+public enum SELECTIONTYPE {
+	   ALL, ADULT, MINOR, HAZBIN, HELLUVA, HAZBIN_ADULT, HELLUVA_ADULT
+}
