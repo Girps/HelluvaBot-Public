@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.util.Date;
@@ -17,11 +17,11 @@ import java.util.List;
 public class UserInfoCommand extends ListenerAdapter
 {
 	
-	public static String prefix = "$"; 
 	
-	public UserInfoCommand(String arg) 
+	
+	public UserInfoCommand() 
 	{
-			prefix = arg; 
+		
 	}
 	
 	// Override method on GuildMessageRecieved 

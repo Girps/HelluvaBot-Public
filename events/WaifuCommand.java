@@ -8,25 +8,28 @@ import java.util.concurrent.TimeUnit;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
+import CharactersPack.GAMETYPE;
 import CharactersPack.SELECTIONTYPE;
+import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 
 public class WaifuCommand extends ListenerAdapter{
-	private static String prefix ="$";
+	
 	private Connection conn; 
 	private EventWaiter waiter; 
-	public WaifuCommand(String arg_Pre, Connection arg_Conn, EventWaiter arg_Waiter)
+	public WaifuCommand( Connection arg_Conn, EventWaiter arg_Waiter)
 	{
-		prefix = arg_Pre; 
+	
 		conn = arg_Conn; 
 		waiter = arg_Waiter; 
 	}
@@ -63,7 +66,7 @@ public class WaifuCommand extends ListenerAdapter{
 				else 
 				{
 					// No waifu so create the character put it in the waifu table 
-					Character chtr = select.getRandomCharacter(SELECTIONTYPE.ADULT); 
+					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,1)[0]; 
 					// We got the character now add it to the waifus table 
 					select.insertWaifu(userID, serverID, chtr); 
 					
@@ -93,6 +96,13 @@ public class WaifuCommand extends ListenerAdapter{
 		{
 			// Is bot return
 			if(event.getUser().isBot()) {return;}
+			if(event.getOption("user").getAsUser().isBot())
+			{
+				event.deferReply().queue(); 
+				event.getHook().sendMessage("Bots cannot have waifus!").queue(); 
+				return;
+			}
+			
 			
 			String targetId = event.getOption("user").getAsUser().getId(); 
 			
@@ -118,7 +128,7 @@ public class WaifuCommand extends ListenerAdapter{
 				else 
 				{
 					// No waifu so create the character put it in the waifu table 
-					Character chtr = select.getRandomCharacter(SELECTIONTYPE.ADULT); 
+					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,1)[0]; 
 					// We got the character now add it to the waifus table 
 					select.insertWaifu(targetId, serverID, chtr); 
 					
@@ -194,7 +204,9 @@ public class WaifuCommand extends ListenerAdapter{
 										select.updateWaifuCharacter(trader.getId(), eReact.getGuild().getId(), two);
 										select.updateWaifuCharacter(tradee.getId(), eReact.getGuild().getId(), one);
 										chan.sendMessage("Trade successful!").queue();
+										
 										// Now we swapped 
+
 										}
 										else 
 										{
@@ -213,5 +225,4 @@ public class WaifuCommand extends ListenerAdapter{
 					 } );
 		}
 	}
-	
 }

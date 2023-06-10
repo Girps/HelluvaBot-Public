@@ -17,15 +17,17 @@ import java.util.concurrent.TimeUnit;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
+import CharactersPack.GAMETYPE;
 import CharactersPack.Character;
 import CharactersPack.SELECTIONTYPE;
+import CharactersPack.SETUPTYPE;
 
 public class SmashPassCommand extends ListenerAdapter
 {
-	private static String prefix = "$"; 
+	
 	private final EventWaiter waiter;
 	private static  Connection conn; 
-	public SmashPassCommand(String arg, Connection arg_Conn, EventWaiter wait)
+	public SmashPassCommand( Connection arg_Conn, EventWaiter wait)
 	{
 		waiter = wait; 
 		conn = arg_Conn; 
@@ -46,7 +48,7 @@ public class SmashPassCommand extends ListenerAdapter
 			try 
 			{
 				CharacterSelection set = new CharacterSelection(conn);
-				 target = set.getRandomCharacter(SELECTIONTYPE.ADULT);
+				 target = set.getRandomCharacters(GAMETYPE.SMASHPASS, SETUPTYPE.LIGHT,1)[0];
 				 
 				 EmbedBuilder build = new EmbedBuilder(); 
 				 build.setThumbnail(target.getDefaultImage()); 
@@ -99,7 +101,7 @@ public class SmashPassCommand extends ListenerAdapter
 			{ 
 				CharacterSelection selection = new CharacterSelection(conn); 
 				// Use a query to get the character
-				target = selection.requestSingleCharacter(targetName,SELECTIONTYPE.ADULT); 
+				target = selection.requestSingleCharacter(targetName,GAMETYPE.SMASHPASS,SETUPTYPE.LIGHT); 
 				// Build embed 
 				
 				if(target == null) 
@@ -127,7 +129,7 @@ public class SmashPassCommand extends ListenerAdapter
 								(e) -> !e.getUser().isBot() && e.getMessageIdLong() == messageEmbed.getIdLong(),
 								(e) -> 
 								{
-									String verb = "<@" + e.getUser().getId() +"> "+ " would " + e.getInteraction().getButton().getLabel() + " "+ messageEmbed.getEmbeds().get(0).getTitle() + "!";   
+									String verb = "<@" + e.getUser().getId() +"> "+ " would " + MarkdownUtil.bold(e.getInteraction().getButton().getLabel()) + " "+ messageEmbed.getEmbeds().get(0).getTitle() + "!";   
 									e.deferEdit().queue();
 									e.getChannel().asTextChannel().sendMessage(verb).queue(); 
 									e.getMessage().editMessageEmbeds(e.getMessage().getEmbeds().get(0)).setActionRow(buttons.get(0).asDisabled(), buttons.get(1).asDisabled()).queue( );

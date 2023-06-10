@@ -17,11 +17,14 @@ import events.KinsCommand;
 import events.ShipsCommand;
 import events.SimpsCommand;
 import events.SmashPassCommand;
+import events.SonasCommand;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 
@@ -34,14 +37,9 @@ public class Bot {
 		 
 		 
 		builder.setActivity(Activity.listening("~man for help")); 
-		builder.setStatus(OnlineStatus.ONLINE); 
-		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
-				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
-		builder.enableCache(CacheFlag.CLIENT_STATUS, CacheFlag.ACTIVITY); 
-		ShardManager jda = builder.build(); 
-		
-		// Connect to database 
- 
+
+
+
 		// Check if we have driver 
 		try 
 		{
@@ -69,17 +67,18 @@ public class Bot {
 		
 		// Add event listners 
 		jda.addEventListener(new TestCommand(prefix, conn));
-		jda.addEventListener(new UserInfoCommand(prefix));
+		jda.addEventListener(new UserInfoCommand());
 		jda.addEventListener(waiter);
 		jda.addEventListener(new EventWaiterCommand(waiter));
-		jda.addEventListener(new WikiCommand(prefix,  conn)); 
-		jda.addEventListener(new SmashPassCommand(prefix,conn,waiter));
-		jda.addEventListener(new SimpsCommand(prefix,conn));
-		jda.addEventListener(new KinsCommand(prefix,conn));
-		jda.addEventListener(new ShipsCommand(prefix,conn));
-		jda.addEventListener(new WaifuCommand(prefix,conn,waiter));
-		jda.addEventListener(new KdmCommand(prefix,conn,waiter));
+		jda.addEventListener(new WikiCommand(  conn)); 
+		jda.addEventListener(new SmashPassCommand(conn,waiter));
+		jda.addEventListener(new SimpsCommand(conn));
+		jda.addEventListener(new KinsCommand(conn));
+		jda.addEventListener(new ShipsCommand(conn));
+		jda.addEventListener(new WaifuCommand(conn,waiter));
+		jda.addEventListener(new KdmCommand(conn,waiter));
 		jda.addEventListener(new CommandManger(conn)); 
+		jda.addEventListener(new SonasCommand(conn));
 	}
 
 }

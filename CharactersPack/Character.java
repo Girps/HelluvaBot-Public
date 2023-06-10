@@ -1,33 +1,46 @@
 package CharactersPack;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Document.OutputSettings;
 import org.jsoup.select.Elements;
-import org.jsoup.safety.*;
+
+import de.tudarmstadt.ukp.wikipedia.api.WikiConstants.Language;
+import de.tudarmstadt.ukp.wikipedia.parser.ParsedPage;
+import de.tudarmstadt.ukp.wikipedia.parser.mediawiki.MediaWikiParser;
+import de.tudarmstadt.ukp.wikipedia.parser.mediawiki.MediaWikiParserFactory;
+import net.sourceforge.jwbf.core.contentRep.Article;
+import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
+
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+
 
 
 public class Character 
 {
-	private int id; 
-	private String name;
-	private static String url = "https://hazbinhotel.fandom.com/wiki/";	// should be the same only one instance is needed   
-	private String defImage;
-	private ArrayList<String> imageList;
-	private String rawData ;
-	private String asideData; 
-	private Date date; 
+	protected int id; 
+	protected String name;
+	protected static String url = "https://hazbinhotel.fandom.com/wiki/";	// should be the same only one instance is needed   
+	protected String defImage;
+	protected ArrayList<String> imageList;
+	protected String rawData ;
+	protected Date date; 
+	private SETUPTYPE set; 
+	public Character() 
+	{
+		defImage = null; 
+		imageList = new ArrayList<String>(); 
+		rawData = null; 
+		date = null; 
+	} 
 	
 	/* Initialize the type with id, name and url given at construction */ 
-	public Character(int arg_Id, String arg_Name ) 
+	public Character(int arg_Id, String arg_Name , SETUPTYPE setArg) 
 	{
 		id = arg_Id; 
 		name = arg_Name; 
@@ -35,6 +48,7 @@ public class Character
 		imageList = new ArrayList<String>();
 		rawData = null;
 		date = null; 
+		set = setArg; 
 		setUpImages();	// Now connect to urls and set up the images 
 		setContent();  // Now set up the raw data to be parsed in other functions 
 	}
@@ -48,7 +62,7 @@ public class Character
 	/* Get the date assigned in */
 	public String getDate() 
 	{
-		SimpleDateFormat frm = new SimpleDateFormat("HH:mm"); 
+	
 		Date now = new Date();
 		
 		 long millDelta = date.getTime() - now.getTime() ; 
@@ -87,277 +101,203 @@ public class Character
 	/* Get the url of the character */
 	public String getUrl()
 	{
-		return url + URLEncoder.encode(name,StandardCharsets.UTF_8); 
+		return url + URLEncoder.encode(name,StandardCharsets.UTF_8).replace("+", "_"); 
 	}
 	
 	/* Function gets the general content of the character for string to parse */ 
 	public void setContent()  
 	{
-		Document doc = null; 
-		// Use jsoup to extract contents form html format
-		try 
-		{
-			doc = Jsoup.connect("https://hazbinhotel.fandom.com/api.php?action=parse&format=php&page="+ URLEncoder.encode(name,StandardCharsets.UTF_8) + "&prop=text").ignoreContentType(true).get();    
-		}
-		catch(IOException e ) 
-		{
-			e.printStackTrace(); 
-		}
-		OutputSettings out = new Document.OutputSettings(); 
-		out.prettyPrint(false); 
+		// Set up rawData to be parsed by other functions 
+		MediaWikiBot bot = new MediaWikiBot("https://hazbinhotel.fandom.com/"); 
+		Article art = bot.getArticle(this.name); 
 		
-		
-		// Now get anything dealing with quotes and basic stuff
-		
-		// Get a list of elements dealing with asides   
-		Elements e = doc.select("aside"); 
-		asideData = Jsoup.clean(e.toString(), "",Safelist.none(),out); 
-		
-		
-		String res = Jsoup.clean(doc.toString(), "",Safelist.none() , out); 
-		res = res.substring(res.indexOf("Gallery")+7); 
-		System.out.println(res); 
-		try 
-		{
-			rawData = res.substring(0,res.indexOf("Gallery[]")); 
-		} 
-		catch(Exception e1) 
-		{
-			try 
-			{ 
-				rawData = res.substring(0, res.indexOf("Gallery[")); 
-			}
-			catch(Exception e2) 
-			{
-				try 
-				{
-					rawData = res.substring(0, res.indexOf("References[]")); 
-				}
-				catch(Exception e3) 
-				{
-					rawData = res.substring(0,res.indexOf("References[")); 
-				}
-			}
-		}
-			System.out.println(rawData); 
-		
-		 
+		rawData = art.getText();  
 	}
 	
 	/* Function returns quote of the character */ 
 	public String getQuote() 
 	{
 		
-		String result = rawData; 
-		
-		String[] arr = result.split("\n"); 
-		
-		int count = 0; 
-		// Check if it exists if not return null 
-		for(int i =0; i < arr.length; ++i) 
-		{
-			if(arr[i].contains("―")) 
-			{
-				count = 0; 
-				break; 
-			}
-			count++; 
-		}
-		
-		if(count == arr.length) {return "none"; }
-		
-		result = ""; 
-		for(int i =0; i < arr.length; ++i) 
-		{
-			
-			if(arr[i].contains("―")) 
-			{
-				result += arr[i]; 
-				break;
-			} 
-			result += arr[i]; 
-		}
-		
-		result = result.trim(); 
-		return result ; 
+		String result = ""; 
+		  try
+		  {
+		  // Trim markup
+		  String quote = rawData.substring(rawData.indexOf("Quote|") + 6, rawData.indexOf("|center") );
+		  
+		  MediaWikiParserFactory factory = new MediaWikiParserFactory(Language.english); 
+		  MediaWikiParser parser = factory.createParser(); 
+		  ParsedPage pp = parser.parse(quote);
+		  // Parse remaing markup 
+		  result = pp.getText(); 
+		  
+		  // Now replace '|' character with  - 
+		  result = result.replace("|", " —"); 
+		  }
+		  catch(Exception e) 
+		  {
+			  result  = "none";
+			  return result; 
+		  }
+		  return result; 
 	}
 	
 	
 	/* Function returns basic information of the character */
 	public String getBasic() 
 	{
-		String result = rawData; 
-		result = result.substring(rawData.indexOf("First appearance")+16,result.length()); 
-		try 
-		{
-			result = result.substring(0,result.indexOf("Contents"));
-		}
-		catch(Exception e )
-		{
-			result = result.substring(0,result.indexOf("]")); 
-		}
+		  String basic = rawData.substring(0, rawData.indexOf("==")); 
+		  String result = ""; 
+		  try { 
+		  
+	
+		  
+		  
+		  MediaWikiParserFactory factory = new MediaWikiParserFactory(Language.english); 
+		  MediaWikiParser parser = factory.createParser(); 
+		  ParsedPage pp = parser.parse(basic);
+		  // Parse remaing markup 
+		  result = pp.getText();  
+		  result = result.trim(); 
+		  
+		  
+		  }
+		  catch(Exception e ) 
+		  {
+			  result = "none"; 
+			  return result; 
+		  }
+		  return result; 
 		
-		String[] arr = result.split("\n"); 
-		
-		List<String> list = new ArrayList<String>(); 
-		list = Arrays.asList(arr); 
-		
-		result = ""; 
-		for(int i =0; i < list.size(); ++i) 
-		{
-			if(list.get(i).contains(".")) 
-			{
-				result += list.get(i); 
-			}
-		}
-		
-		return result; 
 	}
 	
 	/* Getter function getting information about the character */ 
 	public String getNickNames() 
 	{	  
-		String[] delimit = {"Likes","DisLikes","Characteristics"}; 
-		return helperInfo("Nicknames", delimit);
+		return getAttribute(rawData,"nicknames"); 
 	}
 	
 	public String getLikes() 
 	{
-		String[] delimit = {"Dislikes","Characteristics"}; 
-		return helperInfo("Likes", delimit); 
+		return getAttribute(rawData,"likes"); 
 	}
 	
 	public String getDisLikes() 
 	{
-		String[] delimit = {"Characteristics"}; 
-		return helperInfo("Dislikes", delimit); 	
+		return getAttribute(rawData,"dislikes");  	
 	}
 	
 	public String getSpecies() 
 	{
-		String[] delimit = {"Gender", "Age", "Abilities", "Status", "Abilities","Professional Status"}; 
-		return helperInfo("Species",delimit); 
+		return getAttribute(rawData,"species"); 
 	}
 	
 	public String getGender() 
 	{
-		String[] delimit = {"Abilities", "Status", "Abilities","Professional Status"}; 
-		return helperInfo("Gender",delimit); 
+		return getAttribute(rawData,"gender"); 
 	}
 	
 	public String getAge() 
 	{
-		String[] delimit = { "Abilities", "Status", "Abilities","Professional Status"}; 
-		return helperInfo("Age",delimit);  
+		return getAttribute(rawData,"age");  
 	}
 	
 	/*
 	 * */
 	public String getAbilities() 
 	{
-		String[] delimit = { "Status", "Abilities","Professional Status"}; 
-		return helperInfo("Abilities", delimit); 
+		return getAttribute(rawData,"abilities"); 
 	}
 	
 	public String getStatus() 
 	{
-		String[] delimit = { "Professional Status"}; 
-		return helperInfo("Status",delimit); 
+		return getAttribute(rawData,"status"); 
 	}
 	
 	public String getOccup() 
 	{
-		String[] delimit = { "Relationships"}; 
-		return helperInfo("Occupation", delimit); 
+		return getAttribute(rawData,"occupation");  
 	}
 	
 	public String getFamily() 
 	{
-		String[] delimit = { "Friends", "Romantic interests", "Enemies", "Others", "Other" }; 
-		return helperInfo("Family",delimit); 
+		return getAttribute(rawData,"relatives"); 
 	}
 	
 	public String getFriends() 
 	{
-		String[] delimit = {  "Romantic interests", "Enemies", "Others", "Other" }; 
-		return helperInfo("Friends", delimit); 
+		return getAttribute(rawData,"friends"); 
 	}
 	
 	public String getRomance() 
 	{
-		String[] delimit = {  "Enemies", "Others", "Other" }; 
-		return helperInfo("Romantic interests",delimit); 
+		return getAttribute(rawData,"romance"); 
 	}
 	
 	public String getEnemies() 
 	{
-		String[] delimit = { "Others", "Other" }; 
-		return helperInfo("Enemies",delimit); 
+		return getAttribute(rawData,"enemies"); 
 	}
 	
 	public String getOthers() 
 	{
-		String[] delimit = { "Other" }; 
-		return helperInfo("Others",delimit); 
+		return getAttribute(rawData,"others"); 
 	}
 	
 	public String getVoiceActors() 
 	{
-		String[] delimit = { "First appearance" }; 
-		return helperInfo("Voice actor",delimit); 
+		return getAttribute(rawData,"voice_actor"); 
 	}
 	
 	/***************************************************************/
 	
-	/*
-	 *  Helper function help get sections of wanted strings of the data 
-	 * */ 
-	private String helperInfo(String arg1, String[] delimit) 
-	{
-		
-		String result = ""; 
-		// Find section 
-		try
-		{ 
-			result = asideData.substring(asideData.indexOf(arg1),asideData.length());
-		}
-		catch(Exception e)
-		{
-			return "none"; 
-		}
-		
-		result = result.replace(arg1, ""); 
-		
-		String[] arr = result.split("\n");
-		List<String> list = new ArrayList<String>(); 
-		list = Arrays.asList(arr);
-		result = ""; 
-		
-		boolean end = false; 
-		
-		for(int i = 0 ; i < list.size(); ++i) 
-		{
-			// Skip any empty space 
-			if (!list.get(i).isBlank()) 
-			{
-				// Now check if part of the delimiter list 
-				for(int d = 0; d < delimit.length; ++d) 
-				{
-					if(list.get(i).trim().equalsIgnoreCase(delimit[d])) 
-					{
-						end = true; 
-					}
-				}
-				
-				// break out of the loop its done 
-				if(end) {break; }
-
-				result += "-" + list.get(i).trim() + "\n"; 
-			}
-		}
-		
-		return result; 
-	}
+	protected  String getAttribute(String markUp, String startAttribute) 
+	  {
+		  MediaWikiParserFactory factory = new MediaWikiParserFactory(Language.english); 
+		  MediaWikiParser parser = factory.createParser(); 
+		  String result = ""; 
+		  try 
+		  { 
+		  String atr = markUp.substring(markUp.indexOf("|" + startAttribute ) + startAttribute.length() + 1, markUp.length()); 
+		  atr = atr.substring(atr.indexOf("=")+1, atr.length()); 
+		  String[] list = atr.split("\n"); 
+		 
+		  
+		  for(int i = 0; i < list.length; ++i) 
+		  {
+			  // Skip white space
+			  if(list[i].isBlank() || list[i].contains("{{Scroll")) 
+			  {
+				  continue; 
+			  } // Delimited a filed if it's blank after parsing 
+			  else if(parser.parse(list[i]).getText().contains("=") &&
+					  !parser.parse(list[i]).getText().contains("{") ||
+					  parser.parse(list[i]).getText().contains("}}"))
+			  { 
+				  break; 
+			  }
+			  else 
+			  {
+				   
+				  // Remove any special characters 
+				  if(list[i].contains("<")) 
+				  {
+					  // remove it 
+					 list[i] = list[i].substring(0,list[i].indexOf("<")); 
+				  }
+				  result += "-" + parser.parse(list[i]).getText() + "\n"; 
+			  }
+			  
+		  }
+		  
+		  }
+		  catch(Exception e) 
+		  {
+			  result = "none"; 
+			  return result; 
+		  }
+		  
+		  return (result.equals("") ? "none" : result); 
+	  }
 	
 	
 	/* Get the url of the default image of this instance*/ 
@@ -376,15 +316,17 @@ public class Character
 	/*
 	 * Private function sets up the links for images url
 	 * */
-	private void setUpImages() 
+	protected void setUpImages() 
 	{
 		
 		Document doc = null; 
+		Document docGallery = null;
+		
 		
 		try // Check if connection is Successfull 
 		{
 			// Convert the name to encoding standards to handle special characters
-			doc = Jsoup.connect(url + URLEncoder.encode(name,StandardCharsets.UTF_8)).get();
+			doc = Jsoup.connect(url + URLEncoder.encode(name,StandardCharsets.UTF_8).replace("+", "_")).get();
 		}
 		catch (IOException e)
 		{
@@ -415,13 +357,53 @@ public class Character
 				   continue; 
 			   }
 			   
+			   // Only get image link with following string
 			   if(images.get(i).attr("src").contains("static.wikia"))
 			   {
 				   imageList.add(images.get(i).attr("src")); 
 			   }
 		   }
 		   
-		   this.defImage = this.imageList.get(0); 
+		   // Default image of the character set 
+		   this.defImage = this.imageList.get(0);
+		   
+		   switch(this.set) 
+		   {
+		   case HEAVY: 
+		   {  
+			   // Now fetch gifs from the gallery link 
+			   try 
+			   {
+				   docGallery = Jsoup.connect(url + name + "/Gallery").get(); 
+			   }
+			   catch(IOException e) 
+			   {
+				   return; 
+			   }
+		   
+			   // now get the image data urls
+			   Elements imagesGallery = docGallery.select("img[src~=(?i)\\.(gif)]"); 
+			
+			   String tempUrl = ""; 
+			   // Iterate the list of images now stored those urls  in the arrayList
+			   	for(int i = 0; i < imagesGallery.size(); ++i)
+			   	{
+				      tempUrl = imagesGallery.get(i).attr("src"); 
+				      // Check only valid gifs can be added 
+				      if(tempUrl.contains(".gif")) 
+				      {
+				    	   tempUrl = tempUrl.substring(0, tempUrl.indexOf(".gif") + 4); 
+				    	   imageList.add(tempUrl); 
+				      }
+			   }
+			   break;
+		   } 
+		   default: 
+		   {
+			   break; 
+		   }
+		   
+		   }
 	}
 	
 }

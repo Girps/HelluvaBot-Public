@@ -6,20 +6,21 @@ import java.sql.SQLException;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 import CharactersPack.CharacterSelection;
-import CharactersPack.SELECTIONTYPE;
+import CharactersPack.GAMETYPE;
+import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
 
 public class SimpsCommand extends ListenerAdapter{
 
-	protected static String prefix = "$"; 
+	
 	protected static Connection conn;
 	
-	public SimpsCommand(String arg_Pre, Connection arg_Conn) 
+	public SimpsCommand( Connection arg_Conn) 
 	{
-		prefix = arg_Pre; 
+		
 		conn = arg_Conn; 
 	}
 	
@@ -39,14 +40,14 @@ public class SimpsCommand extends ListenerAdapter{
 				CharacterSelection select = new CharacterSelection(conn); 
 				try 
 				{
-					Character found = select.getRandomCharacter(SELECTIONTYPE.ADULT);
+					Character found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT,3)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());
 					builder.setColor(Color.red);
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-					event.getHook().sendMessage( "<@"+ userName + ">" + " simps for " + found.getName() + "!").queue();
+					event.getHook().sendMessage( "<@"+ userName + ">" + " simps for " + MarkdownUtil.bold(found.getName()) + "!").queue();
 				} 
 				catch (SQLException e) 
 				{

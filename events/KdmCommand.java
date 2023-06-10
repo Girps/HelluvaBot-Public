@@ -10,18 +10,18 @@ import java.util.HashMap;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
+import CharactersPack.GAMETYPE;
 import CharactersPack.SELECTIONTYPE;
+import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
 
 import MiscClasses.KdmRound;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -30,12 +30,12 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 public class KdmCommand extends ListenerAdapter
 {
-	private static String prefix = "$"; 
+	
 	private Connection conn; 
 	private EventWaiter waiter; 
-	public KdmCommand(String arg_Pre , Connection arg_Conn, EventWaiter arg_Waiter)
+	public KdmCommand(Connection arg_Conn, EventWaiter arg_Waiter)
 	{
-		prefix = arg_Pre; 
+	 
 		conn = arg_Conn; 
 		waiter = arg_Waiter; 
 	}
@@ -58,55 +58,39 @@ public class KdmCommand extends ListenerAdapter
 			Long userLong = event.getUser().getIdLong(); 
 			try 
 			{
-				Character[] chtrs = null; 
-				
+				 
+				Character[] chtrs = new Character[3]; 
 
 				if(event.getOption("first") == null && event.getOption("second") == null && event.getOption("third") == null) 
 				{
-					chtrs = select.getRandomCharacters(SELECTIONTYPE.ADULT,3);
+					chtrs = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,3);
 				}
 				else
 				{
-					  
-					
-					chtrs = new Character[3]; 
-					
-					// check each 
-					if ( event.getOption("first") != null)
+					int size = event.getOptions().size();
+					List<OptionMapping> options = event.getOptions(); 
+					// Add into game 
+					for(int i = 0; i < size; ++i) 
 					{
-						chtrs[0] = select.requestSingleCharacter(event.getOption("first").getAsString(), SELECTIONTYPE.ADULT); 
-					}
-					else 
-					{
-						chtrs[0] = select.getRandomCharacter(SELECTIONTYPE.ADULT); 
+						chtrs[i] = select.requestSingleCharacter(options.get(i).getAsString(), GAMETYPE.KDM, SETUPTYPE.LIGHT); 
 					}
 					
-					if(event.getOption("second") != null) 
+					// length difference computation 
+					int delta = chtrs.length - options.size(); 
+					switch(delta) 
 					{
-						chtrs[1] = select.requestSingleCharacter(event.getOption("second").getAsString(), SELECTIONTYPE.ADULT); 
+					case(1): 
+						
+						chtrs[2] = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,1)[0];    
+						break; 
+					case(2): 
+						Character[] temp = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,2); 
+					chtrs[2] = temp[1]; 
+					chtrs[1] =temp[0]; 
+						break; 
+					default: 
+						break; 
 					}
-					else 
-					{
-						chtrs[1] = select.getRandomCharacter(SELECTIONTYPE.ADULT); 
-					}
-					
-					if(event.getOption("third") != null) 
-					{
-						chtrs[2] = select.requestSingleCharacter(event.getOption("third").getAsString(), SELECTIONTYPE.ADULT); 
-					}
-					else 
-					{
-						chtrs[2] = select.getRandomCharacter(SELECTIONTYPE.ADULT);
-					}
-					
-					// Check any invalid character 
-					if(chtrs[0] == null || chtrs[1] == null|| chtrs[2] == null) 
-					{
-						event.deferReply().queue();
-						event.getHook().sendMessage("character not in the game!").queue();
-						return; 
-					}
-					
 				}
 				
 				
@@ -186,7 +170,7 @@ public class KdmCommand extends ListenerAdapter
 											buttons.get(1).asDisabled(), buttons.get(2).asDisabled()).queue();     
 									
 									KdmRound temp = map.get(eBtn.getUser().getIdLong()); 
-									temp.setState(eBtn.getButton().getLabel(), eBtn.getMessage().getEmbeds().get(0).getTitle(),  eBtn.getMessage().getIdLong(), e,eBtn);
+									temp.setState(eBtn.getButton().getLabel(), eBtn.getMessage().getEmbeds().get(0).getTitle(),  eBtn.getMessage().getIdLong(),eBtn);
 									
 											
 									return temp.isOver(); 

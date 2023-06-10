@@ -14,7 +14,6 @@ public class TestCommand extends ListenerAdapter
 	{	
 		prefix = arg; 
 		conn = conn_Arg; 
-		System.out.println("Hello name instance created"); 
 	}
 	
 	// Override method on GuildMessageRecieved 
@@ -29,7 +28,7 @@ public class TestCommand extends ListenerAdapter
 		}
 		
 		
-		System.out.println("Event message recieved"); 
+	
 		String msg = event.getMessage().getContentRaw(); 
 		String userId = event.getAuthor().getId().toString(); 
 		

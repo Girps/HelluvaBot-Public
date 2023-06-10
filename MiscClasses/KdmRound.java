@@ -38,7 +38,7 @@ public class KdmRound {
 		return ids; 
 	}
 	
-	public void setState(String btn, String characterName, long idTarget, Message e, ButtonInteraction eBtn) 
+	public void setState(String btn, String characterName, long idTarget, ButtonInteraction eBtn) 
 	{
 		
 		if(btn.equalsIgnoreCase("kill")) 

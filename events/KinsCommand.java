@@ -6,15 +6,18 @@ import java.sql.SQLException;
 
 import CharactersPack.Character;
 import CharactersPack.CharacterSelection;
-import CharactersPack.SELECTIONTYPE;
+import CharactersPack.GAMETYPE;
+
+import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
+
 
 public class KinsCommand extends SimpsCommand{
 
-	public KinsCommand(String arg_Pre, Connection arg_Conn) {
-		super(arg_Pre, arg_Conn);
+	public KinsCommand( Connection arg_Conn) {
+		super(arg_Conn);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -32,14 +35,14 @@ public class KinsCommand extends SimpsCommand{
 				CharacterSelection select = new CharacterSelection(conn); 
 				try 
 				{
-					Character found = select.getRandomCharacter(SELECTIONTYPE.ALL);
+					Character found = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,1)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());
 					builder.setColor(Color.red); 
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-					event.getHook().sendMessage( "<@"+ userName + ">" + " kins " + found.getName() + "!").queue();
+					event.getHook().sendMessage( "<@"+ userName + ">" + " kins " + MarkdownUtil.bold(found.getName()) + "!").queue();
 				} 
 				catch (SQLException e) 
 				{
