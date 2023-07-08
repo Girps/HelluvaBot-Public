@@ -29,7 +29,7 @@ public class MinorCharacter extends Character
 		super(); 
 	}
 	
-	public MinorCharacter(int arg_Id, String arg_Name, String arg_ShowName) {
+	public MinorCharacter(Long arg_Id, String arg_Name, String arg_ShowName) {
 		super(); 
 		// TODO Auto-generated constructor stub
 		this.id = arg_Id; 
@@ -53,6 +53,7 @@ public class MinorCharacter extends Character
 		  Article article = wikiBot.getArticle("Minor Characters/" + this.showName); 
 		  
 		  markUp = article.getText();
+		  
 	}
 	
 	/* Override getting the basic information of the character */
@@ -85,12 +86,12 @@ public class MinorCharacter extends Character
 	public void setContent()
 	{
 		 
-
+		System.out.println(markUp); 
 		  
 		 String rawData = ""; 
 		  // Check names for "," or "and"
 		  if( ( name.contains("and") || name.contains(",") ) && (name.split(" ").length >= 3 
-				  && name.split(" ").length < 5) && !name.contains("Ollie and Bertha"))
+				  && name.split(" ").length < 5) && !name.contains("Ollie and Bertha") && !name.contains("Red and Scoot"))
 		  {
 			  String result = "";  
 			  String temp  = ""; 
@@ -181,6 +182,10 @@ public class MinorCharacter extends Character
 			  {
 				  names.add(raw[i].substring(0,raw[i].indexOf(".jpg") + 4)); 
 
+			  }
+			  else if(raw[i].contains(".jpeg")) 
+			  {
+				  names.add(raw[i].substring(0,raw[i].indexOf(".jpeg") + 5));
 			  }
 		  }
 		  

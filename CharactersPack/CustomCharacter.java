@@ -3,7 +3,7 @@ package CharactersPack;
 
 public class CustomCharacter extends MinorCharacter{
 
-	public CustomCharacter(int id_Arg,String name_Arg, String imgur_Url) 
+	public CustomCharacter(Long id_Arg,String name_Arg, String imgur_Url) 
 	{
 		super();
 		this.name = name_Arg; 

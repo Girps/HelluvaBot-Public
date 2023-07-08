@@ -73,7 +73,7 @@ public class WikiCommand extends ListenerAdapter{
 					builder.setDescription(charactFound.getBasic()); 
 					builder.addField("Quote", MarkdownUtil.quote(charactFound.getQuote()),false);
 					builder.setThumbnail(charactFound.getDefaultImage()); 
-					builder.setFooter("Time: " + date.toString(), event.getGuild().getIconUrl());  
+					builder.setFooter("Time: " + date.toString(), event.getMember().getEffectiveAvatarUrl());  
 					// Now send the embed to the server
 					
 					event.deferReply().queue(); 
@@ -89,6 +89,7 @@ public class WikiCommand extends ListenerAdapter{
 		else if(event.getName().equals("wikiall") && Helper.checkRoles(event.getMember().getRoles())) 
 		{
 			// Get array of every character and print them all 
+			String name = ""; 
 			try 
 			{
 				event.deferReply().queue(); 
@@ -112,7 +113,7 @@ public class WikiCommand extends ListenerAdapter{
 					EmbedBuilder builder = new EmbedBuilder(); 
 					
 					charactFound = list.get(i); 
-					
+					name = charactFound.getName(); 
 					builder.setColor(Color.red); 
 					builder.setAuthor(charactFound.getName(), charactFound.getUrl());
 					builder.setImage(charactFound.getDefaultImage());
@@ -139,6 +140,11 @@ public class WikiCommand extends ListenerAdapter{
 			{
 				event.getHook().sendMessage( "failed").queue();
 			}
+			catch(Exception e) 
+			{
+				e.printStackTrace();
+				event.reply(name + " not found " + "<:smolas_crying:1111057782473506848>").queue();
+			}
 		}
 		else if(event.getName().equals("wikifull") )	// wiki full pagnation implementation 
 		{
@@ -162,7 +168,7 @@ public class WikiCommand extends ListenerAdapter{
 								builder.setImage(charactFound.getDefaultImage());
 								builder.setDescription(charactFound.getBasic()); 
 								builder.addField("Quote",  MarkdownUtil.quote(charactFound.getQuote()),false);
-								builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getGuild().getIconUrl()); 
+								builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getMember().getEffectiveAvatarUrl()); 
 								
 								// Instantiate list of buttons 
 								List<Button> buttons = new ArrayList<Button>();
@@ -184,7 +190,12 @@ public class WikiCommand extends ListenerAdapter{
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 							event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
-						} 
+						}
+						catch(Exception e) 
+						{
+							e.printStackTrace();
+							event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
+						}
 			
 		}
 		
@@ -194,6 +205,7 @@ public class WikiCommand extends ListenerAdapter{
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) 
 	{
+		event.deferEdit().queue();
 		// Implement pagination on embeds called by wikifull command 
 		if( event.getMember().getUser().isBot()) 
 		{
@@ -288,11 +300,11 @@ public class WikiCommand extends ListenerAdapter{
 		
 		// We have a proper index now edit the embed
 		tweakEmbedWiki(oldBuild, charcTarget ,wikiNumber); 
-		
+		System.out.println( charcTarget.getImageList().get(pageNumber)); 
 		oldBuild.setImage(charcTarget.getImageList().get(pageNumber)); 
 		oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageList().size()) + 
-				"\nWiki: " + wikiNumber + "/15",event.getGuild().getIconUrl()); 
-		event.deferEdit().queue();
+				"\nWiki: " + wikiNumber + "/15",event.getMember().getEffectiveAvatarUrl()); 
+		
 		event.getMessage().editMessageEmbeds(oldBuild.build()).queue( );
 	}
 	

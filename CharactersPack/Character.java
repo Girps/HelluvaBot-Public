@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 
 public class Character 
 {
-	protected int id; 
+	protected Long id; 
 	protected String name;
 	protected static String url = "https://hazbinhotel.fandom.com/wiki/";	// should be the same only one instance is needed   
 	protected String defImage;
@@ -40,7 +40,7 @@ public class Character
 	} 
 	
 	/* Initialize the type with id, name and url given at construction */ 
-	public Character(int arg_Id, String arg_Name , SETUPTYPE setArg) 
+	public Character(Long arg_Id, String arg_Name , SETUPTYPE setArg) 
 	{
 		id = arg_Id; 
 		name = arg_Name; 
@@ -87,7 +87,7 @@ public class Character
 	}
 	
 	/* Get the id of the character */ 
-	public int getId() 
+	public Long getId() 
 	{
 		return id; 
 	}

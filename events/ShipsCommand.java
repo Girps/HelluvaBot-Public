@@ -32,6 +32,9 @@ public class ShipsCommand extends ListenerAdapter{
 		// Check by bot
 		if(event.getUser().isBot()) {return; }
 		
+		event.deferReply().queue();
+		
+		Character[] arr = null;
 		
 		if(event.getName().equals("ships")) 
 		{
@@ -43,7 +46,7 @@ public class ShipsCommand extends ListenerAdapter{
 				String userid = event.getUser().getId();
 				
 				// Get array of 2 characters 
-				Character[] arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,2);
+				arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,2);
 				
 				Character One = arr[0]; 
 				Character Two = arr[1];
@@ -51,7 +54,7 @@ public class ShipsCommand extends ListenerAdapter{
 				// Build embed 
 				EmbedBuilder builderOne = new EmbedBuilder(); 
 				builderOne.setTitle(One.getName()); 
-				builderOne.setColor(event.getMember().getColor()); 
+				builderOne.setColor(Color.red); 
 				builderOne.setThumbnail(One.getDefaultImage());
 				
 				// Build embed 
@@ -60,7 +63,7 @@ public class ShipsCommand extends ListenerAdapter{
 				builderTwo.setColor(Color.red); 
 				builderTwo.setThumbnail(Two.getDefaultImage());
 				
-				event.deferReply().queue();
+				
 				event.getHook().sendMessageEmbeds(builderOne.build(),builderTwo.build()).queue();
 				event.getHook().sendMessage("<@" + userid + ">" + " ships " + MarkdownUtil.bold(One.getName()) + " x " + MarkdownUtil.bold(Two.getName()) + "!").queue();
 				
@@ -71,6 +74,13 @@ public class ShipsCommand extends ListenerAdapter{
 				e.printStackTrace();
 				event.getHook().sendMessage("Ships command failed!").queue();
 			} 
+			catch(Exception e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				event.getHook().sendMessage("Something went wrong!").queue();
+				System.out.println(arr[0].getName() + " " + arr[1].getName()); 
+			}
 		}
 		
 	}

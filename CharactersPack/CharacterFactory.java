@@ -2,12 +2,12 @@ package CharactersPack;
 
 public class CharacterFactory {
 
-	int id; 
+	Long id; 
 	String name; 
 	String	type; 
 	String showName;
 	SETUPTYPE setType; 
-	public CharacterFactory(int argId, String nameArg, String showNameArg,String typeArg, SETUPTYPE setArg)
+	public CharacterFactory(Long argId, String nameArg, String showNameArg,String typeArg, SETUPTYPE setArg)
 	{
 		id = argId; 
 		name = nameArg; 

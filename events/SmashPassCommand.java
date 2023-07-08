@@ -19,7 +19,6 @@ import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
 import CharactersPack.Character;
-import CharactersPack.SELECTIONTYPE;
 import CharactersPack.SETUPTYPE;
 
 public class SmashPassCommand extends ListenerAdapter
@@ -54,7 +53,7 @@ public class SmashPassCommand extends ListenerAdapter
 				 build.setThumbnail(target.getDefaultImage()); 
 				 build.setTitle(target.getName()); 
 				 build.setDescription(MarkdownUtil.italics("Smash or pass?")); 
-				 build.setColor(event.getMember().getColor());
+				 build.setColor(Color.RED);
 				 List<Button> buttons = new ArrayList<Button>();
 				 buttons.add(Button.primary("Smash", "smash")); 
 				 buttons.add(Button.danger("Pass", "pass")); 
@@ -129,9 +128,9 @@ public class SmashPassCommand extends ListenerAdapter
 								(e) -> !e.getUser().isBot() && e.getMessageIdLong() == messageEmbed.getIdLong(),
 								(e) -> 
 								{
-									String verb = "<@" + e.getUser().getId() +"> "+ " would " + MarkdownUtil.bold(e.getInteraction().getButton().getLabel()) + " "+ messageEmbed.getEmbeds().get(0).getTitle() + "!";   
+									
 									e.deferEdit().queue();
-									e.getChannel().asTextChannel().sendMessage(verb).queue(); 
+									e.getChannel().asTextChannel().sendMessage("<@" + e.getUser().getId() +"> "+ " would " + MarkdownUtil.bold(e.getInteraction().getButton().getLabel()) + " "+  MarkdownUtil.bold(messageEmbed.getEmbeds().get(0).getTitle()) + "!").queue(); 
 									e.getMessage().editMessageEmbeds(e.getMessage().getEmbeds().get(0)).setActionRow(buttons.get(0).asDisabled(), buttons.get(1).asDisabled()).queue( );
 									// Disabled now send a message if they smashed or passed the character 
 									
@@ -148,7 +147,6 @@ public class SmashPassCommand extends ListenerAdapter
 			catch(SQLException e) 
 			{
 				e.printStackTrace();
-				event.deferReply(); 
 				event.getHook().sendMessage(targetName + " not in Smashpass command!" ).queue();
 			}
 			

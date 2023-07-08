@@ -9,13 +9,12 @@ import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
-import CharactersPack.SELECTIONTYPE;
 import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -37,10 +36,10 @@ public class WaifuCommand extends ListenerAdapter{
 	
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
-		if (event.getUser().isBot() ) {return; }
 		
-		String userID = event.getUser().getId(); 	// get user id 
-		String serverID = event.getGuild().getId(); // get guild id 
+		
+		Long userID = event.getUser().getIdLong(); 	// get user id 
+		Long serverID = event.getGuild().getIdLong(); // get guild id 
 		// Waifu command for caller 
 		if(event.getName().equals("waifu") && event.getOption("user") == null) 
 		{
@@ -53,11 +52,11 @@ public class WaifuCommand extends ListenerAdapter{
 				{
 					// Get the waifu 
 					Character chtr = select.getUserWaifu(userID, serverID); 
-					EmbedBuilder build = new EmbedBuilder(); 
+					EmbedBuilder build = new EmbedBuilder();
+					build.setAuthor(event.getMember().getEffectiveName() + "'s waifu/husbando is ...", event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
 					build.setTitle(chtr.getName()); 
 					build.setImage(chtr.getDefaultImage()); 
 					build.setColor(Color.RED);
-					build.setDescription( "<@" + event.getUser().getId() +  ">" + "'s"  + " waifu/husbando is " + chtr.getName() );
 					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also 
 					event.deferReply().queue(); 
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
@@ -71,10 +70,10 @@ public class WaifuCommand extends ListenerAdapter{
 					select.insertWaifu(userID, serverID, chtr); 
 					
 					EmbedBuilder build = new EmbedBuilder(); 
+					build.setAuthor(event.getMember().getEffectiveName() + "'s waifu/husbando is ...", event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
 					build.setTitle(chtr.getName()); 
 					build.setImage(chtr.getDefaultImage()); 
 					build.setColor(Color.RED);
-					build.setDescription( "<@" + event.getUser().getId() +  ">" + "'s"  + " waifu/husbando is " + chtr.getName() );
 					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also 
 					event.deferReply().queue(); 
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
@@ -104,8 +103,8 @@ public class WaifuCommand extends ListenerAdapter{
 			}
 			
 			
-			String targetId = event.getOption("user").getAsUser().getId(); 
-			
+			Long targetId = event.getOption("user").getAsUser().getIdLong();  
+			Member target = event.getOption("user").getAsMember(); 
 			// Now check if user has a waifu if not give them a bot 
 			CharacterSelection select = new CharacterSelection(conn); 
 			// Now search for waifu in the database
@@ -117,10 +116,10 @@ public class WaifuCommand extends ListenerAdapter{
 					// Get the waifu 
 					Character chtr = select.getUserWaifu(targetId, serverID); 
 					EmbedBuilder build = new EmbedBuilder(); 
-					build.setTitle(chtr.getName()); 
+					build.setAuthor(target.getEffectiveName() + "'s waifu/husbando is ...", target.getEffectiveAvatarUrl(), target.getEffectiveAvatarUrl()); 					build.setTitle(chtr.getName()); 
 					build.setImage(chtr.getDefaultImage()); 
 					build.setColor(Color.RED);
-					build.setDescription( "<@" + targetId +  ">" + "'s"  + " waifu/husbando is " + chtr.getName() );
+			
 					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(build.build()).queue();
@@ -133,12 +132,13 @@ public class WaifuCommand extends ListenerAdapter{
 					select.insertWaifu(targetId, serverID, chtr); 
 					
 					EmbedBuilder build = new EmbedBuilder(); 
+					build.setAuthor(target.getEffectiveName() + "'s waifu/husbando is ...", target.getEffectiveAvatarUrl(), target.getEffectiveAvatarUrl()); 
 					build.setTitle(chtr.getName()); 
 					build.setImage(chtr.getDefaultImage()); 
 					build.setColor(Color.RED);
-					build.setDescription( "<@" + targetId +  ">" + "'s"  + " waifu/husbando is " + chtr.getName() );
-					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also 
-					event.deferReply().queue(); 
+			
+					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also
+					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
 				}
 			}
@@ -155,7 +155,7 @@ public class WaifuCommand extends ListenerAdapter{
 		if(event.getName().equals("waifutrade") && event.getOption("tradee") != null) 
 		{
 
-			
+			CharacterSelection Outterselect = new CharacterSelection(conn); 
 			TextChannel chan = event.getChannel().asTextChannel();
 			// Get the user and the uers to trade with 
 			User trader = event.getUser(); 
@@ -177,52 +177,58 @@ public class WaifuCommand extends ListenerAdapter{
 			
 			event.deferReply().queue(); 
 			
-			event.getHook().sendMessage("<@"+ trader.getId() + ">" + " wants to trade with " + "<@" + tradee.getId() + ">" + "! " + 
-					 "React to this message with an emoji to accept the trade! ").queue( (msg) -> 
-					 {
-						 this.waiter.waitForEvent(MessageReactionAddEvent.class,
-								 (eReact) -> eReact.getMessageIdLong() == msg.getIdLong() && !eReact.getUser().isBot() && eReact.getUser().getIdLong() == tradee.getIdLong(), 
-								 (eReact ) ->
-								 {
-									 CharacterSelection select = new CharacterSelection(conn); 
-									 Character one = null; 
-									 Character two = null; 
-									 // Switch the character of each user 
-									 try 
-									 {	
-										 
-										 // Now check if either has a character to trade with! 
-										if(select.searchUserInWaifu(trader.getId(), eReact.getGuild().getId()) 
-												&& select.searchUserInWaifu(tradee.getId(), eReact.getGuild().getId())) 
-										{
-										one = select.getUserWaifu(trader.getId(), eReact.getGuild().getId());
-										two = select.getUserWaifu(tradee.getId(), eReact.getGuild().getId()); 
-										
-										// Now we got two characters now swap the character we have to update the database!
-										
-										// update trader 
-										select.updateWaifuCharacter(trader.getId(), eReact.getGuild().getId(), two);
-										select.updateWaifuCharacter(tradee.getId(), eReact.getGuild().getId(), one);
-										chan.sendMessage("Trade successful!").queue();
-										
-										// Now we swapped 
-
-										}
-										else 
-										{
-											
-											chan.sendMessage("Trade unsuccessful one of the users has not acquired a waifu today!").queue();
-										}
-									 }
-									 catch (SQLException e)
+			try {
+				event.getHook().sendMessage("<@"+ trader.getId() + ">" + " wants to trade their waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(trader.getIdLong(), serverID).getName())  + " for " + "<@" + tradee.getId() + ">" 
+				+ "'s waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(tradee.getIdLong(), serverID).getName() )+"! " + 
+						 "React to this message with an emoji to accept the trade! ").queue( (msg) -> 
+						 {
+							 this.waiter.waitForEvent(MessageReactionAddEvent.class,
+									 (eReact) -> eReact.getMessageIdLong() == msg.getIdLong() && !eReact.getUser().isBot() && eReact.getUser().getIdLong() == tradee.getIdLong(), 
+									 (eReact ) ->
 									 {
-										e.printStackTrace();
-										chan.sendMessage("An error occured !").queue();
-									 }
-								 },
-								 30L,TimeUnit.SECONDS, 
-								 () -> chan.sendMessage("30 seconds passed trade expired!").queue()); 
-					 } );
+										 CharacterSelection select = new CharacterSelection(conn); 
+										 Character one = null; 
+										 Character two = null; 
+										 // Switch the character of each user 
+										 try 
+										 {	
+											 
+											 // Now check if either has a character to trade with! 
+											if(select.searchUserInWaifu(trader.getIdLong(), eReact.getGuild().getIdLong()) 
+													&& select.searchUserInWaifu(tradee.getIdLong(), eReact.getGuild().getIdLong())) 
+											{
+											one = select.getUserWaifu(trader.getIdLong(), eReact.getGuild().getIdLong());
+											two = select.getUserWaifu(tradee.getIdLong(), eReact.getGuild().getIdLong()); 
+											
+											// Now we got two characters now swap the character we have to update the database!
+											
+											// update trader 
+											select.updateWaifuCharacter(trader.getIdLong(), eReact.getGuild().getIdLong(), two);
+											select.updateWaifuCharacter(tradee.getIdLong(), eReact.getGuild().getIdLong(), one);
+											chan.sendMessage("Trade successful!").queue();
+											
+											// Now we swapped 
+
+											}
+											else 
+											{
+												
+												chan.sendMessage("Trade unsuccessful one of the users has not acquired a waifu today!").queue();
+											}
+										 }
+										 catch (SQLException e)
+										 {
+											e.printStackTrace();
+											chan.sendMessage("An error occured !").queue();
+										 }
+									 },
+									 30L,TimeUnit.SECONDS, 
+									 () -> chan.sendMessage("30 seconds passed trade expired!").queue()); 
+						 } );
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

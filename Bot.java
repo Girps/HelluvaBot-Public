@@ -12,8 +12,12 @@ import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import events.CommandManger;
 import events.EventWaiterCommand;
+import events.FrameCommand;
+import events.GuessCommand;
 import events.KdmCommand;
 import events.KinsCommand;
+import events.ListCommand;
+import events.OriginalCharacterCommand;
 import events.ShipsCommand;
 import events.SimpsCommand;
 import events.SmashPassCommand;
@@ -23,8 +27,6 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import net.dv8tion.jda.api.utils.ChunkingFilter;
-import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 
@@ -79,6 +81,10 @@ public class Bot {
 		jda.addEventListener(new KdmCommand(conn,waiter));
 		jda.addEventListener(new CommandManger(conn)); 
 		jda.addEventListener(new SonasCommand(conn));
+		jda.addEventListener(new ListCommand(conn)); 
+		jda.addEventListener(new OriginalCharacterCommand(conn)); 
+		jda.addEventListener(new GuessCommand(conn, waiter));
+		jda.addEventListener(new FrameCommand()); 
 	}
 
 }

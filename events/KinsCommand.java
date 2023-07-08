@@ -31,12 +31,14 @@ public class KinsCommand extends SimpsCommand{
 		// Check valid command 
 		if(event.getName().equals("kins")) 
 		{
+				String name = null; 
 				String userName = event.getUser().getId();  
 				CharacterSelection select = new CharacterSelection(conn); 
 				try 
 				{
-					Character found = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,1)[0];
+					Character found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT,1)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
+					name = found.getName(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());
 					builder.setColor(Color.red); 
@@ -49,8 +51,14 @@ public class KinsCommand extends SimpsCommand{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					event.deferReply().queue(); 
-					event.getHook().sendMessage("Simps command failed!").queue();
+					event.getHook().sendMessage("Kins command failed!").queue();
 				} 
+				catch (Exception e) 
+				{
+					e.printStackTrace();
+					event.deferReply().queue();
+					event.getHook().sendMessage("Kins command failed on " + name).queue();
+				}
 		}
 	}
 }

@@ -3,17 +3,16 @@ package events;
 import java.awt.Color;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.Character;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
 
 public class SonasCommand extends ListenerAdapter
@@ -44,17 +43,18 @@ public class SonasCommand extends ListenerAdapter
 						
 						try 
 						{
-							if (!select.searchUserInSona(event.getUser().getId(), event.getGuild().getId())) 
+							if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "does not have a sona!").queue(); 
 								return; 
 							}
 							// Now get the sona and display it 
-							Character sona = select.getUserSona(event.getUser().getId(), event.getGuild().getId()); 
+							Character sona = select.getUserSona(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 							EmbedBuilder build = new EmbedBuilder(); 
 							build.setAuthor(sona.getName()); 
 							build.setImage(sona.getDefaultImage()); 
 							build.setColor(Color.red); 
+							build.setFooter( event.getMember().getEffectiveName() + "'s Sona", event.getMember().getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
 						catch (SQLException e) 
@@ -66,21 +66,22 @@ public class SonasCommand extends ListenerAdapter
 					}
 					else // searching another user sona  
 					{
-						String targetId = event.getOption("user").getAsUser().getId();
-					
+						Long targetId = event.getOption("user").getAsUser().getIdLong();
+						Member target = event.getOption("user").getAsMember();
 						try 
 						{
-							if (!select.searchUserInSona(event.getUser().getId(), event.getGuild().getId())) 
+							if (!select.searchUserInSona(targetId, event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( "<@" + targetId  + "> " + "does not have a sona!").queue(); 
 								return; 
 							}
 							// Now get the sona and display it 
-							Character sona = select.getUserSona(targetId, event.getGuild().getId()); 
+							Character sona = select.getUserSona(targetId, event.getGuild().getIdLong()); 
 							EmbedBuilder build = new EmbedBuilder(); 
 							build.setAuthor(sona.getName()); 
 							build.setImage(sona.getDefaultImage()); 
 							build.setColor(Color.red); 
+							build.setFooter( event.getMember().getEffectiveName() + "'s Sona", target.getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
 						catch (SQLException e) 
@@ -93,48 +94,52 @@ public class SonasCommand extends ListenerAdapter
 				break; 
 			case("insertsona"):	// Command to insert a sona into the database 
 				
-				List<OptionMapping> list = event.getOptions();  
+			
 				// Now get all the options and use it to insert into the database 
 				
-				
-			
 			try 
 			{
 				
-				if (select.searchUserInSona(event.getUser().getId(), event.getGuild().getId())) 
+				if (select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{
-					event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "already inserted a sona!").queue(); 
+					event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "you can only have 1 sona! Remove your current sona and use this command again!").queue(); 
 					return; 
 				}
 				
 				
-				String ex  = list.get(1).getAsString().substring(list.get(1).getAsString().length() - 4, list.get(1).getAsString().length()); 
+				String ex  =  event.getOption("url").getAsString().substring( event.getOption("url").getAsString().length() - 4,  event.getOption("url").getAsString().length());
+				System.out.println(ex); 
 				if(!ex.contains(".png") && !ex.contains(".jpg") && !ex.contains(".gif")) 
 				{
 					event.getHook().sendMessage("URL "  + "must end with " + ".png , .jpg or .gif make sure to use a valid imgur image link" ).queue(); 
 					return; 
 				}
 				
-				
-				boolean res = select.insertSona(list.get(0).getAsString(), event.getUser().getId(), list.get(1).getAsString(),
-					event.getGuild().getId(), list.get(2).getAsString(), list.get(3).getAsString(), list.get(4).getAsString()
-						, list.get(5).getAsString(), list.get(6).getAsString(), list.get(7).getAsString());
-				
-				if(res) 
+			// Check if name is available to avoid duplicates in the server 
+				if(select.isAvailable( event.getOption("name").getAsString(),event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{
-					event.getHook().sendMessage("Sona created succesfully!").queue();
+					event.getHook().sendMessage("<@" + event.getUser().getId() + ">" +" Character name " +  event.getOption("name").getAsString() +  " is unavailable! Make sure to give your sona a distinct name for this server!" ).queue(); 
+					return; 
 				}
-				else 
-				{
-					event.getHook().sendMessage("Unsuccesfully in creating sona!").queue();
-				}
+				
+				
+			 select.insertSona(event.getOption("name").getAsString(), event.getUser().getIdLong(), event.getOption("url").getAsString(),
+					event.getGuild().getIdLong(), event.getOption("kdm").getAsString(), event.getOption("smashpass").getAsString(), event.getOption("simps").getAsString()
+						, event.getOption("ships").getAsString(), event.getOption("kins").getAsString(), event.getOption("waifu").getAsString(), event.getOption("favorite").getAsString(), event.getOption("guess").getAsString());
+				
+			 event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "succesfully added your sona!").queue();
 				
 			} 
 			catch (SQLException e)
 			{
-				event.getHook().sendMessage("something went wrong!").queue();
+				event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "something went wrong unable to add your sona!").queue();
 				e.printStackTrace();
 			} 
+			catch(Exception e) 
+			{
+				event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "something went wrong unable to add your sona! Make sure to fill in each option!").queue();
+				e.printStackTrace();
+			}
 				
 				break;
 				
@@ -145,7 +150,7 @@ public class SonasCommand extends ListenerAdapter
 					
 					try 
 					{
-						if (!select.searchUserInSona(event.getUser().getId(), event.getGuild().getId())) 
+						if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 						{
 							event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "does not have a sona!").queue(); 
 							return; 
@@ -153,7 +158,7 @@ public class SonasCommand extends ListenerAdapter
 						else 
 						{
 							// Delete the sona 
-							if ( select.removeSona(event.getUser().getId(), event.getGuild().getId())) 
+							if ( select.removeSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage("Sona removed succesfully!").queue();
 							}
@@ -174,13 +179,13 @@ public class SonasCommand extends ListenerAdapter
 					// Delete the sona 
 					try 
 					{
-						if (!select.searchUserInSona(event.getOption("user").getAsUser().getId(), event.getGuild().getId())) 
+						if (!select.searchUserInSona(event.getOption("user").getAsUser().getIdLong(), event.getGuild().getIdLong())) 
 						{
 							event.getHook().sendMessage( "<@" +   event.getOption("user").getAsUser().getId() + "> " + "does not have a sona!").queue(); 
 							return; 
 						}
 						
-						if ( select.removeSona(event.getOption("user").getAsMember().getId(), event.getGuild().getId())) 
+						if ( select.removeSona(event.getOption("user").getAsMember().getIdLong(), event.getGuild().getIdLong())) 
 						{
 							event.getHook().sendMessage("Sona removed succesfully!").queue();
 						}
@@ -210,40 +215,48 @@ public class SonasCommand extends ListenerAdapter
 		@Override
 		public void onGuildLeave(GuildLeaveEvent event)
 		{
-			String id = event.getGuild().getId(); 
+			Long idGuild = event.getGuild().getIdLong(); 
 			
 			// Now delete all sonas and waifus from the server 
 			CharacterSelection select = new CharacterSelection(conn); 
 			try 
 			{	
-				select.removeAllSonas(id);
-				select.removeAllWaifus(id); 
+				select.removeAllSonas(idGuild);
+				select.removeAllOcsInGuild(idGuild);
+				select.removeAllWaifus(idGuild); 
+				select.removeFavListGuild(idGuild);
+				System.out.println("Bot leave event success"); 
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
+				System.out.println("Bot leave event failed"); 
 				e.printStackTrace();
 			} 
 			
 		}
 		
-		// User leaves the guild remove their sonas and waifus from the tables 
+		/* User leaves guild remove there sonas, ocs , waifus and favorite lists from that server */ 
 		@Override  
 		public void onGuildMemberRemove(GuildMemberRemoveEvent event)
 		{
-			System.out.println("Member leave event"); 
+		
 			
 			
 			
-			String serverId = event.getGuild().getId(); 
-			String userId = event.getUser().getId(); 
+			Long serverId = event.getGuild().getIdLong(); 
+			Long userId = event.getUser().getIdLong(); 
 			
 			CharacterSelection select = new CharacterSelection(conn); 
 			try 
 			{
 				select.removeSona(userId, serverId); 
+				select.removeAllOcs(userId, serverId);
 				select.removeWaifu(userId, serverId); 
+				select.removeFavList(userId, serverId);	
+				System.out.println("Member leave event success"); 
 			}
 			catch(SQLException e) 
 			{
+				System.out.println("Member leave event failed"); 
 				e.printStackTrace(); 
 			}
 		}

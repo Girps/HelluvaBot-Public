@@ -11,7 +11,6 @@ import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
-import CharactersPack.SELECTIONTYPE;
 import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
 
