@@ -16,8 +16,9 @@ public class KdmRound {
 	private	String date; 
 	private String marry; 
 	private ArrayList<Long> ids;
-	
-	public KdmRound(String argUser,Long id) 
+	private ArrayList<String> characterNames; 
+	private int count; 
+	public KdmRound(String argUser,Long id, String nameOne, String nameTwo, String nameThree) 
 	{
 		userId = argUser; 
 		gameId = id; 
@@ -25,6 +26,11 @@ public class KdmRound {
 		date = null; 
 		marry = null; 
 		ids = new ArrayList<Long>(); 
+		characterNames = new ArrayList<String>(); 
+		characterNames.add(nameOne);
+		characterNames.add(nameTwo);
+		characterNames.add(nameThree); 
+		
 		
 	}
 	
@@ -38,24 +44,88 @@ public class KdmRound {
 		return ids; 
 	}
 	
-	public void setState(String btn, String characterName, long idTarget, ButtonInteraction eBtn) 
+	public void setState(String btn, String characterName, long idTarget, ButtonInteraction eBtn) throws InterruptedException, ExecutionException 
 	{
+		String name = ""; 
 		
-		if(btn.equalsIgnoreCase("kill")) 
+		// Remove character now remove ids 
+			for(int i = 0 ;  i < characterNames.size();  i++) 
+			{
+				// Compare string remove and stop when over 
+				if(characterName.equals(characterNames.get(i))) 
+				{
+					name = characterName; 
+					characterNames.remove(i);
+					++count; 
+					System.out.println(count); 
+					break; 
+				}
+			} 
+		
+			
+			for(int i = 0 ; i < ids.size(); ++i) 
+			{
+				if(idTarget == ids.get(i)) 
+				{
+					ids.remove(i); 
+					break; 
+				}
+			}
+		
+		// Got the name now initalize 
+		switch (btn)
 		{
-			kill = characterName; 
-			if(this.isOver()) {return;}
+			case "Kill" : 
+			{
+				
+				kill = name; 
+				break; 
+			}
+			case "Date": 
+			{
+				
+				date = name; 
+				break; 
+			}
+			case "Marry":
+			{
+				marry = name; 
+				break; 
+			}
 		}
-		else if(btn.equalsIgnoreCase("date")) 
-		{
-			date = characterName; 
-			if(this.isOver()) {return;}
-		}
-		else if(btn.equalsIgnoreCase("marry")) 
-		{
-			marry = characterName;
-			if(this.isOver()) {return;}
-		}
+		
+		
+
+		if (characterNames.size() == 1) 
+		{ 
+			if(kill == null)
+			{
+				kill = characterNames.get(0);
+			}
+			else if(date == null) 
+			{
+				date = characterNames.get(0); 
+			}
+			else 
+			{
+				marry = characterNames.get(0); 
+			}
+			
+			// Now disable last message 
+			
+			
+					
+			
+					List<Button> list = null;
+					
+						list = eBtn.getChannel().retrieveMessageById(ids.get(0)).submit().get().getActionRows().get(0).getButtons(); 
+					
+				
+						eBtn.getChannel().asTextChannel().editMessageById(ids.get(0)," ").setActionRow(list.get(0).asDisabled(), list.get(1).asDisabled(), list.get(2).asDisabled()).queue();
+
+			return; 
+		} 
+		
 		
 		Button disButton = eBtn.getButton().asDisabled(); 
 		
@@ -70,7 +140,7 @@ public class KdmRound {
 		
 				List<Button> list = null;
 				
-					list = eBtn.getChannel().retrieveMessageById(ids.get(i)).complete().getActionRows().get(0).getButtons(); 
+					list = eBtn.getChannel().retrieveMessageById(ids.get(i)).submit().get().getActionRows().get(0).getButtons(); 
 				
 				if(disButton.getLabel().equalsIgnoreCase("kill")) 
 				{
@@ -81,7 +151,7 @@ public class KdmRound {
 				{
 					eBtn.getChannel().asTextChannel().editMessageById(ids.get(i)," ").setActionRow(list.get(0), list.get(1).asDisabled(), list.get(2)).queue();
 				}
-				else  if(disButton.isDisabled())// marry case 
+				else  if(disButton.isDisabled())	// marry case 
 				{
 					eBtn.getChannel().asTextChannel().editMessageById(ids.get(i)," ").setActionRow(list.get(0), list.get(1), list.get(2).asDisabled()).queue();
 				}
@@ -99,7 +169,7 @@ public class KdmRound {
 	// Check if the round is over
 	public boolean isOver() 
 	{
-		if(kill != null && marry != null && date != null) 
+		if(count >= 2) 
 		{
 			return true; 
 		}
@@ -107,14 +177,25 @@ public class KdmRound {
 		return false; 
 	}
 	
-	@Override
-	public String toString() 
+	public String getUser() 
 	{
-		String result=""; 
-		
-		result = "<@"+ userId + ">" + " would kill " + kill + " date " + date + " and marry " + marry ; 
-		
-		return result; 
+		return userId; 
+	}
+	
+	
+	public String getKill() 
+	{
+		return kill;
+	}
+	
+	public String getDate() 
+	{
+		return date; 
+	}
+	
+	public String getMarry() 
+	{
+		return marry; 
 	}
 	
 }

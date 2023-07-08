@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
@@ -126,16 +127,10 @@ public class KdmCommand extends ListenerAdapter
 					ArrayList<Long> messageIds = new ArrayList<Long>(); 
 					
 					// Create the kdm object push it to a hashmap  
-					KdmRound currentRound = new KdmRound( userId , e.getIdLong()); 
+					KdmRound currentRound = new KdmRound( userId , e.getIdLong(),builderOne.build().getTitle(), builderTwo.build().getTitle(), builderThree.build().getTitle()); 
 					HashMap<Long, KdmRound> map = new HashMap<Long,KdmRound >(); 
 					
-					
-					
 					messageIds.add(e.getIdLong());  
-					
-					
-					
-					
 					
 					txtChan.sendMessageEmbeds(builderTwo.build()).setActionRow(buttons).queue( (msg2) -> 
 					{
@@ -163,13 +158,25 @@ public class KdmCommand extends ListenerAdapter
 									(eBtn.getMessage().getIdLong() == messageIds.get(0) || eBtn.getMessage().getIdLong() == messageIds.get(1)
 									|| eBtn.getMessage().getIdLong() == messageIds.get(2) ) ) 
 							{
-								eBtn.deferEdit().queue();  
+							
+								// Disable entire selection
 								MessageEmbed original = eBtn.getMessage().getEmbeds().get(0);
 									eBtn.getMessage().editMessageEmbeds(original).setActionRow(buttons.get(0).asDisabled(), 
 											buttons.get(1).asDisabled(), buttons.get(2).asDisabled()).queue();     
 									
 									KdmRound temp = map.get(eBtn.getUser().getIdLong()); 
-									temp.setState(eBtn.getButton().getLabel(), eBtn.getMessage().getEmbeds().get(0).getTitle(),  eBtn.getMessage().getIdLong(),eBtn);
+									try 
+									{
+										temp.setState(eBtn.getButton().getLabel(), eBtn.getMessage().getEmbeds().get(0).getTitle(),  eBtn.getMessage().getIdLong(),eBtn);
+									} 
+									catch (InterruptedException e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+									catch (ExecutionException e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
 									
 											
 									return temp.isOver(); 
@@ -185,7 +192,7 @@ public class KdmCommand extends ListenerAdapter
 						, (eBtn) -> 
 						{ 
 							KdmRound temp = map.get(eBtn.getUser().getIdLong()); 
-							eBtn.getChannel().asTextChannel().sendMessage(temp.toString()).queue();  
+							eBtn.getChannel().asTextChannel().sendMessage( "<@"+ temp.getUser() + ">" + " would " + MarkdownUtil.italics("kill ") + MarkdownUtil.bold(temp.getKill()) + MarkdownUtil.italics(" date ") + MarkdownUtil.bold(temp.getDate()) + " and "+  MarkdownUtil.italics(" marry ") + MarkdownUtil.bold(temp.getMarry())).queue();  
 							map.remove(temp.getGameId()); 
 						}
 						, 5L,TimeUnit.MINUTES, () -> 
@@ -208,6 +215,13 @@ public class KdmCommand extends ListenerAdapter
 				e.printStackTrace();
 				event.deferReply().queue();
 				event.getHook().sendMessage("KDM command failed!"); 
+			}
+			catch(Exception e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				event.deferReply().queue();
+				event.getHook().sendMessage("Something went wrong!"); 
 			}
 		}
 				
