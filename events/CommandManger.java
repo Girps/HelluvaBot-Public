@@ -344,7 +344,7 @@ public class CommandManger extends ListenerAdapter {
 				commandList.add(Commands.slash("removesona", "Remove sona from the server").addOptions(UserOption)); 
 				
 				commandList.add(Commands.slash("addfavorite", "Insert your top 10 favorite characters!").addOptions(characterOption));  
-				commandList.add(Commands.slash("favorites", "Returns a list of your favorite characters")); 
+				commandList.add(Commands.slash("favorites", "Returns a list of your favorite characters").addOptions(UserOption)); 
 				commandList.add(Commands.slash("removefavorite", "Remove a specific character from your list").addOptions(removeCharacter)); 
 				commandList.add(Commands.slash("changefavoritestitle", "Select a number to update a character with").addOptions(title)); 
 				commandList.add(Commands.slash("clearfavorites", "Clears your list of favorite characters")); 

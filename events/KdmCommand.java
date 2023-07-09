@@ -138,8 +138,8 @@ public class KdmCommand extends ListenerAdapter
 					);  
 					
 					txtChan.sendMessageEmbeds(builderThree.build()).setActionRow(buttons).queue( (msg2) -> 
-					{ messageIds.add(msg2.getIdLong()); }
-					
+					{ 
+						messageIds.add(msg2.getIdLong()); }
 					); 
 					
 					MessageCreateBuilder msgBuilderTwo = new MessageCreateBuilder();

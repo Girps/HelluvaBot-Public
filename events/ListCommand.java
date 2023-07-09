@@ -120,16 +120,18 @@ public class ListCommand extends ListenerAdapter{
 			ArrayList<CharactersPack.Character> list = null; 
 			try
 			{
+				if(event.getOptions().isEmpty())
+				{ 
 				// Check if list exists 
-				if(!select.checkFavList(userId, serverId)) 
-				{
-					event.getHook().sendMessage("<@" + userId + "> you do not have a favorites list!").queue(); 
-					return;
-				} 
+					if(!select.checkFavList(userId, serverId)) 
+					{
+						event.getHook().sendMessage("<@" + userId + "> you do not have a favorites list!").queue(); 
+						return;
+					} 
 				
 				
-				 title = select.getTitleList(userId, serverId); 
-				 list = select.getFavoritesList(userId,serverId);
+					title = select.getTitleList(userId, serverId); 
+					list = select.getFavoritesList(userId,serverId);
 					
 					// Now send Embed 
 					EmbedBuilder builder = new EmbedBuilder(); 
@@ -148,7 +150,38 @@ public class ListCommand extends ListenerAdapter{
 					builder.setColor(Color.RED); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				
-				
+				} 
+				else	// Now  
+				{
+					Long targetId = event.getOptions().get(0).getAsUser().getIdLong(); 
+					
+					// Check if targeted user has a favorites list 
+					if(!select.checkFavList(targetId , serverId)) 
+					{
+						event.getHook().sendMessage( "<@"+ userId +"> "+ "user" + " <@" + targetId + "> does not have a favorites list!").queue(); 
+						return;
+					} 
+					
+					title = select.getTitleList(targetId, serverId); 
+					list = select.getFavoritesList(targetId,serverId);
+					
+					// Now send Embed 
+					EmbedBuilder builder = new EmbedBuilder(); 
+					
+					builder.setAuthor(title, event.getOptions().get(0).getAsUser().getEffectiveAvatarUrl(),event.getOptions().get(0).getAsMember().getEffectiveAvatarUrl()); 
+					builder.setThumbnail(event.getOptions().get(0).getAsUser().getEffectiveAvatarUrl());   
+					// build a string 
+					String res = "";
+					int count = 1;
+					for(Character characters : list) 
+					{
+						res += count + "." + characters.getName() + "\n";
+						count++; 
+					}
+					builder.setDescription(res); 
+					builder.setColor(Color.RED); 
+					event.getHook().sendMessageEmbeds(builder.build()).queue();
+				}
 			} catch (SQLException e)
 			{
 				// TODO Auto-generated catch block
