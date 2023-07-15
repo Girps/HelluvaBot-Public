@@ -4,14 +4,13 @@ import java.awt.Color;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
 import CharactersPack.Character;
 import CharactersPack.CharacterSelection;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class ListCommand extends ListenerAdapter{
 
@@ -49,13 +48,13 @@ public class ListCommand extends ListenerAdapter{
 					} 
 					// Now insert the character 
 					select.insertFavorite(characterName, userId, serverId);
-					event.getHook().sendMessage(event.getUser().getAsMention() + " character succesfully entered!").queue();
+					event.getHook().sendMessage(event.getUser().getAsMention() + " character " + MarkdownUtil.bold(characterName) + " succesfully entered!").queue();
 				}
 				catch (SQLException e) 
 				{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-						event.getHook().sendMessage("<@"+ userId + ">" + " falied to insert character!" ).queue();; 
+						event.getHook().sendMessage("<@"+ userId + ">" + " falied to insert character" + MarkdownUtil.bold(MarkdownUtil.bold(characterName)) + "!" ).queue();; 
 				} 
 				break;
 			
@@ -101,10 +100,17 @@ public class ListCommand extends ListenerAdapter{
 				} 
 				
 				select.removeFavCharacter(characterName, event.getUser().getIdLong(), event.getGuild().getIdLong());
-				event.getHook().sendMessage( event.getUser().getAsMention() + " " + characterName + " has been removed from your list!" ).queue(); 
+				event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterName) + " has been removed from your list!" ).queue(); 
 			} 
-			catch (SQLException e) {
+			catch (SQLException e) 
+			{
 				// TODO Auto-generated catch block
+				e.printStackTrace();
+				event.getHook().sendMessage("Something went wrong!").queue();
+			}
+			catch(Exception e) 
+			{
+				
 				e.printStackTrace();
 				event.getHook().sendMessage("Something went wrong!").queue();
 			}
@@ -169,7 +175,7 @@ public class ListCommand extends ListenerAdapter{
 					EmbedBuilder builder = new EmbedBuilder(); 
 					
 					builder.setAuthor(title, event.getOptions().get(0).getAsUser().getEffectiveAvatarUrl(),event.getOptions().get(0).getAsMember().getEffectiveAvatarUrl()); 
-					builder.setThumbnail(event.getOptions().get(0).getAsUser().getEffectiveAvatarUrl());   
+					builder.setThumbnail(list.get(0).getDefaultImage());   
 					// build a string 
 					String res = "";
 					int count = 1;
@@ -208,7 +214,7 @@ public class ListCommand extends ListenerAdapter{
 					return; 
 				}
 				select.changeFavTitle(title,event.getUser().getIdLong(), event.getGuild().getIdLong());
-				event.getHook().sendMessage(event.getUser().getAsMention() + " favorites title changed! ").queue(); 
+				event.getHook().sendMessage(event.getUser().getAsMention() + " favorites title changed to " + MarkdownUtil.bold(title) + "!").queue(); 
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				event.getHook().sendMessage("Something went wrong!").queue(); 

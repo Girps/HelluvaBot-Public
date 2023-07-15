@@ -40,7 +40,7 @@ public class SimpsCommand extends ListenerAdapter{
 				CharacterSelection select = new CharacterSelection(conn); 
 				try 
 				{
-					Character found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT,3)[0];
+					Character found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());

@@ -46,7 +46,7 @@ public class ShipsCommand extends ListenerAdapter{
 				String userid = event.getUser().getId();
 				
 				// Get array of 2 characters 
-				arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,2);
+				arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),2);
 				
 				Character One = arr[0]; 
 				Character Two = arr[1];

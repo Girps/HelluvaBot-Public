@@ -36,7 +36,7 @@ public class KinsCommand extends SimpsCommand{
 				CharacterSelection select = new CharacterSelection(conn); 
 				try 
 				{
-					Character found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT,1)[0];
+					Character found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),1)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
 					name = found.getName(); 
 					builder.setTitle(found.getName()); 

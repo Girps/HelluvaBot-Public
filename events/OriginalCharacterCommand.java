@@ -57,7 +57,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					select.insertOrginalCharacter(event.getOption("name").getAsString() , userId, event.getOption("url").getAsString() ,
 						serverId, event.getOption("kdm").getAsString() , event.getOption("smashpass").getAsString() , event.getOption("simps").getAsString() 
 							, event.getOption("ships").getAsString() , event.getOption("kins").getAsString() , event.getOption("waifu").getAsString() ,event.getOption("favorite").getAsString() 
-							, event.getOption("guess").getAsString() );
+							, event.getOption("guess").getAsString() , event.getOption("collect").getAsString());
 				
 					event.getHook().sendMessage("<@"+ userId +"> OC successfully inserted!" ).queue(); 
 					
@@ -108,7 +108,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			
 			if(!Helper.checkRoles(event.getMember().getRoles())) 
 			{
-				event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only admins can remove other user OCs!").queue();
+				event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();				
 				return; 
 			}
 			else 
@@ -191,8 +191,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			}
 			else 
 			{
-				event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only admins can use that command!").queue();
-			}
+				event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();			}
 			
 			break; 
 		} 

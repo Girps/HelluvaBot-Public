@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
@@ -41,7 +40,7 @@ public class KdmCommand extends ListenerAdapter
 	}
 	
 	
-	@SuppressWarnings("unlikely-arg-type")
+	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
@@ -55,7 +54,7 @@ public class KdmCommand extends ListenerAdapter
 			TextChannel  txtChan = event.getChannel().asTextChannel(); 
 			CharacterSelection select = new CharacterSelection(conn); 
 			String userId = event.getUser().getId(); 
-			Long userLong = event.getUser().getIdLong(); 
+		
 			try 
 			{
 				 
@@ -63,7 +62,7 @@ public class KdmCommand extends ListenerAdapter
 
 				if(event.getOption("first") == null && event.getOption("second") == null && event.getOption("third") == null) 
 				{
-					chtrs = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,3);
+					chtrs = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3);
 				}
 				else
 				{
@@ -72,7 +71,7 @@ public class KdmCommand extends ListenerAdapter
 					// Add into game 
 					for(int i = 0; i < size; ++i) 
 					{
-						chtrs[i] = select.requestSingleCharacter(options.get(i).getAsString(), GAMETYPE.KDM, SETUPTYPE.LIGHT); 
+						chtrs[i] = select.requestSingleCharacter(options.get(i).getAsString(),  event.getGuild().getIdLong(), GAMETYPE.KDM, SETUPTYPE.LIGHT); 
 					}
 					
 					// length difference computation 
@@ -81,10 +80,10 @@ public class KdmCommand extends ListenerAdapter
 					{
 					case(1): 
 						
-						chtrs[2] = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,1)[0];    
+						chtrs[2] = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),1)[0];    
 						break; 
 					case(2): 
-						Character[] temp = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT,2); 
+						Character[] temp = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),2); 
 					chtrs[2] = temp[1]; 
 					chtrs[1] =temp[0]; 
 						break; 
@@ -128,7 +127,7 @@ public class KdmCommand extends ListenerAdapter
 					
 					// Create the kdm object push it to a hashmap  
 					KdmRound currentRound = new KdmRound( userId , e.getIdLong(),builderOne.build().getTitle(), builderTwo.build().getTitle(), builderThree.build().getTitle()); 
-					HashMap<Long, KdmRound> map = new HashMap<Long,KdmRound >(); 
+					//HashMap<Long, KdmRound> map = new HashMap<Long,KdmRound >(); 
 					
 					messageIds.add(e.getIdLong());  
 					
@@ -146,7 +145,8 @@ public class KdmCommand extends ListenerAdapter
 					msgBuilderTwo.setActionRow(buttons); 
 					msgBuilderTwo.build(); 
 					currentRound.setArrayList(messageIds);
-					map.put(userLong, currentRound); 
+					
+				
 				
 					
 					// Now use waiter
@@ -164,7 +164,7 @@ public class KdmCommand extends ListenerAdapter
 									eBtn.getMessage().editMessageEmbeds(original).setActionRow(buttons.get(0).asDisabled(), 
 											buttons.get(1).asDisabled(), buttons.get(2).asDisabled()).queue();     
 									
-									KdmRound temp = map.get(eBtn.getUser().getIdLong()); 
+									KdmRound temp = currentRound; 
 									try 
 									{
 										temp.setState(eBtn.getButton().getLabel(), eBtn.getMessage().getEmbeds().get(0).getTitle(),  eBtn.getMessage().getIdLong(),eBtn);
@@ -191,15 +191,13 @@ public class KdmCommand extends ListenerAdapter
 						}
 						, (eBtn) -> 
 						{ 
-							KdmRound temp = map.get(eBtn.getUser().getIdLong()); 
+							KdmRound temp = currentRound; 
 							eBtn.getChannel().asTextChannel().sendMessage( "<@"+ temp.getUser() + ">" + " would " + MarkdownUtil.italics("kill ") + MarkdownUtil.bold(temp.getKill()) + MarkdownUtil.italics(" date ") + MarkdownUtil.bold(temp.getDate()) + " and "+  MarkdownUtil.italics(" marry ") + MarkdownUtil.bold(temp.getMarry())).queue();  
-							map.remove(temp.getGameId()); 
+							 
 						}
 						, 5L,TimeUnit.MINUTES, () -> 
 						{
-								// Now delete the messages part of this game! 
-								txtChan.sendMessage("<@" + userId+"> " + "your KDM session expired!" ).queue(); 
-								map.remove(e.getId()); 
+								// Delete unfinished game 
 								e.delete().queue();
 								e.getChannel().retrieveMessageById(messageIds.get(1)).queue( (dMsg2) -> dMsg2.delete().queue());
 								e.getChannel().retrieveMessageById(messageIds.get(2)).queue( (dMsg3) -> dMsg3.delete().queue()); 

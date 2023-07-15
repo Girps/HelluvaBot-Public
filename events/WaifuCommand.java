@@ -65,7 +65,7 @@ public class WaifuCommand extends ListenerAdapter{
 				else 
 				{
 					// No waifu so create the character put it in the waifu table 
-					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,1)[0]; 
+					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,event.getGuild().getIdLong(),1)[0]; 
 					// We got the character now add it to the waifus table 
 					select.insertWaifu(userID, serverID, chtr); 
 					
@@ -107,6 +107,7 @@ public class WaifuCommand extends ListenerAdapter{
 			Member target = event.getOption("user").getAsMember(); 
 			// Now check if user has a waifu if not give them a bot 
 			CharacterSelection select = new CharacterSelection(conn); 
+			String name = ""; 
 			// Now search for waifu in the database
 			try 
 			{
@@ -115,6 +116,7 @@ public class WaifuCommand extends ListenerAdapter{
 				{
 					// Get the waifu 
 					Character chtr = select.getUserWaifu(targetId, serverID); 
+					name = chtr.getName(); 
 					EmbedBuilder build = new EmbedBuilder(); 
 					build.setAuthor(target.getEffectiveName() + "'s waifu/husbando is ...", target.getEffectiveAvatarUrl(), target.getEffectiveAvatarUrl()); 					build.setTitle(chtr.getName()); 
 					build.setImage(chtr.getDefaultImage()); 
@@ -127,7 +129,8 @@ public class WaifuCommand extends ListenerAdapter{
 				else 
 				{
 					// No waifu so create the character put it in the waifu table 
-					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,1)[0]; 
+					Character chtr = select.getRandomCharacters(GAMETYPE.WAIFU,SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),1)[0]; 
+					name = chtr.getName(); 
 					// We got the character now add it to the waifus table 
 					select.insertWaifu(targetId, serverID, chtr); 
 					
@@ -147,6 +150,12 @@ public class WaifuCommand extends ListenerAdapter{
 				e.printStackTrace();
 				event.deferReply();
 				event.getHook().sendMessage("An error occured!").queue(); 
+			}
+			catch(Exception e) 
+			{
+				System.out.println("error with " + name); 
+				event.deferReply();
+				event.getHook().sendMessage("An error occured! Picking character " + name).queue(); 
 			}
 			
 		}
@@ -177,6 +186,22 @@ public class WaifuCommand extends ListenerAdapter{
 			
 			event.deferReply().queue(); 
 			
+			
+			 // Now check if either has a character to trade with! 
+			try 
+			{
+				if(!Outterselect.searchUserInWaifu(trader.getIdLong(), event.getGuild().getIdLong()) 
+						|| !Outterselect.searchUserInWaifu(tradee.getIdLong(), event.getGuild().getIdLong())) 
+				{
+					event.getHook().sendMessage("Trade unsuccessful one of the users has not acquired a waifu today!").queue();
+				}
+				
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				event.getHook().sendMessage("An error occured !").queue();
+			}
+			
 			try {
 				event.getHook().sendMessage("<@"+ trader.getId() + ">" + " wants to trade their waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(trader.getIdLong(), serverID).getName())  + " for " + "<@" + tradee.getId() + ">" 
 				+ "'s waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(tradee.getIdLong(), serverID).getName() )+"! " + 
@@ -193,10 +218,7 @@ public class WaifuCommand extends ListenerAdapter{
 										 try 
 										 {	
 											 
-											 // Now check if either has a character to trade with! 
-											if(select.searchUserInWaifu(trader.getIdLong(), eReact.getGuild().getIdLong()) 
-													&& select.searchUserInWaifu(tradee.getIdLong(), eReact.getGuild().getIdLong())) 
-											{
+										
 											one = select.getUserWaifu(trader.getIdLong(), eReact.getGuild().getIdLong());
 											two = select.getUserWaifu(tradee.getIdLong(), eReact.getGuild().getIdLong()); 
 											
@@ -205,25 +227,18 @@ public class WaifuCommand extends ListenerAdapter{
 											// update trader 
 											select.updateWaifuCharacter(trader.getIdLong(), eReact.getGuild().getIdLong(), two);
 											select.updateWaifuCharacter(tradee.getIdLong(), eReact.getGuild().getIdLong(), one);
-											chan.sendMessage("Trade successful!").queue();
+											event.getHook().sendMessage("Trade successful!").queue();
 											
-											// Now we swapped 
-
-											}
-											else 
-											{
-												
-												chan.sendMessage("Trade unsuccessful one of the users has not acquired a waifu today!").queue();
-											}
+											
 										 }
 										 catch (SQLException e)
 										 {
 											e.printStackTrace();
-											chan.sendMessage("An error occured !").queue();
+											event.getHook().sendMessage("An error occured !").queue();
 										 }
 									 },
 									 30L,TimeUnit.SECONDS, 
-									 () -> chan.sendMessage("30 seconds passed trade expired!").queue()); 
+									 () -> event.getHook().sendMessage("30 seconds passed trade expired!").queue()); 
 						 } );
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block

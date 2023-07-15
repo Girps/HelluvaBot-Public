@@ -64,7 +64,7 @@ public class WikiCommand extends ListenerAdapter{
 				
 				
 					// We have the fields now create our character object 
-					Character charactFound = select.requestSingleCharacter(characterName, GAMETYPE.WIKI,SETUPTYPE.LIGHT);
+					Character charactFound = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.LIGHT);
 					
 					// We have the character now build an embed for the character 
 					EmbedBuilder builder = new EmbedBuilder(); 
@@ -73,7 +73,7 @@ public class WikiCommand extends ListenerAdapter{
 					builder.setDescription(charactFound.getBasic()); 
 					builder.addField("Quote", MarkdownUtil.quote(charactFound.getQuote()),false);
 					builder.setThumbnail(charactFound.getDefaultImage()); 
-					builder.setFooter("Time: " + date.toString(), event.getMember().getEffectiveAvatarUrl());  
+					builder.setFooter(event.getMember().getEffectiveName(), event.getMember().getEffectiveAvatarUrl());  
 					// Now send the embed to the server
 					
 					event.deferReply().queue(); 
@@ -158,7 +158,7 @@ public class WikiCommand extends ListenerAdapter{
 								
 								
 								// We have the fields now create our character object 
-								Character charactFound = select.requestSingleCharacter(characterName, GAMETYPE.WIKI,SETUPTYPE.HEAVY);
+								Character charactFound = select.requestSingleCharacter(characterName, event.getGuild().getIdLong(),GAMETYPE.WIKI,SETUPTYPE.HEAVY);
 								
 								// We have the character now build an embed for the character 
 								EmbedBuilder builder = new EmbedBuilder(); 
@@ -239,7 +239,7 @@ public class WikiCommand extends ListenerAdapter{
 		Character charcTarget = null; 
 		try 
 		{
-			charcTarget = select.requestSingleCharacter(characterName, GAMETYPE.WIKI,SETUPTYPE.HEAVY);
+			charcTarget = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.HEAVY);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

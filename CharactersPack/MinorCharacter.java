@@ -86,7 +86,7 @@ public class MinorCharacter extends Character
 	public void setContent()
 	{
 		 
-		System.out.println(markUp); 
+		 // System.out.println(markUp); 
 		  
 		 String rawData = ""; 
 		  // Check names for "," or "and"
@@ -158,6 +158,7 @@ public class MinorCharacter extends Character
 		  {
 			  rawData = rawData.substring(0, rawData.indexOf("==")); 
 		  }
+		
 		  this.rawData = rawData;
 	}
 	

@@ -47,7 +47,7 @@ public class SmashPassCommand extends ListenerAdapter
 			try 
 			{
 				CharacterSelection set = new CharacterSelection(conn);
-				 target = set.getRandomCharacters(GAMETYPE.SMASHPASS, SETUPTYPE.LIGHT,1)[0];
+				 target = set.getRandomCharacters(GAMETYPE.SMASHPASS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),1)[0];
 				 
 				 EmbedBuilder build = new EmbedBuilder(); 
 				 build.setThumbnail(target.getDefaultImage()); 
@@ -100,7 +100,7 @@ public class SmashPassCommand extends ListenerAdapter
 			{ 
 				CharacterSelection selection = new CharacterSelection(conn); 
 				// Use a query to get the character
-				target = selection.requestSingleCharacter(targetName,GAMETYPE.SMASHPASS,SETUPTYPE.LIGHT); 
+				target = selection.requestSingleCharacter(targetName,  event.getGuild().getIdLong(), GAMETYPE.SMASHPASS,SETUPTYPE.LIGHT); 
 				// Build embed 
 				
 				if(target == null) 

@@ -41,7 +41,7 @@ public class GuessCommand extends ListenerAdapter{
 			try 
 			{
 				// get 4 random characters 
-				CharactersPack.Character[] chts = select.getRandomCharacters(GAMETYPE.GUESS, SETUPTYPE.LIGHT, 4);
+				CharactersPack.Character[] chts = select.getRandomCharacters(GAMETYPE.GUESS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 4);
 				EmbedBuilder builder = new EmbedBuilder();
 				
 				Random gen = new Random(); 

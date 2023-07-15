@@ -81,7 +81,7 @@ public class SonasCommand extends ListenerAdapter
 							build.setAuthor(sona.getName()); 
 							build.setImage(sona.getDefaultImage()); 
 							build.setColor(Color.red); 
-							build.setFooter( event.getMember().getEffectiveName() + "'s Sona", target.getEffectiveAvatarUrl()); 
+							build.setFooter( target.getEffectiveName() + "'s Sona", target.getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
 						catch (SQLException e) 
@@ -125,7 +125,7 @@ public class SonasCommand extends ListenerAdapter
 				
 			 select.insertSona(event.getOption("name").getAsString(), event.getUser().getIdLong(), event.getOption("url").getAsString(),
 					event.getGuild().getIdLong(), event.getOption("kdm").getAsString(), event.getOption("smashpass").getAsString(), event.getOption("simps").getAsString()
-						, event.getOption("ships").getAsString(), event.getOption("kins").getAsString(), event.getOption("waifu").getAsString(), event.getOption("favorite").getAsString(), event.getOption("guess").getAsString());
+						, event.getOption("ships").getAsString(), event.getOption("kins").getAsString(), event.getOption("waifu").getAsString(), event.getOption("favorite").getAsString(), event.getOption("guess").getAsString(), event.getOption("collect").getAsString());
 				
 			 event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "succesfully added your sona!").queue();
 				
@@ -202,7 +202,7 @@ public class SonasCommand extends ListenerAdapter
 				}
 				else 
 				{
-					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only admins can use that command!").queue();
+					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();
 				}
 			default: 
 				break; 

@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
+import events.CollectCommand;
 import events.CommandManger;
 import events.EventWaiterCommand;
 import events.FrameCommand;
@@ -39,6 +40,12 @@ public class Bot {
 		 
 		 
 		builder.setActivity(Activity.listening("~man for help")); 
+
+
+		
+	
+
+		
 
 
 
@@ -85,6 +92,7 @@ public class Bot {
 		jda.addEventListener(new OriginalCharacterCommand(conn)); 
 		jda.addEventListener(new GuessCommand(conn, waiter));
 		jda.addEventListener(new FrameCommand()); 
+		jda.addEventListener(new CollectCommand(conn,waiter)); 
 	}
 
 }
