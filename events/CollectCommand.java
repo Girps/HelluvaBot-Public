@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.awt.Color;
 
-import javax.xml.stream.events.Characters;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
@@ -16,7 +15,6 @@ import CharactersPack.GAMETYPE;
 import CharactersPack.Character;
 import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -236,7 +234,7 @@ public class CollectCommand extends ListenerAdapter{
 					}
 					builder.setAuthor(event.getMember().getEffectiveName() + "'s Collection!", event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl());
 					builder.setThumbnail(list.get(0).getDefaultImage()); 
-					builder.setColor(Color.RED); 
+					builder.setColor(Color.YELLOW); 
 					builder.setDescription(names); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
 				}
@@ -411,15 +409,22 @@ public class CollectCommand extends ListenerAdapter{
 						
 							String names = ""; 
 							EmbedBuilder builder = new EmbedBuilder(); 
-						
+							
 							for(Character temp : list) 
 							{
-								names += "- "  + temp.getName() + "\n"; 
+								if(!select.hasBeenClaimed(temp.getId(), event.getGuild().getIdLong())) 
+								{  
+									names += "- "  + temp.getName() + "\n"; 
+								}
+								else 
+								{
+									names += "- " + temp.getName() + " :x:" +"\n"; 
+								}
 							}
 							builder.setAuthor(event.getMember().getEffectiveName() + "'s wishlist!", event.getUser().getEffectiveAvatarUrl(),
 									event.getUser().getEffectiveAvatarUrl());
 							builder.setThumbnail(list.get(0).getDefaultImage()); 
-							builder.setColor(Color.WHITE); 
+							builder.setColor(Color.YELLOW); 
 							builder.setDescription(names); 
 							builder.setFooter("You will be @ when these characters appear on a roll!"); 
 							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
@@ -445,7 +450,7 @@ public class CollectCommand extends ListenerAdapter{
 							builder.setAuthor(event.getOption("user").getAsMember().getEffectiveName() + "'s wishlist!", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),
 									event.getOption("user").getAsMember().getEffectiveAvatarUrl());
 							builder.setThumbnail(list.get(0).getDefaultImage()); 
-							builder.setColor(Color.WHITE); 
+							builder.setColor(Color.YELLOW); 
 							builder.setDescription(names); 
 							builder.setFooter("You will be @ when these characters appear on a roll!"); 
 							event.getHook().sendMessageEmbeds(builder.build()).queue(); 

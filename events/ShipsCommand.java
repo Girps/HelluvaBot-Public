@@ -54,13 +54,13 @@ public class ShipsCommand extends ListenerAdapter{
 				// Build embed 
 				EmbedBuilder builderOne = new EmbedBuilder(); 
 				builderOne.setTitle(One.getName()); 
-				builderOne.setColor(Color.red); 
+				builderOne.setColor(Color.MAGENTA); 
 				builderOne.setThumbnail(One.getDefaultImage());
 				
 				// Build embed 
 				EmbedBuilder builderTwo = new EmbedBuilder(); 
 				builderTwo.setTitle(Two.getName()); 
-				builderTwo.setColor(Color.red); 
+				builderTwo.setColor(Color.MAGENTA); 
 				builderTwo.setThumbnail(Two.getDefaultImage());
 				
 				

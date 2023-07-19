@@ -41,7 +41,7 @@ public class KinsCommand extends SimpsCommand{
 					name = found.getName(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());
-					builder.setColor(Color.red); 
+					builder.setColor(Color.CYAN); 
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 					event.getHook().sendMessage( "<@"+ userName + ">" + " kins " + MarkdownUtil.bold(found.getName()) + "!").queue();

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -43,8 +44,8 @@ public class CharacterSelection {
 			query = "SELECT name FROM characters \r\n"
 					+ "WHERE characters.is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
-					+ "SELECT name FROM gamecharacters\r\n"
-					+ "WHERE gamecharacters.is_Adult = \"T\"\r\n"
+					+ "SELECT name FROM gameCharacters\r\n"
+					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inKDM = \"T\" " + " AND " + "server_Id = " + serverId  
@@ -56,8 +57,8 @@ public class CharacterSelection {
 			query = "SELECT name FROM characters \r\n"
 					+ "WHERE characters.is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
-					+ "SELECT name FROM gamecharacters\r\n"
-					+ "WHERE gamecharacters.is_Adult = \"T\"\r\n"
+					+ "SELECT name FROM gameCharacters\r\n"
+					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inSP = \"T\" " + " AND " + "server_Id = " + serverId   
@@ -68,7 +69,7 @@ public class CharacterSelection {
 		case FAVORITES :
 			query = "SELECT name FROM characters \r\n"
 					+ "UNION \r\n"
-					+ "SELECT name FROM gamecharacters\r\n"
+					+ "SELECT name FROM gameCharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inFav = \"T\" " + " AND " + "server_Id = " + serverId  
@@ -79,7 +80,7 @@ public class CharacterSelection {
 		case COLLECT : 
 			query = "SELECT name FROM characters \r\n"
 					+ "UNION \r\n"
-					+ "SELECT name FROM gamecharacters\r\n"
+					+ "SELECT name FROM gameCharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inCollect = \"T\" " + " AND " + "server_Id = " + serverId  
@@ -244,8 +245,8 @@ public class CharacterSelection {
 		query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters\r\n"
 				+ " WHERE characters.char_Id = " + id.toString()
 				+ " UNION\r\n"
-				+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters\r\n"
-				+ " WHERE gamecharacters.gameCharacter_Id = " + id.toString() 
+				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters\r\n"
+				+ " WHERE gameCharacter_Id = " + id.toString() 
 				+ " UNION \r\n"
 				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas\r\n"
 				+ " WHERE  sonas.sona_Id = " + id.toString()
@@ -286,8 +287,8 @@ public class CharacterSelection {
 			query =  "SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters " +  
 					 " WHERE characters.is_Adult = \"T\"" + 
 					 " UNION " + 
-					 " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters " +
-					 " WHERE gamecharacters.is_Adult = \"T\"" + 
+					 " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters " +
+					 " WHERE gameCharacters.is_Adult = \"T\"" + 
 					 " UNION " + 
 					 " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas " + 
 					 " WHERE sonas.inKDM = \"T\" " + " AND server_Id = " + serverId +   
@@ -302,8 +303,8 @@ public class CharacterSelection {
 			query = "SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters "
 					+ " WHERE characters.is_Adult = \"T\" "
 					+ " UNION\r\n"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters "
-					+ " WHERE gamecharacters.is_Adult = \"T\" "
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters "
+					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas "
 					+ " WHERE sonas.inSimps = \"T\" " + " AND server_Id = " + serverId 
@@ -317,8 +318,8 @@ public class CharacterSelection {
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters "
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE gamecharacters.is_Adult = \"T\" "
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inShips = \"T\""  +  " AND server_Id = " + serverId 
@@ -331,7 +332,7 @@ public class CharacterSelection {
 		case KINS:
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inKins = \"T\" " + " AND server_Id = " + serverId 
@@ -345,8 +346,8 @@ public class CharacterSelection {
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters "
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE gamecharacters.is_Adult = \"T\" "
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inSP = \"T\" " + " AND server_Id = " + serverId 
@@ -360,8 +361,8 @@ public class CharacterSelection {
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE gamecharacters.is_Adult = \"T\" "
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inWaifu = \"T\"" +   " AND server_Id = " + serverId 
@@ -374,7 +375,7 @@ public class CharacterSelection {
 		case GUESS: 
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inGuess = \"T\" " + " AND server_Id = " + serverId 
@@ -387,7 +388,7 @@ public class CharacterSelection {
 		case COLLECT: 
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
 					+ " UNION "
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE sonas.inCollect = \"T\" " +  " AND server_Id = " + serverId 
@@ -409,7 +410,7 @@ public class CharacterSelection {
 	public  Character requestSingleCharacter(String name, long serverId,GAMETYPE type, SETUPTYPE set) throws SQLException 
 	{
 		
-		System.out.println(type.toString()); 
+		
 		Character found  = null; 
 		String query = ""; 
 		switch(type)
@@ -421,8 +422,8 @@ public class CharacterSelection {
 				 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 				+ " WHERE LOWER(characters.name) = LOWER(" + "\"" +name + "\"" + ") AND characters.is_Adult = \"T\" "
 				+ " UNION"
-				+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-				+ " WHERE LOWER(gamecharacters.name) = LOWER(" +"\"" + name + "\"" + ") AND gamecharacters.is_Adult = \"T\""
+				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+				+ " WHERE LOWER(gameCharacters.name) = LOWER(" +"\"" + name + "\"" + ") AND gameCharacters.is_Adult = \"T\""
 				+ " UNION"
 				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 				+ " WHERE  LOWER(sonas.name) = LOWER("+ "\"" + name + "\"" +") AND sonas.inKDM = \"T\"" + " AND server_Id = " + serverId 
@@ -438,8 +439,8 @@ public class CharacterSelection {
 					 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " WHERE LOWER(characters.name) = LOWER(\'" + name + "\') AND characters.is_Adult = \"T\" "
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE LOWER(gamecharacters.name) = LOWER(\'"+ name+ "\') AND gamecharacters.is_Adult = \"T\""
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE LOWER(gameCharacters.name) = LOWER(\'"+ name+ "\') AND gameCharacters.is_Adult = \"T\""
 					+ " UNION"
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE  LOWER(sonas.name) = LOWER(\'" + name +"\') AND sonas.inKDM = \"T\"" +  " AND server_Id = " + serverId 
@@ -458,8 +459,8 @@ public class CharacterSelection {
 					 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " WHERE LOWER(characters.name) = LOWER(" +"\"" + name + "\"" +") AND characters.is_Adult = \"T\" "
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE LOWER(gamecharacters.name) = LOWER(" + "\"" + name + "\"" + ") AND gamecharacters.is_Adult = \"T\""
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE LOWER(gameCharacters.name) = LOWER(" + "\"" + name + "\"" + ") AND gameCharacters.is_Adult = \"T\""
 					+ " UNION"
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 					+ " WHERE  LOWER(sonas.name) = LOWER(" +"\"" +name + "\"" +") AND sonas.inSP = \"T\"" +  " AND server_Id = " + serverId 
@@ -475,8 +476,8 @@ public class CharacterSelection {
 						 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 						+ " WHERE LOWER(characters.name) = LOWER(\'" + name + "\') AND characters.is_Adult = \"T\" "
 						+ " UNION"
-						+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-						+ " WHERE LOWER(gamecharacters.name) = LOWER(\'"+ name+ "\') AND gamecharacters.is_Adult = \"T\""
+						+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+						+ " WHERE LOWER(gameCharacters.name) = LOWER(\'"+ name+ "\') AND gameCharacters.is_Adult = \"T\""
 						+ " UNION"
 						+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 						+ " WHERE  LOWER(sonas.name) = LOWER(\'" + name +"\') AND sonas.inSP = \"T\"" + " AND server_Id = " + serverId 
@@ -493,16 +494,16 @@ public class CharacterSelection {
 			query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " WHERE LOWER(characters.name) = LOWER(" + "\'" + name + "\'" + ") "
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE LOWER(gamecharacters.name) = LOWER(" + "\'" + name + "\'" + ") " + " LIMIT 1"; 
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE LOWER(gameCharacters.name) = LOWER(" + "\'" + name + "\'" + ") " + " LIMIT 1"; 
 		}
 		else 
 		{
 			query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 					+ " WHERE LOWER(characters.name) = LOWER( \""  + name  + "\") "
 					+ " UNION"
-					+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-					+ " WHERE LOWER(gamecharacters.name) = LOWER( \"" + name + "\") " + " LIMIT 1"; 
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+					+ " WHERE LOWER(gameCharacters.name) = LOWER( \"" + name + "\") " + " LIMIT 1"; 
 		}
 			found = processQueryGetCharacters(query,set)[0]; 
 			break;
@@ -512,8 +513,8 @@ public class CharacterSelection {
 				query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 						+ " WHERE LOWER(characters.name) = LOWER(" + "\'" + name + "\'" + ") "
 						+ " UNION"
-						+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-						+ " WHERE LOWER(gamecharacters.name) = LOWER(" + "\'" + name + "\'" + ") "
+						+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+						+ " WHERE LOWER(gameCharacters.name) = LOWER(" + "\'" + name + "\'" + ") "
 						+ "UNION"
 						+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 						+ " WHERE  LOWER(sonas.name) = LOWER(\'" + name +"\') AND sonas.inFav = \"T\"" +  " AND server_Id = " + serverId   
@@ -527,8 +528,8 @@ public class CharacterSelection {
 				query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 						+ " WHERE LOWER(characters.name) = LOWER( \""  + name  + "\") "
 						+ " UNION"
-						+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
-						+ " WHERE LOWER(gamecharacters.name) = LOWER( \"" + name + "\") " 	
+						+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
+						+ " WHERE LOWER(name) = LOWER( \"" + name + "\") " 	
 						+ " UNION "
 						+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
 						+ " WHERE LOWER(sonas.name) = LOWER(\"" + name + "\"" + ") AND sonas.inFav = \"T\"" +  " AND server_Id = " + serverId 
@@ -658,7 +659,7 @@ public class CharacterSelection {
 			inKins, String inWaifu, String inFav, String inGuess, String inCollect) throws SQLException 
 	{
 		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
-		  System.out.println(serverId); 
+		
 		String queryTwo = "";   
 		if(!name.contains("\"")) 
 		{  
@@ -712,8 +713,8 @@ public class CharacterSelection {
 			query = "SELECT characters.char_Id FROM characters \r\n"
 				+ "WHERE characters.name = \"" + name + "\"\r\n"
 				+ "UNION\r\n"
-				+ "SELECT gamecharacters.gameCharacter_Id FROM gamecharacters\r\n"
-				+ "WHERE gamecharacters.name = \"" + name + "\"\r\n"
+				+ "SELECT gameCharacter_Id FROM gameCharacters\r\n"
+				+ "WHERE name = \"" + name + "\"\r\n"
 				+ "UNION\r\n"
 				+ "SELECT sonas.sona_Id FROM sonas\r\n"
 				+ "WHERE sonas.name = \"" + name + "\"\r\n"
@@ -727,8 +728,8 @@ public class CharacterSelection {
 			query = "SELECT characters.char_Id FROM characters \r\n"
 					+ "WHERE characters.name = \'" + name + "\'\r\n"
 					+ "UNION\r\n"
-					+ "SELECT gamecharacters.gameCharacter_Id FROM gamecharacters\r\n"
-					+ "WHERE gamecharacters.name = \'" + name + "\'\r\n"
+					+ "SELECT gameCharacter_Id FROM gameCharacters\r\n"
+					+ "WHERE name = \'" + name + "\'\r\n"
 					+ "UNION\r\n"
 					+ "SELECT sonas.sona_Id FROM sonas\r\n"
 					+ "WHERE sonas.name = \'" + name + "\'\r\n"
@@ -809,7 +810,7 @@ public class CharacterSelection {
 				 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character FROM characters"
 				+ " WHERE char_id = " + id
 				+ " UNION"
-				+ " SELECT gamecharacters.gameCharacter_Id, gamecharacters.name, gamecharacters.show_Name, gamecharacters.imgur_Url FROM gamecharacters"
+				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url FROM gameCharacters"
 				+ " WHERE gameCharacter_Id = " + id
 				+ " UNION"
 				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url FROM sonas"
@@ -834,7 +835,7 @@ public class CharacterSelection {
 				 " SELECT  characters.name FROM characters"
 				+ " WHERE char_id = " + id
 				+ " UNION"
-				+ " SELECT gamecharacters.name  FROM gamecharacters "
+				+ " SELECT name  FROM gameCharacters "
 				+ " WHERE gameCharacter_Id = " + id
 				+ " UNION"
 				+ " SELECT  sonas.name FROM sonas "
@@ -912,8 +913,8 @@ public class CharacterSelection {
 			query = "SELECT characters.name FROM characters \r\n"
 					+ " WHERE characters.name = " +  "\"" + name + "\""+ " \r\n"
 					+ " UNION\r\n"
-					+ " SELECT gamecharacters.name FROM gamecharacters \r\n"
-					+ " WHERE gamecharacters.name = " + "\"" + name + "\"" + "\r\n"
+					+ " SELECT name FROM gameCharacters \r\n"
+					+ " WHERE name = " + "\"" + name + "\"" + "\r\n"
 					+ " UNION \r\n"
 					+ " SELECT sonas.name FROM sonas\r\n"
 					+ " WHERE sonas.name = " + "\"" + name + "\"" + " AND sonas.server_Id = " +  serverId + " AND sonas.user_Id = " +  userId 
@@ -926,8 +927,8 @@ public class CharacterSelection {
 			query = "SELECT characters.name FROM characters \r\n"
 					+ " WHERE characters.name =" +  "\'" + name + "\'"+ " \r\n"
 					+ " UNION\r\n"
-					+ " SELECT gamecharacters.name FROM gamecharacters \r\n"
-					+ " WHERE gamecharacters.name = " + "\'" + name + "\'" + "\r\n"
+					+ " SELECT name FROM gameCharacters \r\n"
+					+ " WHERE name = " + "\'" + name + "\'" + "\r\n"
 					+ " UNION \r\n"
 					+ "SELECT sonas.name FROM sonas\r\n"
 					+ "WHERE sonas.name = " + "\'" + name +"\'" + " AND sonas.server_Id = " + serverId + " AND sonas.user_Id = " +  userId 
@@ -1024,7 +1025,7 @@ public class CharacterSelection {
 	{
 		String query = "SELECT cusChar_Id , name, url  FROM customCharacters " + 
 				"WHERE user_Id = "  + userId + " AND server_Id = " + serverId  + 
-				" ORDER BY cusChar_Id ASC";  
+				" ORDER BY timeCreated DESC";  
 	 Statement stat = conn.createStatement(); 
 		ResultSet res = stat.executeQuery(query); 
 		
@@ -1259,7 +1260,8 @@ public class CharacterSelection {
 		res.next(); 
 		
 		
-		Date end = res.getTimestamp(1); 
+		Date end = res.getTimestamp(1);
+		System.out.println(end); 
 		Date now = new Date(); 
 		long millDelta = ( end.getTime() + 3600000L) - now.getTime(); 
 		Long min =  millDelta / (60000) % 60; 
@@ -1585,4 +1587,125 @@ public class CharacterSelection {
 		stat.execute(query); 
 	}
 
+	/* Method will delete all players and corresponding collection and wish list of a guild */ 
+	public void removeAllPlayersCollectInGuild(long serverId) throws SQLException {
+		String queryOne = " DELETE FROM playersInCollect "
+				+ "WHERE server_Id = " + serverId;
+		String queryTwo = "DELETE FROM playersCollection "
+				+ "WHERE server_Id = " + serverId; 
+		String queryThree = "DELETE FROM wishList "
+				+ "WHERE server_Id = " + serverId; 
+		Statement stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE); 
+		stat.addBatch(queryOne); 
+		stat.addBatch(queryTwo);
+		stat.addBatch(queryThree);
+		stat.executeBatch(); 
+	}
+
+	/* Method will remove a particular user from tables playersInCollect , playersCollection and wishlist*/ 
+	public void removeCollect(Long userId, Long serverId) throws SQLException {
+		String queryOne = " DELETE FROM playersInCollect "
+				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
+		String queryTwo = "DELETE FROM playersCollection "
+				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
+		String queryThree = "DELETE FROM wishList "
+				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
+		Statement stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE); 
+		stat.addBatch(queryOne); 
+		stat.addBatch(queryTwo);
+		stat.addBatch(queryThree);
+		stat.executeBatch(); 
+	}
+
+	/* Get all user ids from the server */ 
+	public ArrayList<Long> getServerUsers(long serverId ) throws SQLException {
+		String query = "SELECT DISTINCT user_Id FROM sonas \r\n"
+				+ "UNION \r\n"
+				+ "SELECT DISTINCT user_Id FROM favorites  \r\n"
+				+ "UNION \r\n"
+				
+				+ "SELECT DISTINCT user_Id FROM customcharacters\r\n"
+				+ "UNION \r\n"
+				+ "SELECT DISTINCT user_Id FROM playersInCollect\r\n"
+				+ "UNION	\r\n"
+				+ "SELECT DISTINCT user_Id FROM playersCollection "; 
+		Statement stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+		ResultSet res = stat.executeQuery(query); 
+		
+		ArrayList<Long> users = new ArrayList<Long>(); 
+		if(res.next())
+		{
+			do 
+			{ 
+				users.add(res.getLong(1)); 
+			}
+			while(res.next()); 
+		}
+		
+		return users;
+		
+	}
+
+
+	/* Swap rank of characters in the favorites list */ 
+	public void favSwapCharacter(String characterOne, String characterTwo, long userId, long serverId) throws SQLException 
+	{
+		long charOne = this.getCharacterId(characterOne, serverId); 
+		long charTwo = this.getCharacterId(characterTwo, serverId); 
+		 String queryOne = "SELECT timeCreated FROM favorites "
+		 		+ " WHERE fav_Id = " + charOne + " AND user_Id = " + userId + " AND server_Id = " + serverId; 
+		 String queryTwo = "SELECT timeCreated FROM favorites " 
+		 		+ " WHERE fav_Id = " + charTwo + " AND user_Id = " + userId + " AND server_Id = " + serverId;
+		 
+		 Statement stat = conn.createStatement(); 
+		 ResultSet res= stat.executeQuery(queryOne); 
+		 res.next(); 
+		 
+		 Timestamp timeOne = res.getTimestamp(1); // first character time 
+		 res = stat.executeQuery(queryTwo); 
+		 res.next(); 
+		 Timestamp timeTwo = res.getTimestamp(1); // second character time  
+		 
+		 // now swap 
+		 stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+		 
+		 
+		 queryOne = " UPDATE favorites " 
+				 + " SET timeCreated = '" + timeTwo +  "' " + 
+				 " WHERE fav_Id = " + charOne + " AND user_Id = " +  userId + " AND server_Id = " + serverId; 
+		
+		 queryTwo = " UPDATE favorites " 
+				 + " SET timeCreated = '" + timeOne +  "' "+ 
+				 " WHERE fav_Id = " + charTwo + " AND user_Id = " + userId + " AND server_Id = " + serverId;  
+		 
+		stat.execute(queryOne); 
+		stat.execute(queryTwo); 
+	
+		System.out.println("Succesful time swap!"); 
+	}
+
+	/* Void method will set OC character as a default picuture by update timeCreated 
+	 * 	field */ 
+	public void setDefOcCharacter(String name, long userId, long serverId) throws SQLException
+	{
+		String query= ""; 
+		System.out.println(name); 
+		if(!name.contains("\"")) 
+		{ 
+			query = "UPDATE customCharacters " + 
+						" SET timeCreated = CURRENT_TIMESTAMP " + 
+						" WHERE name = " + "\"" + name + "\"" +" AND user_Id = " + userId + " AND server_Id = " + serverId;
+		
+		}
+		else 
+		{
+			query = "UPDATE customCharacters " + 
+					" SET timeCreated = CURRENT_TIMESTAMP " + 
+					"WHERE name = " + "\'" +  name + "\'" + " AND user_Id = " + userId + " AND server_Id = " + serverId;
+			
+			
+		}
+		Statement stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE); 
+		stat.execute(query); 
+	}
 }

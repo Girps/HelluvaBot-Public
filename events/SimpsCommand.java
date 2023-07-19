@@ -44,7 +44,7 @@ public class SimpsCommand extends ListenerAdapter{
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(found.getName()); 
 					builder.setThumbnail(found.getDefaultImage());
-					builder.setColor(Color.red);
+					builder.setColor(Color.PINK);
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 					event.getHook().sendMessage( "<@"+ userName + ">" + " simps for " + MarkdownUtil.bold(found.getName()) + "!").queue();

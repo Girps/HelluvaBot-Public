@@ -31,7 +31,7 @@ public class ListCommand extends ListenerAdapter{
 		
 		switch (event.getName()) 
 		{
-		case "addfavorite" :
+		case "add-favorite" :
 		{	
 			// Now add characters into the list 
 			Long userId = event.getUser().getIdLong(); 
@@ -59,7 +59,7 @@ public class ListCommand extends ListenerAdapter{
 				break;
 			
 		}
-		case "clearfavorites" : 
+		case "clear-favorites" : 
 		{
 			// delete list from the database
 			CharacterSelection select = new CharacterSelection(conn);
@@ -86,7 +86,7 @@ public class ListCommand extends ListenerAdapter{
 		
 			break; 
 		}
-		case "removefavorite": 
+		case "remove-favorite": 
 		{
 			String characterName = event.getOptions().get(0).getAsString(); 
 			CharacterSelection select = new CharacterSelection(conn);
@@ -153,7 +153,7 @@ public class ListCommand extends ListenerAdapter{
 						count++; 
 					}
 					builder.setDescription(res); 
-					builder.setColor(Color.RED); 
+					builder.setColor(Color.ORANGE); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				
 				} 
@@ -185,7 +185,7 @@ public class ListCommand extends ListenerAdapter{
 						count++; 
 					}
 					builder.setDescription(res); 
-					builder.setColor(Color.RED); 
+					builder.setColor(Color.ORANGE); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
 			} catch (SQLException e)
@@ -199,7 +199,7 @@ public class ListCommand extends ListenerAdapter{
 		
 			break; 
 		}
-		case "changefavoritestitle" : 
+		case "change-favorites-title" : 
 		{
 			
 			String title = event.getOption("title").getAsString(); 
@@ -224,6 +224,28 @@ public class ListCommand extends ListenerAdapter{
 			
 			break; 
 		}
+		case "swap-favorite-rank" :
+			{
+			String characterOne = event.getOption("first-character").getAsString(); 
+			String characterTwo = event.getOption("second-character").getAsString(); 
+			
+			CharacterSelection select = new CharacterSelection(conn); 
+			
+				try 
+				{
+					select.favSwapCharacter(characterOne, characterTwo, event.getUser().getIdLong(),event.getGuild().getIdLong());
+					event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterOne) 
+					+ " has been swapped with " + MarkdownUtil.bold(characterTwo) + "!").queue(); 
+				} 
+				catch (SQLException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					event.getHook().sendMessage("Something went wrong!").queue(); 
+				} 
+			
+			}	
+			break; 
 		}
 	}
 	

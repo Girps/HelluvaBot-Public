@@ -9,8 +9,6 @@ import CharactersPack.CharacterSelection;
 import CharactersPack.Character;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -53,7 +51,7 @@ public class SonasCommand extends ListenerAdapter
 							EmbedBuilder build = new EmbedBuilder(); 
 							build.setAuthor(sona.getName()); 
 							build.setImage(sona.getDefaultImage()); 
-							build.setColor(Color.red); 
+							build.setColor(Color.WHITE); 
 							build.setFooter( event.getMember().getEffectiveName() + "'s Sona", event.getMember().getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
@@ -80,7 +78,7 @@ public class SonasCommand extends ListenerAdapter
 							EmbedBuilder build = new EmbedBuilder(); 
 							build.setAuthor(sona.getName()); 
 							build.setImage(sona.getDefaultImage()); 
-							build.setColor(Color.red); 
+							build.setColor(Color.WHITE); 
 							build.setFooter( target.getEffectiveName() + "'s Sona", target.getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
@@ -92,7 +90,7 @@ public class SonasCommand extends ListenerAdapter
 						} 
 					}
 				break; 
-			case("insertsona"):	// Command to insert a sona into the database 
+			case("insert-sona"):	// Command to insert a sona into the database 
 				
 			
 				// Now get all the options and use it to insert into the database 
@@ -143,7 +141,7 @@ public class SonasCommand extends ListenerAdapter
 				
 				break;
 				
-			case ("removesona"): 
+			case ("remove-sona"): 
 				
 				if(event.getOption("user") == null) 
 				{
@@ -211,53 +209,5 @@ public class SonasCommand extends ListenerAdapter
 		
 	}
 		
-		/* Delete all waifus and sonas from the server the bot left from */
-		@Override
-		public void onGuildLeave(GuildLeaveEvent event)
-		{
-			Long idGuild = event.getGuild().getIdLong(); 
-			
-			// Now delete all sonas and waifus from the server 
-			CharacterSelection select = new CharacterSelection(conn); 
-			try 
-			{	
-				select.removeAllSonas(idGuild);
-				select.removeAllOcsInGuild(idGuild);
-				select.removeAllWaifus(idGuild); 
-				select.removeFavListGuild(idGuild);
-				System.out.println("Bot leave event success"); 
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				System.out.println("Bot leave event failed"); 
-				e.printStackTrace();
-			} 
-			
-		}
 		
-		/* User leaves guild remove there sonas, ocs , waifus and favorite lists from that server */ 
-		@Override  
-		public void onGuildMemberRemove(GuildMemberRemoveEvent event)
-		{
-		
-			
-			
-			
-			Long serverId = event.getGuild().getIdLong(); 
-			Long userId = event.getUser().getIdLong(); 
-			
-			CharacterSelection select = new CharacterSelection(conn); 
-			try 
-			{
-				select.removeSona(userId, serverId); 
-				select.removeAllOcs(userId, serverId);
-				select.removeWaifu(userId, serverId); 
-				select.removeFavList(userId, serverId);	
-				System.out.println("Member leave event success"); 
-			}
-			catch(SQLException e) 
-			{
-				System.out.println("Member leave event failed"); 
-				e.printStackTrace(); 
-			}
-		}
 }

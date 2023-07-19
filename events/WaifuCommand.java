@@ -161,7 +161,7 @@ public class WaifuCommand extends ListenerAdapter{
 		}
 		
 		// Event to trade waifus 
-		if(event.getName().equals("waifutrade") && event.getOption("tradee") != null) 
+		if(event.getName().equals("waifu-trade") && event.getOption("tradee") != null) 
 		{
 
 			CharacterSelection Outterselect = new CharacterSelection(conn); 

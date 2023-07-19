@@ -51,7 +51,7 @@ public class GuessCommand extends ListenerAdapter{
 				builder.setImage(chts[rand].getDefaultImage());
 				builder.setTitle("Guess game"); 
 				builder.setDescription(MarkdownUtil.italics("Who is this character?")); 
-				builder.setColor(Color.RED); 
+				builder.setColor(Color.LIGHT_GRAY); 
 				builder.setFooter(event.getMember().getEffectiveName(), event.getMember().getEffectiveAvatarUrl()); 
 				List<Button> buttons = new ArrayList<Button>();
 			

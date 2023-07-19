@@ -12,6 +12,7 @@ import CharactersPack.Character;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class OriginalCharacterCommand extends ListenerAdapter
 {
@@ -32,7 +33,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 		switch(event.getName()) 
 		{
 		
-		case "insertoc": 
+		case "insert-oc": 
 			{
 				
 			
@@ -73,7 +74,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				}
 				break; 
 			}
-		case "removemyoc" : 
+		case "remove-my-oc" : 
 			{
 				String characterName = event.getOption("customcharacter").getAsString();  // gets character name to remove 
 				
@@ -103,7 +104,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				break; 
 			}
 			
-		case "removeuseroc" : 
+		case "remove-user-oc" : 
 		{
 			
 			if(!Helper.checkRoles(event.getMember().getRoles())) 
@@ -147,7 +148,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			
 			break; 
 		}
-		case "removeallocs":
+		case "remove-all-ocs":
 		{
 			if(event.getOptions().isEmpty()) { 
 				try 
@@ -195,7 +196,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			
 			break; 
 		} 
-		case "myoc" : 
+		case "my-oc" : 
 		{
 		
 			// Check if option is null if so return a list of all there characters on an embed
@@ -210,7 +211,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					chars = select.getOCList(userId, serverId);
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", event.getMember().getEffectiveAvatarUrl(),event.getMember().getEffectiveAvatarUrl()); 
-					builder.setColor(Color.RED);
+					builder.setColor(Color.WHITE);
 					String result = ""; 
 					// Now print them in a list 
 					for(CharactersPack.Character temps : chars)
@@ -229,7 +230,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(CharacterName); 
 					builder.setFooter( event.getMember().getEffectiveName()  + "'s OC ", event.getMember().getEffectiveAvatarUrl()); 
-					builder.setColor(Color.RED);
+					builder.setColor(Color.WHITE);
 					builder.setImage(temp.getDefaultImage());
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
@@ -246,7 +247,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			}
 			break; 
 		}
-		case "searchoc": 
+		case "search-oc": 
 			
 			try 
 			{
@@ -275,7 +276,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				EmbedBuilder builder = new EmbedBuilder(); 
 				builder.setTitle(CharacterName); 
 				builder.setFooter( event.getOption("user").getAsMember().getEffectiveName()  + "'s OC ", event.getOption("user").getAsMember().getEffectiveAvatarUrl()); 
-				builder.setColor(Color.RED);
+				builder.setColor(Color.WHITE);
 				builder.setImage(temp.getDefaultImage());
 				event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
@@ -294,7 +295,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),event.getOption("user").getAsMember().getEffectiveAvatarUrl());  
-					builder.setColor(Color.RED);
+					builder.setColor(Color.WHITE);
 					String result = ""; 
 					// Now print them in a list 
 					for(CharactersPack.Character temps : chars)
@@ -318,7 +319,20 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				e.printStackTrace();
 			}
 			break; 
-		
+		case "set-default-oc":
+			String name = event.getOption("customcharacter").getAsString(); 
+			
+			try {
+				select.setDefOcCharacter(name, event.getUser().getIdLong(), event.getGuild().getIdLong());
+				event.getHook().sendMessage(MarkdownUtil.bold(name) + " has been set as default image for your oc list!").queue();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				event.getHook().sendMessage("Something went wrong!").queue();
+			}
+			
+			
+			break; 
 		}
 		
 	}

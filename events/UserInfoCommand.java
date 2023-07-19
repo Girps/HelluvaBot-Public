@@ -30,7 +30,7 @@ public class UserInfoCommand extends ListenerAdapter
 		{
 			
 				// Just single string 
-			if(event.getName().equals("userinfo") && event.getOption("user") == null) 
+			if(event.getName().equals("user-info") && event.getOption("user") == null) 
 			{
 				Member user = event.getMember(); 
 				String bannerId = user.getUser().retrieveProfile().complete().getBannerUrl();  
@@ -97,7 +97,7 @@ public class UserInfoCommand extends ListenerAdapter
 			}
 			
 			// Mulitple string 
-			if( event.getName().equals("userinfo") && event.getOption("user") != null)
+			if( event.getName().equals("user-info") && event.getOption("user") != null)
 			{
 				// Now check if that the user is part of the discord guild
 				Member user = event.getOption("user").getAsMember();   

@@ -1,6 +1,7 @@
 
 import events.TestCommand;
 import events.UserInfoCommand;
+import events.UserManager;
 import events.WaifuCommand;
 import events.WikiCommand;
 
@@ -72,6 +73,8 @@ public class Bot {
 		catch(SQLException e)
 		{
 			e.printStackTrace();
+			System.out.println("Failed to connect to mySQL database"); 
+
 		}
 		
 		// Add event listners 
@@ -93,6 +96,7 @@ public class Bot {
 		jda.addEventListener(new GuessCommand(conn, waiter));
 		jda.addEventListener(new FrameCommand()); 
 		jda.addEventListener(new CollectCommand(conn,waiter)); 
+		jda.addEventListener(new UserManager(conn)); 
 	}
 
 }

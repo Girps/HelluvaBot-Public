@@ -82,11 +82,10 @@ public class FrameCommand extends ListenerAdapter
 				 File file = new File("temp" + event.getId() + ".png"); 
 				// Have image now build it to embed 
 				EmbedBuilder builder = new EmbedBuilder(); 
-				System.out.println(file.getName()); 
 				builder.setTitle(files[index].replace(".mp4", "") );
 				builder.setDescription(" frame " + rand + "/" + length); 
 				builder.setImage(  "attachment://"+ file.getName() ); 
-				builder.setColor(Color.RED); 
+				builder.setColor(new Color(255,102,102)); 
 				builder.setFooter(event.getMember().getEffectiveName(), event.getMember().getEffectiveAvatarUrl()); 
 				FileUpload upload = FileUpload.fromData(file); 
 				event.getHook().sendMessageEmbeds(builder.build()).addFiles(upload).queue( e -> {file.delete();});   

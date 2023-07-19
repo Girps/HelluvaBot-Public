@@ -53,7 +53,7 @@ public class SmashPassCommand extends ListenerAdapter
 				 build.setThumbnail(target.getDefaultImage()); 
 				 build.setTitle(target.getName()); 
 				 build.setDescription(MarkdownUtil.italics("Smash or pass?")); 
-				 build.setColor(Color.RED);
+				 build.setColor(new Color(102,0,153));
 				 List<Button> buttons = new ArrayList<Button>();
 				 buttons.add(Button.primary("Smash", "smash")); 
 				 buttons.add(Button.danger("Pass", "pass")); 
@@ -113,7 +113,7 @@ public class SmashPassCommand extends ListenerAdapter
 				build.setThumbnail(target.getDefaultImage()); 
 				build.setTitle(target.getName()); 
 				build.setDescription(MarkdownUtil.italics("Smash or pass?")); 
-				build.setColor(Color.RED);
+				build.setColor(new Color(102,0,153));
 				List<Button> buttons = new ArrayList<Button>();
 				buttons.add(Button.primary("Smash", "smash")); 
 				buttons.add(Button.danger("Pass", "pass")); 

@@ -146,7 +146,7 @@ public class WikiCommand extends ListenerAdapter{
 				event.reply(name + " not found " + "<:smolas_crying:1111057782473506848>").queue();
 			}
 		}
-		else if(event.getName().equals("wikifull") )	// wiki full pagnation implementation 
+		else if(event.getName().equals("wiki-full") )	// wiki full pagnation implementation 
 		{
 			// Get character name  
 						String characterName = event.getOption("character").getAsString();
@@ -300,7 +300,6 @@ public class WikiCommand extends ListenerAdapter{
 		
 		// We have a proper index now edit the embed
 		tweakEmbedWiki(oldBuild, charcTarget ,wikiNumber); 
-		System.out.println( charcTarget.getImageList().get(pageNumber)); 
 		oldBuild.setImage(charcTarget.getImageList().get(pageNumber)); 
 		oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageList().size()) + 
 				"\nWiki: " + wikiNumber + "/15",event.getMember().getEffectiveAvatarUrl()); 

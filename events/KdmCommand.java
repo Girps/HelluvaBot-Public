@@ -93,23 +93,23 @@ public class KdmCommand extends ListenerAdapter
 				}
 				
 				
-				
+				Color darkRed = new Color(190,0,0); 
 				// set up emebeds and send each one
 				EmbedBuilder builderOne = new EmbedBuilder(); 
 				builderOne.setTitle(chtrs[0].getName()); 
-				builderOne.setColor(Color.RED); 
+				builderOne.setColor(darkRed); 
 				builderOne.setThumbnail(chtrs[0].getDefaultImage()); 
 				builderOne.setDescription(MarkdownUtil.bold("Player : ") + "<@" + userId + ">"); 
 				
 				EmbedBuilder builderTwo = new EmbedBuilder(); 
 				builderTwo.setTitle(chtrs[1].getName()); 
-				builderTwo.setColor(Color.RED); 
+				builderTwo.setColor(darkRed); 
 				builderTwo.setThumbnail(chtrs[1].getDefaultImage()); 
 				builderTwo.setDescription(MarkdownUtil.bold("Player : ") +"<@" + userId + ">"); 
 				
 				EmbedBuilder builderThree = new EmbedBuilder(); 
 				builderThree.setTitle(chtrs[2].getName()); 
-				builderThree.setColor(Color.RED); 
+				builderThree.setColor(darkRed); 
 				builderThree.setThumbnail(chtrs[2].getDefaultImage()); 
 				builderThree.setDescription(MarkdownUtil.bold("Player : ") +"<@" + userId + ">"); 
 				
