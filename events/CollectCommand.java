@@ -1,9 +1,6 @@
 package events;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.awt.Color;
 
@@ -21,12 +18,11 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class CollectCommand extends ListenerAdapter{
-	private static Connection conn; 
+	
 	private static EventWaiter waiter; 
 	
-	public CollectCommand(Connection argConn, EventWaiter argWaiter) 
-	{
-		conn = argConn; 
+	public CollectCommand(EventWaiter argWaiter) 
+	{ 
 		waiter = argWaiter; 
 	}
 	
@@ -34,13 +30,18 @@ public class CollectCommand extends ListenerAdapter{
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{	
 		event.deferReply().queue();
-		CharacterSelection select = new CharacterSelection(conn);
+		
+		
 		
 		// Insert player into the collect game 
 		try 
-		{
+		{		
+			CharacterSelection select = new CharacterSelection();
+
 			select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
-		} catch (SQLException e2) {
+		}
+		catch (Exception e2)
+		{
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		} 
@@ -51,7 +52,8 @@ public class CollectCommand extends ListenerAdapter{
 				
 			try 
 			{
-				
+				CharacterSelection select = new CharacterSelection();
+
 				// if player has no turn return 
 				if ( select.getPlayerRollsLimit(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{
@@ -85,9 +87,6 @@ public class CollectCommand extends ListenerAdapter{
 					builder.setColor(event.getGuild().retrieveMemberById( userId ).submit().get().getColor()); 
 					builder.setFooter("Already claimed!", event.getGuild().getIconUrl()); 
 					builder.setDescription("Owned by " + "<@" + userId +">" + " !"); 
-					 
-					
-					
 					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
 					return; 
 				}
@@ -119,12 +118,13 @@ public class CollectCommand extends ListenerAdapter{
 									{
 										if(eReact.getMessageIdLong() == Emessage.getIdLong()) 
 										{
+											CharacterSelection  innerSelect = new CharacterSelection(); 
 											// Insert the user who reacted into table 
-											select.insertUserIntoCollect(eReact.getUser().getIdLong(), event.getGuild().getIdLong()); 
+											innerSelect.insertUserIntoCollect(eReact.getUser().getIdLong(), event.getGuild().getIdLong()); 
 										
 											// Check if max has already been collect or has to wait till claim refreshes 
-											claimLimit = select.getClaimLimit(eReact.getUser().getIdLong(), event.getGuild().getIdLong()); 
-											collectLimit = select.checkCollectLimit(eReact.getUser().getIdLong(), event.getGuild().getIdLong());
+											claimLimit = innerSelect.getClaimLimit(eReact.getUser().getIdLong(), event.getGuild().getIdLong()); 
+											collectLimit = innerSelect.checkCollectLimit(eReact.getUser().getIdLong(), event.getGuild().getIdLong());
 											
 											
 											// If valid claim 
@@ -138,9 +138,10 @@ public class CollectCommand extends ListenerAdapter{
 												String time = "";
 												try 
 												{
-													time = select.getPlayerCollectTime(eReact.getUserIdLong(), eReact.getGuild().getIdLong());
+													time = innerSelect.getPlayerCollectTime(eReact.getUserIdLong(), eReact.getGuild().getIdLong());
 													event.getHook().sendMessage(eReact.getUser().getAsMention() + " you already claimed! Wait after " + MarkdownUtil.bold(time) + " before you can claim again!" ).queue(); 
-												} catch (SQLException e)
+												}
+												catch (Exception e)
 												{
 													// TODO Auto-generated catch block
 													e.printStackTrace();
@@ -157,7 +158,7 @@ public class CollectCommand extends ListenerAdapter{
 											return false;
 											
 										}
-									} catch (SQLException e1) {
+									} catch (Exception e1) {
 										// TODO Auto-generated catch block
 										e1.printStackTrace();
 									}
@@ -168,17 +169,22 @@ public class CollectCommand extends ListenerAdapter{
 								},	// success 
 								(eSuccess) -> 	
 								{
+									
+									
 									// Function to give user the character 
 									try 
 									{
+										CharacterSelection  innerSelect = new CharacterSelection(); 
+										
+										
 										EmbedBuilder tempBuilder = new EmbedBuilder(builder); 
 										tempBuilder.setFooter("Claimed by " + eSuccess.getMember().getEffectiveName(), eSuccess.getMember().getEffectiveAvatarUrl());
 										tempBuilder.setColor(eSuccess.getMember().getColor()); 
-										select.claimCharacter(temp.getId(), eSuccess.getUser().getIdLong(), eSuccess.getGuild().getIdLong());
+										innerSelect.claimCharacter(temp.getId(), eSuccess.getUser().getIdLong(), eSuccess.getGuild().getIdLong());
 										event.getHook().editMessageEmbedsById(Emessage.getIdLong(), tempBuilder.build()).queue(); 
 										event.getHook().sendMessage(eSuccess.getUser().getAsMention() + " has claimed " + MarkdownUtil.bold(temp.getName()) + "!").queue(); 
 									}
-									catch (SQLException e1)
+									catch (Exception e1)
 									{
 										// TODO Auto-generated catch block
 										e1.printStackTrace();
@@ -197,25 +203,24 @@ public class CollectCommand extends ListenerAdapter{
 				if(!list.isEmpty())
 				{ 
 					event.getHook().sendMessage(list + " character " + MarkdownUtil.bold(temp.getName()) + " has been rolled!").queue(); 
+					return; 
 				}
-			} catch (SQLException e) {
+			} catch (Exception e)
+			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
+			}
 				
+			
+			
 			break; 
 			case "collection" : // shows collect list of calling user or option of another user 
 			try 
 			{
 				if(event.getOptions().isEmpty())
 				{
-					
+					CharacterSelection select = new CharacterSelection();
+
 					if(!select.hasCollectList(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you have not collected a character from the collect game"+ "!").queue(); 
@@ -240,6 +245,8 @@ public class CollectCommand extends ListenerAdapter{
 				}
 				else 
 				{
+					CharacterSelection select = new CharacterSelection();
+
 					if(!select.hasCollectList(event.getOption("user").getAsUser().getIdLong(), event.getGuild().getIdLong())) 
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " user " + event.getOption("user").getAsMember().getEffectiveName() + " has not collected a character from the collect game"+ "!").queue(); 
@@ -258,23 +265,21 @@ public class CollectCommand extends ListenerAdapter{
 					builder.setAuthor(event.getOption("user").getAsMember().getEffectiveName() + "'s Collection!", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),
 							event.getOption("user").getAsMember().getEffectiveAvatarUrl());
 					builder.setThumbnail(list.get(0).getDefaultImage()); 
-					builder.setColor(Color.RED); 
+					builder.setColor(Color.YELLOW); 
 					builder.setDescription(names); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
 				}
 					
 			} 
-			catch (SQLException e)
+			catch (Exception e)
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				event.getHook().sendMessage("Something went wrong!").queue();
 			} 
-				
-				
 				break; 
 			case "collect-trade" : // trade character in collection
-				
+			
 				String traderCharacter = event.getOption("trader-character").getAsString(); 
 				long tradee = event.getOption("user").getAsUser().getIdLong(); 
 				String tradeeCharacter = event.getOption("tradee-character").getAsString(); 
@@ -313,12 +318,14 @@ public class CollectCommand extends ListenerAdapter{
 								
 										try 
 										{
+										
+											CharacterSelection select = new CharacterSelection();
 											traderCharacterId = select.getCharacterId(traderCharacter, event.getGuild().getIdLong());
 											tradeeCharacterId = select.getCharacterId (tradeeCharacter,event.getGuild().getIdLong()); 
 											select.swapUserCollectible(event.getUser().getIdLong(), tradee, traderCharacterId, tradeeCharacterId, eSuccess.getGuild().getIdLong());
-										} catch (SQLException e)
+										}
+										catch (Exception e)
 										{
-											// TODO Auto-generated catch block
 											e.printStackTrace();
 											event.getHook().sendMessage("Something went wrong!").queue(); 
 											return; 
@@ -332,7 +339,7 @@ public class CollectCommand extends ListenerAdapter{
 								);
 					}
 				); 
-				
+		
 				
 				break; 
 			case "reset-collect" : // Can only be decided by Helluva Admin
@@ -341,11 +348,13 @@ public class CollectCommand extends ListenerAdapter{
 				{
 					// Reset the game for the server 
 					try 
-					{
-						select.resetCollectGame(event.getGuild().getIdLong());
+					{					
+						CharacterSelection select = new CharacterSelection();
+						select.removeAllPlayersCollectInGuild(event.getGuild().getIdLong());
 						event.getHook().sendMessage( "Helluva Admin " + event.getUser().getAsMention() + " has reset the collect game!").queue();
+						
 					}
-					catch (SQLException e)
+					catch (Exception e)
 					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -356,16 +365,19 @@ public class CollectCommand extends ListenerAdapter{
 				else 
 				{
 					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();
-					return; 
 				}
 				
+
 				break; 
 			case "set-default-collect" :  // sets default image of the collection list 
 			{
+				
+				
 				String targetCharacter = event.getOption("character").getAsString(); 
 				long charId;
 				try 
 				{
+					CharacterSelection select = new CharacterSelection();
 					if(select.getSearchCharIdSelect(select.getCharacterId(targetCharacter, event.getGuild().getIdLong()), event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 					{ 
 						charId = select.getCharacterId(targetCharacter, event.getGuild().getIdLong());
@@ -376,7 +388,9 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " character "  + MarkdownUtil.bold(targetCharacter) + " is not on your collect list!" ).queue(); 
 					}
-				} catch (SQLException e) 
+					
+
+				} catch (Exception e) 
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -387,9 +401,8 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 			case "wish-list": // list of characters players want to claim, or option wish list of another user
 				{
-					
-					
 					 
+					
 					ArrayList<Character> list;
 					try
 					{	
@@ -397,6 +410,7 @@ public class CollectCommand extends ListenerAdapter{
 						
 						if(event.getOptions().isEmpty())
 						{
+							CharacterSelection select = new CharacterSelection();
 							
 							if(!select.hasWishList(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{
@@ -432,7 +446,8 @@ public class CollectCommand extends ListenerAdapter{
 						else 
 						{
 							long idtarget = event.getOption("user").getAsUser().getIdLong(); 
-							
+							CharacterSelection select = new CharacterSelection();
+
 							if(!select.hasWishList(idtarget, event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( event.getUser().getAsMention() + "user " + event.getOption("user").getAsUser().getAsMention() + " has not added a character to their wishlist"+ "!").queue(); 
@@ -456,8 +471,9 @@ public class CollectCommand extends ListenerAdapter{
 							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
 						}
 						
+
 					} 
-					catch (SQLException e)
+					catch (Exception e)
 					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -467,11 +483,13 @@ public class CollectCommand extends ListenerAdapter{
 				}
 				break; 
 			case "add-wish": 
-				{
+				{	
 						String characterName = event.getOption("character").getAsString(); 
 						long charId = 0; 
 						try
 						{
+							CharacterSelection select = new CharacterSelection();
+
 							if(select.wishListLimit(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{ 
 								charId = select.getCharacterId(characterName, event.getGuild().getIdLong());
@@ -482,8 +500,11 @@ public class CollectCommand extends ListenerAdapter{
 							{
 								event.getHook().sendMessage(event.getUser().getAsMention() + " you reached the limit of 5 characters in your wishlist!").queue(); 
 							}
+							
+
+							
 						} 
-						catch (SQLException e)
+						catch (Exception e)
 						{
 							event.getHook().sendMessage("Something went wrong!").queue(); 					
 							e.printStackTrace();
@@ -492,8 +513,12 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 			case "clear-wishes" :
 			{
+				
+				
 				try 
 				{
+					CharacterSelection select = new CharacterSelection();
+
 					if(select.hasWishList(event.getUser().getIdLong(), event.getGuild().getIdLong()))
 					{
 						select.clearWishList(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
@@ -503,9 +528,10 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have a wishlist!").queue(); 
 					}
-				} catch (SQLException e)
+					
+				} 
+				catch (Exception e)
 				{
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					event.getHook().sendMessage("Something went wrong!").queue();
 				}
@@ -517,6 +543,8 @@ public class CollectCommand extends ListenerAdapter{
 				String targetCharacter = event.getOption("character").getAsString(); 
 				try 
 				{
+					CharacterSelection select = new CharacterSelection();
+
 					if(select.searchWishList(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong()) )
 					{
 						select.removeWish(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -526,9 +554,8 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have " +  MarkdownUtil.bold(targetCharacter) + "!").queue();
 					}
-				
 				} 
-				catch (SQLException e)
+				catch (Exception e)
 				{
 				// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -541,6 +568,8 @@ public class CollectCommand extends ListenerAdapter{
 				String targetCharacter = event.getOption("character").getAsString(); 
 				try 
 				{
+					CharacterSelection select = new CharacterSelection();
+
 					if(select.searchCharacterCollectList(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong()) )
 					{
 						select.removeCollectCharacter(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -550,9 +579,8 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have " +  MarkdownUtil.bold(targetCharacter) + "!").queue();
 					}
-				
 				} 
-				catch (SQLException e)
+				catch (Exception e)
 				{
 				// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -562,9 +590,9 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 			case "force-release" : 
 			{
-					long targetUser = event.getOption("user").getAsUser().getIdLong(); 
-					
+					long targetUser = event.getOption("user").getAsUser().getIdLong(); 		
 					String targetCharacter = event.getOption("character").getAsString(); 
+
 				try 
 				{
 					
@@ -574,6 +602,8 @@ public class CollectCommand extends ListenerAdapter{
 						return; 
 					}
 					
+					CharacterSelection select = new CharacterSelection();
+
 					if(select.searchCharacterCollectList(targetCharacter,targetUser, event.getGuild().getIdLong()) )
 					{
 						select.removeCollectCharacter(targetCharacter,event.getOption("user").getAsUser().getIdLong(), event.getGuild().getIdLong());
@@ -585,9 +615,8 @@ public class CollectCommand extends ListenerAdapter{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " user " + event.getOption("user").getAsMentionable() + 
 								" does not have character "+ targetCharacter + "!").queue();
 					}
-				
 				}
-				catch (SQLException e)
+				catch (Exception e)
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -597,5 +626,4 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 		}
 	}
-	
 }

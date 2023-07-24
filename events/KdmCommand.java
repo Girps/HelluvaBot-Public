@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +30,11 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 public class KdmCommand extends ListenerAdapter
 {
-	
-	private Connection conn; 
 	private EventWaiter waiter; 
-	public KdmCommand(Connection arg_Conn, EventWaiter arg_Waiter)
+	public KdmCommand( EventWaiter arg_Waiter)
 	{
-	 
-		conn = arg_Conn; 
+
+		
 		waiter = arg_Waiter; 
 	}
 	
@@ -52,12 +51,13 @@ public class KdmCommand extends ListenerAdapter
 			
 			// Get info
 			TextChannel  txtChan = event.getChannel().asTextChannel(); 
-			CharacterSelection select = new CharacterSelection(conn); 
+			
 			String userId = event.getUser().getId(); 
 		
 			try 
 			{
-				 
+			
+				CharacterSelection select = new CharacterSelection(); 
 				Character[] chtrs = new Character[3]; 
 
 				if(event.getOption("first") == null && event.getOption("second") == null && event.getOption("third") == null) 
@@ -205,15 +205,7 @@ public class KdmCommand extends ListenerAdapter
 						}); 
 				});
 				
-				
 			} 
-			catch (SQLException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				event.deferReply().queue();
-				event.getHook().sendMessage("KDM command failed!"); 
-			}
 			catch(Exception e) 
 			{
 				// TODO Auto-generated catch block

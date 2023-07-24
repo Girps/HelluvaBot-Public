@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +26,10 @@ public class SmashPassCommand extends ListenerAdapter
 {
 	
 	private final EventWaiter waiter;
-	private static  Connection conn; 
-	public SmashPassCommand( Connection arg_Conn, EventWaiter wait)
+	
+	public SmashPassCommand( EventWaiter wait)
 	{
 		waiter = wait; 
-		conn = arg_Conn; 
 	}
 	
 	
@@ -43,10 +43,11 @@ public class SmashPassCommand extends ListenerAdapter
 		// Smash pass case gets a random character 
 		if( event.getName().equals("smashpass") && event.getOption("character") == null) 
 		{
+
 			// Get random number that corresponds 
 			try 
 			{
-				CharacterSelection set = new CharacterSelection(conn);
+				CharacterSelection set = new CharacterSelection();
 				 target = set.getRandomCharacters(GAMETYPE.SMASHPASS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),1)[0];
 				 
 				 EmbedBuilder build = new EmbedBuilder(); 
@@ -68,9 +69,8 @@ public class SmashPassCommand extends ListenerAdapter
 								(e) -> !e.getUser().isBot() && e.getMessageIdLong() == messageEmbed.getIdLong(),
 								(e) -> 
 								{
-									String verb = "<@" + e.getUser().getId() +"> "+ " would " + e.getInteraction().getButton().getLabel() + " "+ messageEmbed.getEmbeds().get(0).getTitle() + "!";   
 									e.deferEdit().queue();
-									e.getChannel().asTextChannel().sendMessage(verb).queue(); 
+									e.getChannel().asTextChannel().sendMessage("<@" + e.getUser().getId() +"> "+ " would " + MarkdownUtil.bold(e.getInteraction().getButton().getLabel()) + " "+  MarkdownUtil.bold(messageEmbed.getEmbeds().get(0).getTitle()) + "!").queue(); 
 									e.getMessage().editMessageEmbeds(e.getMessage().getEmbeds().get(0)).setActionRow(buttons.get(0).asDisabled(), buttons.get(1).asDisabled()).queue( );
 									// Disabled now send a message if they smashed or passed the character 
 									
@@ -82,7 +82,6 @@ public class SmashPassCommand extends ListenerAdapter
 									}
 								); 
 						 }); 
-				  
 			}
 			catch (Exception e) 
 			{
@@ -94,11 +93,10 @@ public class SmashPassCommand extends ListenerAdapter
 		else if(event.getName().equals("smashpass") && event.getOption("character") != null)	// Smash pass event gets a single character 	 
 		{
 			String targetName = event.getOption("character").getAsString(); 
-			
 			targetName = targetName.trim(); 
 			try 
 			{ 
-				CharacterSelection selection = new CharacterSelection(conn); 
+				CharacterSelection selection = new CharacterSelection(); 
 				// Use a query to get the character
 				target = selection.requestSingleCharacter(targetName,  event.getGuild().getIdLong(), GAMETYPE.SMASHPASS,SETUPTYPE.LIGHT); 
 				// Build embed 
@@ -142,9 +140,8 @@ public class SmashPassCommand extends ListenerAdapter
 									}
 								); 
 						 });
-				
 			}
-			catch(SQLException e) 
+			catch(Exception e) 
 			{
 				e.printStackTrace();
 				event.getHook().sendMessage(targetName + " not in Smashpass command!" ).queue();

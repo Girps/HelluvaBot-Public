@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import CharactersPack.CharacterSelection;
@@ -17,13 +18,9 @@ import CharactersPack.Character;
 
 public class ShipsCommand extends ListenerAdapter{
 	
-	private static Connection conn ; 
-	
-	public ShipsCommand( Connection arg_Conn)
+
+	public ShipsCommand( )
 	{
-		
-			conn = arg_Conn; 
-		
 	}
 	
 	@Override
@@ -35,14 +32,14 @@ public class ShipsCommand extends ListenerAdapter{
 		event.deferReply().queue();
 		
 		Character[] arr = null;
-		
 		if(event.getName().equals("ships")) 
 		{
-			CharacterSelection select = new CharacterSelection(conn); 
 			// Get two characters 
 			try 
 			{
-				// Get caller 
+				// Get caller 			
+				CharacterSelection select = new CharacterSelection(); 
+
 				String userid = event.getUser().getId();
 				
 				// Get array of 2 characters 
@@ -67,12 +64,6 @@ public class ShipsCommand extends ListenerAdapter{
 				event.getHook().sendMessageEmbeds(builderOne.build(),builderTwo.build()).queue();
 				event.getHook().sendMessage("<@" + userid + ">" + " ships " + MarkdownUtil.bold(One.getName()) + " x " + MarkdownUtil.bold(Two.getName()) + "!").queue();
 				
-			} 
-			catch (SQLException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				event.getHook().sendMessage("Ships command failed!").queue();
 			} 
 			catch(Exception e) 
 			{

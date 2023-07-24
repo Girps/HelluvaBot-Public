@@ -1,8 +1,8 @@
 package events;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,7 +12,6 @@ import CharactersPack.GAMETYPE;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -22,12 +21,18 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 public class CommandManger extends ListenerAdapter {
 
-	private Connection conn; 
+
 	private static ArrayList<String> wikiNames;
 	private ArrayList<String> MiscNames; 
-	public CommandManger (Connection conn_Arg)
+	private ArrayList<String> cmds; 
+	private boolean debug  ; 
+	public CommandManger ( )
 	{
-		conn = conn_Arg;
+		
+		cmds = new ArrayList<String>(Arrays.asList("Collect command", "Frame command", "Guess command", "Kdm command", 
+				"Simps command", "Smashpass command", "Sonas command", "UserInfo command", "Favorite command", "Waifu command", 
+				"Wiki command" , "Oc command", "Credits"));
+		debug = false; 
 	}
 	
 	@Override
@@ -39,17 +44,10 @@ public class CommandManger extends ListenerAdapter {
 		 { 
 			 // Search the letter and get 25 possible options including that lettter 
 			 
-			 CharacterSelection select = new CharacterSelection(conn); 
+			 CharacterSelection select = new CharacterSelection(); 
 				ArrayList<String> names = null ; 
-				try {
-					 names = select.getAllCharacterNames(GAMETYPE.WIKI,0);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
+				 names = select.getAllCharacterNames(GAMETYPE.WIKI,0);
 				wikiNames = names; 
-			 
-			 
 			 ArrayList<String> subList = new ArrayList<String>(); 
 			 
 			 for(int i =0; i < wikiNames.size(); ++i) 
@@ -70,12 +68,38 @@ public class CommandManger extends ListenerAdapter {
 					 .collect(Collectors.toList()); 
 			 event.replyChoices(options).queue();   
 		 }
+		 
+		 else if(event.getName().equals("help") || 
+				 event.getFocusedOption().getName().equals("command") )  
+	 {
+		
+		 ArrayList<String> subList = new ArrayList<String>(); 
+		MiscNames = cmds; 
+		for(int i =0; i < MiscNames.size(); ++i) 
+		 {
+			 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
+			 {
+				subList.add(MiscNames.get(i)); 
+			 }
+		 }
+		
+		 // Convert to arrays
+		 String [] subset = new String[subList.size()]; 
+		 
+		 subList.toArray(subset); 
+		 
+		 List<Command.Choice> options = Stream.of(subset).limit(25)
+				 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
+				 .map(name -> new Command.Choice(name, name))
+				 .collect(Collectors.toList()); 
+		 event.replyChoices(options).queue();
+		 
+	 } 
 		 else if(event.getName().equals("kdm")  ||  event.getFocusedOption().getName().equals("first") || 
 					 event.getFocusedOption().getName().equals("second") || event.getFocusedOption().getName().equals("third") )  
 		 {
-			 CharacterSelection select = new CharacterSelection(conn); 
-			 try 
-			{
+			 CharacterSelection select = new CharacterSelection(); 
+			
 				 ArrayList<String> subList = new ArrayList<String>(); 
 				MiscNames = select.getAllCharacterNames(GAMETYPE.KDM,event.getGuild().getIdLong());
 				for(int i =0; i < MiscNames.size(); ++i) 
@@ -96,18 +120,13 @@ public class CommandManger extends ListenerAdapter {
 						 .map(name -> new Command.Choice(name, name))
 						 .collect(Collectors.toList()); 
 				 event.replyChoices(options).queue();   
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 		 }
  		 else if (event.getName().equals("smashpass") 
 			 && ( event.getFocusedOption().getName().equals("character"))) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn); 
-			 try 
-			{
-				
+			 CharacterSelection select = new CharacterSelection(); 
+			
 				 ArrayList<String> subList = new ArrayList<String>(); 
 					MiscNames = select.getAllCharacterNames(GAMETYPE.SMASHPASS,event.getGuild().getIdLong());
 					for(int i =0; i < MiscNames.size(); ++i) 
@@ -129,16 +148,12 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 		 }
 		 else if ( event.getName().equals("add-favorite") && event.getFocusedOption().getName().equals("character")  ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
-			 try 
-			{
+			 CharacterSelection select = new CharacterSelection();  
+			
 				
 				 ArrayList<String> subList = new ArrayList<String>(); 
 					MiscNames = select.getAllCharacterNames(GAMETYPE.FAVORITES, event.getGuild().getIdLong());
@@ -161,18 +176,14 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 		 }
 		 else if ( ( event.getName().equals("remove-favorite")  || event.getName().equals("swap-favorite-rank") ) 
 				 &&  ( event.getFocusedOption().getName().equals("character") || event.getFocusedOption().getName().equals("first-character") ||
 						 event.getFocusedOption().getName().equals("second-character")) ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
-			 try 
-			{
+			 CharacterSelection select = new CharacterSelection();  
+			
 				
 				 ArrayList<String> subList = new ArrayList<String>(); 
 					MiscNames = select.getFavListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -195,18 +206,14 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 			 
 		 }
 		 else if ( event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") &&   event.getFocusedOption().getName().equals("customcharacter") ) 
 		 {
 			 Long id = event.getUser().getIdLong(); 
-			 CharacterSelection select = new CharacterSelection(conn);  
-			 try 
-			{ 
+			 CharacterSelection select = new CharacterSelection();  
+			
 				 ArrayList<String> subList = new ArrayList<String>(); 
 					MiscNames = select.getUsersOCName(id, event.getGuild().getIdLong()); 
 					for(int i =0; i < MiscNames.size(); ++i) 
@@ -228,18 +235,14 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 			 
 		 }
 		 else if ( event.getName().equals("search-oc") || event.getName().equals("remove-user-oc")  &&   event.getFocusedOption().getName().equals("customcharacter") ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
+			 CharacterSelection select = new CharacterSelection();  
 			
-			 try 
-			{
+			
 				
 				 ArrayList<String> subList = new ArrayList<String>();  
 					MiscNames = select.getUsersOCName(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
@@ -261,20 +264,14 @@ public class CommandManger extends ListenerAdapter {
 							 .map(name -> new Command.Choice(name, name))
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
-				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 			 
 		 }
 		 else if ( event.getName().equals("release")  &&  event.getFocusedOption().getName().equals("character") ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
+			 CharacterSelection select = new CharacterSelection();  
 			
-			 try 
-			{
-				
+			
 				 ArrayList<String> subList = new ArrayList<String>();  
 					MiscNames = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 					for(int i =0; i < MiscNames.size(); ++i) 
@@ -296,19 +293,14 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 			 
 		 }
 		 else if ( event.getName().equals("force-release") &&   event.getFocusedOption().getName().equals("character") ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
+			 CharacterSelection select = new CharacterSelection();  
 			
-			 try 
-			{
-				
+			
 				 ArrayList<String> subList = new ArrayList<String>();  
 					MiscNames = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
 					for(int i =0; i < MiscNames.size(); ++i) 
@@ -330,20 +322,15 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 			 
 		 }
 		 else if (  ( event.getName().equals("collect-trade")  || event.getName().equals("set-default-collect")  ) &&   ( event.getFocusedOption().getName().equals("trader-character") || event.getFocusedOption().getName().equals("tradee-character") 
 				 || event.getFocusedOption().getName().equals("character") ) ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
+			 CharacterSelection select = new CharacterSelection();  
 			
-			 try 
-			{
-				
+			
 				 ArrayList<String> subList = new ArrayList<String>(); 
 				 if(event.getInteraction().getOption("user") != null) 
 				 { 
@@ -372,23 +359,19 @@ public class CommandManger extends ListenerAdapter {
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
 				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 			 
 		 }
 		 else if ( event.getName().equals("add-wish") &&   event.getFocusedOption().getName().equals("character")  ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
-			System.out.println("add command" ); 
-			 try 
-			{
+			 CharacterSelection select = new CharacterSelection();  
+
+			
 				
 				 ArrayList<String> subList = new ArrayList<String>(); 
 				
 					 MiscNames = select.getAllCharacterNames(GAMETYPE.COLLECT, event.getGuild().getIdLong());
-				 
+
 					for(int i =0; i < MiscNames.size(); ++i) 
 					 {
 						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
@@ -407,23 +390,17 @@ public class CommandManger extends ListenerAdapter {
 							 .map(name -> new Command.Choice(name, name))
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
-				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		
 			 
 		 }
 		 else if ( event.getName().equals("remove-wish") &&   event.getFocusedOption().getName().equals("character")  ) 
 		 {
-			 CharacterSelection select = new CharacterSelection(conn);  
-			 try 
-			{
+			 CharacterSelection select = new CharacterSelection();  
+			
 				
 				 ArrayList<String> subList = new ArrayList<String>(); 
 				
 					 MiscNames = select.getWishListNames(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
-				 
 					for(int i =0; i < MiscNames.size(); ++i) 
 					 {
 						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
@@ -442,12 +419,6 @@ public class CommandManger extends ListenerAdapter {
 							 .map(name -> new Command.Choice(name, name))
 							 .collect(Collectors.toList()); 
 					 event.replyChoices(options).queue();   
-				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			 
 		 }
 	}
 		 
@@ -517,7 +488,8 @@ public class CommandManger extends ListenerAdapter {
 		OptionData favOne =  new OptionData(OptionType.STRING, "first-character", "Favorite character", true, true ); 
 		OptionData favTwo =  new OptionData(OptionType.STRING, "second-character", "Favorite character", true, true ); 
 
-		
+		OptionData cmd =  new OptionData(OptionType.STRING, "command", "Main commands", true, true ); 
+
 		commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
 		commandList.add(Commands.slash("wiki", "Display general information on entered character").addOptions(characterOption)); 
 		commandList.add(Commands.slash("simps", "Return random character the caller simps for"));
@@ -561,8 +533,19 @@ public class CommandManger extends ListenerAdapter {
 		commandList.add(Commands.slash("clear-wishes","Remove all wishes from your wishlist!")); 
 		commandList.add(Commands.slash("swap-favorite-rank","Swap rank of each favorite character!").addOptions(favOne, favTwo)); 
 		commandList.add(Commands.slash("set-default-oc","Set default character picture in your oc!").addOptions(customCharacterOp2)); 
+		commandList.add(Commands.slash("help","Get infromation about each command").addOptions(cmd)); 
 
-		event.getJDA().updateCommands().addCommands(commandList).queue();
+		if(!debug) 
+		{ 
+			event.getJDA().updateCommands().addCommands(commandList).queue();
+		}
+		else 
+		{
+			System.out.println("DEBUG"); 
+
+			event.getGuild().updateCommands().addCommands(commandList).queue();
+
+		}
 	}
 	
 	@Override 
@@ -628,6 +611,7 @@ public class CommandManger extends ListenerAdapter {
 				
 				OptionData favOne =  new OptionData(OptionType.STRING, "first-character", "Favorite character", true, true ); 
 				OptionData favTwo =  new OptionData(OptionType.STRING, "second-character", "Favorite character", true, true ); 
+				OptionData cmd =  new OptionData(OptionType.STRING, "command", "Main commands", true, true ); 
 
 				
 				commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
@@ -673,8 +657,17 @@ public class CommandManger extends ListenerAdapter {
 				commandList.add(Commands.slash("clear-wishes","Remove all wishes from your wishlist!")); 
 				commandList.add(Commands.slash("swap-favorite-rank","Swap rank of each favorite character!").addOptions(favOne, favTwo)); 
 				commandList.add(Commands.slash("set-default-oc","Set default character picture in your oc!").addOptions(customCharacterOp2)); 
-				
-				event.getJDA().updateCommands().addCommands(commandList).queue();
+				commandList.add(Commands.slash("help","Get infromation about each command").addOptions(cmd)); 
+				if(!debug) 
+				{ 
+					event.getJDA().updateCommands().addCommands(commandList).queue();
+				}
+				else 
+				{
+					System.out.println("DEBUG"); 
+					event.getGuild().updateCommands().addCommands(commandList).queue();
+
+				}
 				
 	}
 }

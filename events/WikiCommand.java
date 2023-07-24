@@ -9,7 +9,7 @@ import CharactersPack.SETUPTYPE;
 
 import java.awt.Color;
 import java.sql.Connection;
-
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -32,12 +32,9 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 public class WikiCommand extends ListenerAdapter{
 
 	
-	private Connection conn; 
-	
-	public WikiCommand( Connection arg_Conn)
+	public WikiCommand()
 	{
 		
-		conn = arg_Conn; 
 	}
 	
 	@Override
@@ -60,8 +57,8 @@ public class WikiCommand extends ListenerAdapter{
 			// Now check in database for the character 
 			try 
 			{
-					CharacterSelection select = new CharacterSelection(conn); 
-				
+
+					CharacterSelection select = new CharacterSelection(); 				
 				
 					// We have the fields now create our character object 
 					Character charactFound = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.LIGHT);
@@ -78,9 +75,8 @@ public class WikiCommand extends ListenerAdapter{
 					
 					event.deferReply().queue(); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-				
 			}
-			catch (SQLException e) {
+			catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
@@ -93,7 +89,7 @@ public class WikiCommand extends ListenerAdapter{
 			try 
 			{
 				event.deferReply().queue(); 
-				CharacterSelection select = new CharacterSelection(conn);
+				CharacterSelection select = new CharacterSelection();
 				SELECTIONTYPE type = SELECTIONTYPE.ALL;
 				String str = event.getOption("type").getAsString(); 
 				switch(str ) 
@@ -136,10 +132,6 @@ public class WikiCommand extends ListenerAdapter{
 				}
 				
 			}
-			catch(SQLException e) 
-			{
-				event.getHook().sendMessage( "failed").queue();
-			}
 			catch(Exception e) 
 			{
 				e.printStackTrace();
@@ -154,7 +146,8 @@ public class WikiCommand extends ListenerAdapter{
 						// Now check in database for the character 
 						try 
 						{
-								CharacterSelection select = new CharacterSelection(conn); 
+
+								CharacterSelection select = new CharacterSelection(); 
 								
 								
 								// We have the fields now create our character object 
@@ -183,13 +176,6 @@ public class WikiCommand extends ListenerAdapter{
 								event.deferReply().queue(); 
 								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();
 								
-
-						}
-						catch (SQLException e)
-						{
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-							event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
 						}
 						catch(Exception e) 
 						{
@@ -235,12 +221,13 @@ public class WikiCommand extends ListenerAdapter{
 		int wikiNumber = Integer.valueOf(wikiNumberStr); 
 		
 		// Get the character
-		CharacterSelection select = new CharacterSelection(conn);
 		Character charcTarget = null; 
 		try 
-		{
+		{		
+	
+			CharacterSelection select = new CharacterSelection();
 			charcTarget = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.HEAVY);
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 

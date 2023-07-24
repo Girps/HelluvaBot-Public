@@ -1,6 +1,7 @@
 package events;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -15,12 +16,10 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class UserManager extends ListenerAdapter  
 {
-	private static Connection conn; 
 	
 	
-	public UserManager(Connection argConn) 
+	public UserManager() 
 	{
-		conn = argConn; 
 	}
 	
 	
@@ -35,7 +34,8 @@ public class UserManager extends ListenerAdapter
 		
 		try 
 		{ 
-			CharacterSelection select = new CharacterSelection(conn); 
+			
+			CharacterSelection select = new CharacterSelection(); 
 		// pull all users from the database in particular server 
 			for(int i = 0; i < event.getJDA().getGuilds().size(); ++i) 
 			{ 
@@ -55,8 +55,6 @@ public class UserManager extends ListenerAdapter
 						
 						for(int x = 0; x < userIds.size(); ++x) 
 						{
-								try 
-								{ 
 								// if not in server remove it from database 
 								if(!memberIds.contains(userIds.get(x)))
 							 			{
@@ -66,12 +64,7 @@ public class UserManager extends ListenerAdapter
 											select.removeFavList(userIds.get(x), users.get(0).getGuild().getIdLong());	
 											select.removeCollect(userIds.get(x), users.get(0).getGuild().getIdLong());  
 											System.out.println(userIds.get(x) + " no longer in the server has been removed at start up"); 
-							 			}
-									}
-								catch(SQLException e)
-								{
-									e.printStackTrace(); 
-								} 
+							 			} 
 							}
 					
 						}
@@ -79,11 +72,12 @@ public class UserManager extends ListenerAdapter
 				}
 			}
 		} 
-		catch(SQLException e) 
+		catch(Exception e) 
 		{
 			e.printStackTrace(); 
 			System.out.println("Something went wrong"); 
 		}
+		
 		// if not here remove them from database 
 	}
 	
@@ -107,16 +101,16 @@ public class UserManager extends ListenerAdapter
 		Long idGuild = event.getGuild().getIdLong(); 
 		
 		// Now delete all sonas and waifus from the server 
-		CharacterSelection select = new CharacterSelection(conn); 
 		try 
 		{	
+			CharacterSelection select = new CharacterSelection(); 
 			select.removeAllSonas(idGuild);
 			select.removeAllOcsInGuild(idGuild);
 			select.removeAllWaifus(idGuild); 
 			select.removeFavListGuild(idGuild);
 			select.removeAllPlayersCollectInGuild(idGuild); 
 			System.out.println("Bot leave event success"); 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			System.out.println("Bot leave event failed"); 
 			e.printStackTrace();
@@ -133,9 +127,9 @@ public class UserManager extends ListenerAdapter
 		Long serverId = event.getGuild().getIdLong(); 
 		Long userId = event.getUser().getIdLong(); 
 		
-		CharacterSelection select = new CharacterSelection(conn); 
 		try 
 		{
+			CharacterSelection select = new CharacterSelection();
 			select.removeSona(userId, serverId); 
 			select.removeAllOcs(userId, serverId);
 			select.removeWaifu(userId, serverId); 
@@ -143,7 +137,7 @@ public class UserManager extends ListenerAdapter
 			select.removeCollect(userId, serverId);  
 			System.out.println("Member leave event success"); 
 		}
-		catch(SQLException e) 
+		catch(Exception e) 
 		{
 			System.out.println("Member leave event failed"); 
 			e.printStackTrace(); 

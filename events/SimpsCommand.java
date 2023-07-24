@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -16,12 +17,11 @@ import CharactersPack.Character;
 public class SimpsCommand extends ListenerAdapter{
 
 	
-	protected static Connection conn;
+
 	
-	public SimpsCommand( Connection arg_Conn) 
+	public SimpsCommand( ) 
 	{
 		
-		conn = arg_Conn; 
 	}
 	
 	 
@@ -36,10 +36,12 @@ public class SimpsCommand extends ListenerAdapter{
 		// Check valid command 
 		if(event.getName().equals("simps")) 
 		{
+				
 				String userName = event.getUser().getId();  
-				CharacterSelection select = new CharacterSelection(conn); 
+		
 				try 
-				{
+				{		
+					CharacterSelection select = new CharacterSelection(); 
 					Character found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setTitle(found.getName()); 
@@ -49,7 +51,7 @@ public class SimpsCommand extends ListenerAdapter{
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 					event.getHook().sendMessage( "<@"+ userName + ">" + " simps for " + MarkdownUtil.bold(found.getName()) + "!").queue();
 				} 
-				catch (SQLException e) 
+				catch (Exception e) 
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();

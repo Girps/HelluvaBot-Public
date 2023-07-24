@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -12,15 +13,14 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-public class ListCommand extends ListenerAdapter{
+public class FavoriteCommand extends ListenerAdapter{
 
 	
-	protected static Connection conn;
+
 	
-	public ListCommand( Connection arg_Conn ) 
+	public FavoriteCommand( ) 
 	{
 		
-		conn = arg_Conn; 
 	}
 
 	
@@ -28,6 +28,9 @@ public class ListCommand extends ListenerAdapter{
 	public void  onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
 		event.deferReply().queue();
+		
+
+		
 		
 		switch (event.getName()) 
 		{
@@ -37,9 +40,11 @@ public class ListCommand extends ListenerAdapter{
 			Long userId = event.getUser().getIdLong(); 
 			Long serverId = event.getGuild().getIdLong(); 
 			String characterName = event.getOptions().get(0).getAsString(); 
-			
-			CharacterSelection select = new CharacterSelection(conn); 
-				try {
+	
+
+			CharacterSelection select = new CharacterSelection(); 
+				try 
+				{
 					// check if list already exists
 					if(!select.checkFavLimit(userId, serverId)) 
 					{
@@ -50,7 +55,7 @@ public class ListCommand extends ListenerAdapter{
 					select.insertFavorite(characterName, userId, serverId);
 					event.getHook().sendMessage(event.getUser().getAsMention() + " character " + MarkdownUtil.bold(characterName) + " succesfully entered!").queue();
 				}
-				catch (SQLException e) 
+				catch (Exception e) 
 				{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -61,8 +66,10 @@ public class ListCommand extends ListenerAdapter{
 		}
 		case "clear-favorites" : 
 		{
+			
+
 			// delete list from the database
-			CharacterSelection select = new CharacterSelection(conn);
+			CharacterSelection select = new CharacterSelection();
 			Long  userId = event.getUser().getIdLong(); 
 			Long serverId = event.getGuild().getIdLong(); 
 			try 
@@ -78,7 +85,7 @@ public class ListCommand extends ListenerAdapter{
 					return; 
 				}
 			} 
-			catch (SQLException e) {
+			catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return; 
@@ -88,8 +95,10 @@ public class ListCommand extends ListenerAdapter{
 		}
 		case "remove-favorite": 
 		{
+			
 			String characterName = event.getOptions().get(0).getAsString(); 
-			CharacterSelection select = new CharacterSelection(conn);
+			
+			CharacterSelection select = new CharacterSelection();
 			try 
 			{
 				// Check if list exists 
@@ -102,25 +111,21 @@ public class ListCommand extends ListenerAdapter{
 				select.removeFavCharacter(characterName, event.getUser().getIdLong(), event.getGuild().getIdLong());
 				event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterName) + " has been removed from your list!" ).queue(); 
 			} 
-			catch (SQLException e) 
+			catch (Exception e) 
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				event.getHook().sendMessage("Something went wrong!").queue();
 			}
-			catch(Exception e) 
-			{
-				
-				e.printStackTrace();
-				event.getHook().sendMessage("Something went wrong!").queue();
-			}
+			
 			break;
 		}
 		case "favorites" : 
 		{
 			// Get the list from the table 
 			String title = null;
-			CharacterSelection select = new CharacterSelection(conn);
+		
+			CharacterSelection select = new CharacterSelection();
 			Long userId = event.getUser().getIdLong(); 
 			Long serverId = event.getGuild().getIdLong(); 
 			ArrayList<CharactersPack.Character> list = null; 
@@ -155,7 +160,6 @@ public class ListCommand extends ListenerAdapter{
 					builder.setDescription(res); 
 					builder.setColor(Color.ORANGE); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-				
 				} 
 				else	// Now  
 				{
@@ -188,7 +192,8 @@ public class ListCommand extends ListenerAdapter{
 					builder.setColor(Color.ORANGE); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
-			} catch (SQLException e)
+			} 
+			catch (Exception e)
 			{
 				// TODO Auto-generated catch block
 				event.getHook().sendMessage("something went wrong!").queue();
@@ -202,9 +207,9 @@ public class ListCommand extends ListenerAdapter{
 		case "change-favorites-title" : 
 		{
 			
-			String title = event.getOption("title").getAsString(); 
+			String title = event.getOption("title").getAsString();
 			
-			CharacterSelection select = new CharacterSelection(conn);
+			CharacterSelection select = new CharacterSelection();
 		
 			try 
 			{
@@ -215,7 +220,9 @@ public class ListCommand extends ListenerAdapter{
 				}
 				select.changeFavTitle(title,event.getUser().getIdLong(), event.getGuild().getIdLong());
 				event.getHook().sendMessage(event.getUser().getAsMention() + " favorites title changed to " + MarkdownUtil.bold(title) + "!").queue(); 
-			} catch (SQLException e) {
+			} 
+			catch (Exception e) 
+			{
 				// TODO Auto-generated catch block
 				event.getHook().sendMessage("Something went wrong!").queue(); 
 				e.printStackTrace();
@@ -227,9 +234,9 @@ public class ListCommand extends ListenerAdapter{
 		case "swap-favorite-rank" :
 			{
 			String characterOne = event.getOption("first-character").getAsString(); 
-			String characterTwo = event.getOption("second-character").getAsString(); 
+			String characterTwo = event.getOption("second-character").getAsString();
 			
-			CharacterSelection select = new CharacterSelection(conn); 
+			CharacterSelection select = new CharacterSelection(); 
 			
 				try 
 				{
@@ -237,7 +244,7 @@ public class ListCommand extends ListenerAdapter{
 					event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterOne) 
 					+ " has been swapped with " + MarkdownUtil.bold(characterTwo) + "!").queue(); 
 				} 
-				catch (SQLException e)
+				catch (Exception e)
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();

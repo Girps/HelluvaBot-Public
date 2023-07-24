@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
@@ -24,12 +25,11 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class WaifuCommand extends ListenerAdapter{
 	
-	private Connection conn; 
 	private EventWaiter waiter; 
-	public WaifuCommand( Connection arg_Conn, EventWaiter arg_Waiter)
+	public WaifuCommand( EventWaiter arg_Waiter)
 	{
-	
-		conn = arg_Conn; 
+		
+		
 		waiter = arg_Waiter; 
 	}
 	
@@ -43,10 +43,12 @@ public class WaifuCommand extends ListenerAdapter{
 		// Waifu command for caller 
 		if(event.getName().equals("waifu") && event.getOption("user") == null) 
 		{
-			CharacterSelection select = new CharacterSelection(conn); 
+			
 			// Now search for waifu in the database
 			try 
 			{
+				CharacterSelection select = new CharacterSelection();
+				 
 				// Search db for waifu 
 				if (select.searchUserInWaifu(userID, serverID))
 				{
@@ -60,7 +62,6 @@ public class WaifuCommand extends ListenerAdapter{
 					build.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(chtr.getDate()), false);  // get the time from the data base also 
 					event.deferReply().queue(); 
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
-					
 				}
 				else 
 				{
@@ -79,16 +80,12 @@ public class WaifuCommand extends ListenerAdapter{
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
 				}
 			}
-			catch(SQLException e) 
+			catch(Exception e) 
 			{
 				e.printStackTrace();	
 				event.deferReply();
 				event.reply("An error occured!").queue(); 
 			}
-			
-			
-			
-			
 			
 		} // Check waifu of other player 
 		else if(event.getName().equals("waifu") && event.getOption("user") != null) 
@@ -106,11 +103,11 @@ public class WaifuCommand extends ListenerAdapter{
 			Long targetId = event.getOption("user").getAsUser().getIdLong();  
 			Member target = event.getOption("user").getAsMember(); 
 			// Now check if user has a waifu if not give them a bot 
-			CharacterSelection select = new CharacterSelection(conn); 
 			String name = ""; 
 			// Now search for waifu in the database
 			try 
-			{
+			{			
+				CharacterSelection select = new CharacterSelection(); 
 				// Search db for waifu 
 				if (select.searchUserInWaifu(targetId, serverID))
 				{
@@ -145,12 +142,6 @@ public class WaifuCommand extends ListenerAdapter{
 					event.getHook().sendMessageEmbeds(build.build()).queue(); 
 				}
 			}
-			catch(SQLException e) 
-			{
-				e.printStackTrace();
-				event.deferReply();
-				event.getHook().sendMessage("An error occured!").queue(); 
-			}
 			catch(Exception e) 
 			{
 				System.out.println("error with " + name); 
@@ -164,8 +155,6 @@ public class WaifuCommand extends ListenerAdapter{
 		if(event.getName().equals("waifu-trade") && event.getOption("tradee") != null) 
 		{
 
-			CharacterSelection Outterselect = new CharacterSelection(conn); 
-			TextChannel chan = event.getChannel().asTextChannel();
 			// Get the user and the uers to trade with 
 			User trader = event.getUser(); 
 			User tradee = event.getOption("tradee").getAsUser(); 
@@ -183,26 +172,31 @@ public class WaifuCommand extends ListenerAdapter{
 				event.getHook().sendMessage("Can not trade with a bot!").queue(); 
 				return; 
 			}
-			
+
 			event.deferReply().queue(); 
-			
 			
 			 // Now check if either has a character to trade with! 
 			try 
-			{
+			{						
+				
+				CharacterSelection Outterselect = new CharacterSelection(); 
 				if(!Outterselect.searchUserInWaifu(trader.getIdLong(), event.getGuild().getIdLong()) 
 						|| !Outterselect.searchUserInWaifu(tradee.getIdLong(), event.getGuild().getIdLong())) 
 				{
 					event.getHook().sendMessage("Trade unsuccessful one of the users has not acquired a waifu today!").queue();
+					return; 
 				}
 				
-			} catch (SQLException e1) {
+			}
+			catch (Exception e1) 
+			{
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 				event.getHook().sendMessage("An error occured !").queue();
 			}
 			
 			try {
+				CharacterSelection Outterselect = new CharacterSelection(); 
 				event.getHook().sendMessage("<@"+ trader.getId() + ">" + " wants to trade their waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(trader.getIdLong(), serverID).getName())  + " for " + "<@" + tradee.getId() + ">" 
 				+ "'s waifu " + MarkdownUtil.bold(Outterselect.getUserWaifu(tradee.getIdLong(), serverID).getName() )+"! " + 
 						 "React to this message with an emoji to accept the trade! ").queue( (msg) -> 
@@ -211,7 +205,9 @@ public class WaifuCommand extends ListenerAdapter{
 									 (eReact) -> eReact.getMessageIdLong() == msg.getIdLong() && !eReact.getUser().isBot() && eReact.getUser().getIdLong() == tradee.getIdLong(), 
 									 (eReact ) ->
 									 {
-										 CharacterSelection select = new CharacterSelection(conn); 
+											
+
+										 CharacterSelection select = new CharacterSelection(); 
 										 Character one = null; 
 										 Character two = null; 
 										 // Switch the character of each user 
@@ -229,9 +225,8 @@ public class WaifuCommand extends ListenerAdapter{
 											select.updateWaifuCharacter(tradee.getIdLong(), eReact.getGuild().getIdLong(), one);
 											event.getHook().sendMessage("Trade successful!").queue();
 											
-											
 										 }
-										 catch (SQLException e)
+										 catch (Exception e)
 										 {
 											e.printStackTrace();
 											event.getHook().sendMessage("An error occured !").queue();
@@ -240,7 +235,7 @@ public class WaifuCommand extends ListenerAdapter{
 									 30L,TimeUnit.SECONDS, 
 									 () -> event.getHook().sendMessage("30 seconds passed trade expired!").queue()); 
 						 } );
-			} catch (SQLException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

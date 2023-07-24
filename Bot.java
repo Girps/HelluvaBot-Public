@@ -11,14 +11,16 @@ import java.sql.SQLException;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
+import CharactersPack.CharacterSelection;
 import events.CollectCommand;
 import events.CommandManger;
 import events.EventWaiterCommand;
 import events.FrameCommand;
 import events.GuessCommand;
+import events.HelpCommand;
 import events.KdmCommand;
 import events.KinsCommand;
-import events.ListCommand;
+import events.FavoriteCommand;
 import events.OriginalCharacterCommand;
 import events.ShipsCommand;
 import events.SimpsCommand;
@@ -69,11 +71,16 @@ public class Bot {
 		try 
 		{
 			conn = DriverManager.getConnection(url, name, password); 
+			CharacterSelection select = new CharacterSelection(url, name, password); 
 		}
 		catch(SQLException e)
 		{
 			e.printStackTrace();
 			System.out.println("Failed to connect to mySQL database"); 
+		}
+		finally
+		{
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 
 		}
 		
@@ -82,21 +89,22 @@ public class Bot {
 		jda.addEventListener(new UserInfoCommand());
 		jda.addEventListener(waiter);
 		jda.addEventListener(new EventWaiterCommand(waiter));
-		jda.addEventListener(new WikiCommand(  conn)); 
-		jda.addEventListener(new SmashPassCommand(conn,waiter));
-		jda.addEventListener(new SimpsCommand(conn));
-		jda.addEventListener(new KinsCommand(conn));
-		jda.addEventListener(new ShipsCommand(conn));
-		jda.addEventListener(new WaifuCommand(conn,waiter));
-		jda.addEventListener(new KdmCommand(conn,waiter));
-		jda.addEventListener(new CommandManger(conn)); 
-		jda.addEventListener(new SonasCommand(conn));
-		jda.addEventListener(new ListCommand(conn)); 
-		jda.addEventListener(new OriginalCharacterCommand(conn)); 
-		jda.addEventListener(new GuessCommand(conn, waiter));
+		jda.addEventListener(new WikiCommand( )); 
+		jda.addEventListener(new SmashPassCommand(waiter));
+		jda.addEventListener(new SimpsCommand());
+		jda.addEventListener(new KinsCommand());
+		jda.addEventListener(new ShipsCommand());
+		jda.addEventListener(new WaifuCommand(waiter));
+		jda.addEventListener(new KdmCommand(waiter));
+		jda.addEventListener(new CommandManger()); 
+		jda.addEventListener(new SonasCommand());
+		jda.addEventListener(new FavoriteCommand()); 
+		jda.addEventListener(new OriginalCharacterCommand()); 
+		jda.addEventListener(new GuessCommand(waiter));
 		jda.addEventListener(new FrameCommand()); 
-		jda.addEventListener(new CollectCommand(conn,waiter)); 
-		jda.addEventListener(new UserManager(conn)); 
+		jda.addEventListener(new CollectCommand(waiter)); 
+		jda.addEventListener(new UserManager()); 
+		jda.addEventListener(new HelpCommand()); 
 	}
 
 }

@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,22 +23,29 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class GuessCommand extends ListenerAdapter{
 
-	private static Connection conn; 
 	private  EventWaiter waiter; 
-	public GuessCommand(Connection arg, EventWaiter argWaiter ) 
+	public GuessCommand(EventWaiter argWaiter ) 
 	{
-		conn = arg; 
+		
 		waiter = argWaiter; 
 	}
 
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
+		
+		
+		
 		if(event.getName().equals("guess")) 
 		{
 			event.deferReply(); 
+			
+			
+			
+			
+			
 			// Get 4 random characters and pick one to guess correctly 
-			CharacterSelection select = new CharacterSelection(conn); 
+			CharacterSelection select = new CharacterSelection(); 
 			try 
 			{
 				// get 4 random characters 
@@ -60,7 +68,6 @@ public class GuessCommand extends ListenerAdapter{
 				buttons.add ( Button.secondary(chts[1].getName(), chts[1].getName()));
 				buttons.add(  Button.secondary(chts[2].getName(), chts[2].getName()));
 				buttons.add(  Button.secondary(chts[3].getName(), chts[3].getName()));
-				
 				event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue( (messageEmbed)
 						-> {
 				this.waiter.waitForEvent(ButtonInteractionEvent.class, 
@@ -91,12 +98,6 @@ public class GuessCommand extends ListenerAdapter{
 						); 
 				
 			}
-			catch (SQLException e) 
-			{
-				// TODO Auto-generated catch block
-				event.getHook().sendMessage(" Something went wrong!").queue(); 
-				e.printStackTrace();
-			} 
 			catch(Exception e) 
 			{
 				event.getHook().sendMessage(" Something went wrong!").queue(); 

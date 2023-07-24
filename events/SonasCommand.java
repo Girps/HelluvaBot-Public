@@ -2,6 +2,7 @@ package events;
 
 import java.awt.Color;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 
@@ -16,11 +17,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 public class SonasCommand extends ListenerAdapter
 {
 	
-	private static Connection conn; 
-	
-	public SonasCommand(Connection connArg) 
+	public SonasCommand( ) 
 	{
-		conn = connArg; 
+		
 	}
 	
 	@Override
@@ -29,11 +28,11 @@ public class SonasCommand extends ListenerAdapter
 		
 		String cmd = event.getName(); 
 		event.deferReply().queue(); 
-		CharacterSelection select = new CharacterSelection(conn); 
 		switch(cmd) 
 		{
-			case("sona"):	// Command to return sona from the database assigned to caller 
+			case("sona"):	// Command to return sona from the database assigned to caller
 				
+					
 					// Check if option is empty 
 					if(event.getOption("user") == null) 
 					{
@@ -41,6 +40,7 @@ public class SonasCommand extends ListenerAdapter
 						
 						try 
 						{
+							CharacterSelection select = new CharacterSelection(); 
 							if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "does not have a sona!").queue(); 
@@ -55,7 +55,7 @@ public class SonasCommand extends ListenerAdapter
 							build.setFooter( event.getMember().getEffectiveName() + "'s Sona", event.getMember().getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
-						catch (SQLException e) 
+						catch (Exception e) 
 						{
 							// TODO Auto-generated catch block
 							event.getHook().sendMessage("something went wrong!").queue(); 
@@ -68,6 +68,7 @@ public class SonasCommand extends ListenerAdapter
 						Member target = event.getOption("user").getAsMember();
 						try 
 						{
+							CharacterSelection select = new CharacterSelection(); 
 							if (!select.searchUserInSona(targetId, event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( "<@" + targetId  + "> " + "does not have a sona!").queue(); 
@@ -82,7 +83,7 @@ public class SonasCommand extends ListenerAdapter
 							build.setFooter( target.getEffectiveName() + "'s Sona", target.getEffectiveAvatarUrl()); 
 							event.getHook().sendMessageEmbeds(build.build()).queue();
 						}
-						catch (SQLException e) 
+						catch (Exception e) 
 						{
 							// TODO Auto-generated catch block
 							event.getHook().sendMessage("something went wrong!").queue(); 
@@ -97,7 +98,7 @@ public class SonasCommand extends ListenerAdapter
 				
 			try 
 			{
-				
+				CharacterSelection select = new CharacterSelection(); 
 				if (select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{
 					event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "you can only have 1 sona! Remove your current sona and use this command again!").queue(); 
@@ -106,7 +107,6 @@ public class SonasCommand extends ListenerAdapter
 				
 				
 				String ex  =  event.getOption("url").getAsString().substring( event.getOption("url").getAsString().length() - 4,  event.getOption("url").getAsString().length());
-				System.out.println(ex); 
 				if(!ex.contains(".png") && !ex.contains(".jpg") && !ex.contains(".gif")) 
 				{
 					event.getHook().sendMessage("URL "  + "must end with " + ".png , .jpg or .gif make sure to use a valid imgur image link" ).queue(); 
@@ -128,11 +128,6 @@ public class SonasCommand extends ListenerAdapter
 			 event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "succesfully added your sona!").queue();
 				
 			} 
-			catch (SQLException e)
-			{
-				event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "something went wrong unable to add your sona!").queue();
-				e.printStackTrace();
-			} 
 			catch(Exception e) 
 			{
 				event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "something went wrong unable to add your sona! Make sure to fill in each option!").queue();
@@ -143,11 +138,12 @@ public class SonasCommand extends ListenerAdapter
 				
 			case ("remove-sona"): 
 				
-				if(event.getOption("user") == null) 
+ 				if(event.getOption("user") == null) 
 				{
 					
 					try 
 					{
+						CharacterSelection select = new CharacterSelection(); 
 						if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 						{
 							event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "does not have a sona!").queue(); 
@@ -165,7 +161,7 @@ public class SonasCommand extends ListenerAdapter
 								event.getHook().sendMessage("Sona was not removed succesfully!").queue();
 							}
 						}
-					} catch (SQLException e)
+					} catch (Exception e)
 					{
 						// TODO Auto-generated catch block
 						event.getHook().sendMessage("something went wrong!").queue();
@@ -177,6 +173,7 @@ public class SonasCommand extends ListenerAdapter
 					// Delete the sona 
 					try 
 					{
+						CharacterSelection select = new CharacterSelection(); 
 						if (!select.searchUserInSona(event.getOption("user").getAsUser().getIdLong(), event.getGuild().getIdLong())) 
 						{
 							event.getHook().sendMessage( "<@" +   event.getOption("user").getAsUser().getId() + "> " + "does not have a sona!").queue(); 
@@ -191,7 +188,7 @@ public class SonasCommand extends ListenerAdapter
 						{
 							event.getHook().sendMessage("Sona was not removed succesfully!").queue();
 						}
-					} catch (SQLException e)
+					} catch (Exception e)
 					{
 						// TODO Auto-generated catch block
 						event.getHook().sendMessage("something went wrong!").queue();
