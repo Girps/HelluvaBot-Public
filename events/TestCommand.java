@@ -9,11 +9,9 @@ public class TestCommand extends ListenerAdapter
 {
 	
 	public static String prefix = "$"; 
-	private Connection conn; 
-	public TestCommand(String arg, Connection conn_Arg) 
+	public TestCommand(String arg) 
 	{	
 		prefix = arg; 
-		conn = conn_Arg; 
 	}
 	
 	// Override method on GuildMessageRecieved 
@@ -42,20 +40,7 @@ public class TestCommand extends ListenerAdapter
 	if(msg.equalsIgnoreCase(prefix + "shutdown")) 
 	{
 		System.out.println("Bot is shutdown"); 
-		// Close it 
-		try
-		{
-			
-			if(!conn.isClosed())
-			{
-			conn.close();
-			}
-		} 
-		catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		event.getJDA().shutdown();
+		
 	}
 	
 }

@@ -21,7 +21,6 @@ public class HelpCommand extends ListenerAdapter
 		{
 			String command = event.getOption("command").getAsString(); 
 			event.deferReply().queue(); 
-			System.out.println(command); 
 			EmbedBuilder builder = null; 
 			switch (command) 
 			{
@@ -106,6 +105,7 @@ public class HelpCommand extends ListenerAdapter
 				case "Oc command" : 
 				{
 					builder = getEmbed(14); 
+					break; 
 				}
 				case "Credits" : 
 				{
@@ -185,7 +185,7 @@ public class HelpCommand extends ListenerAdapter
 			builder.addField("/sona [user]", "Returns a sona of another player. Optional arguemnt [user]",false); 
 			builder.addField("/insert-sona <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>",
 					"Inserts a sona into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they"
-					+ " may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org. " ,false); 
+					+ " may not load inside small embeds.Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=pC9GgoP9ycE",false); 
 			builder.addField("/remove-sona", "Remove your sona from the server.", false); 
 			builder.addField("/remove-sona [user]", "@Helluva Admin only command to remove another user's sona.",false); 
 			break; 
@@ -219,7 +219,7 @@ public class HelpCommand extends ListenerAdapter
 		case 14 : 
 			builder = new EmbedBuilder(); 
 			builder.addField("/insert-oc <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>", "Insert your oc into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they " + 
-					"may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + " Tutorial to insert ocs and sona https://www.youtube.com/watch?v=F8dKVbP1Nzo&list=RDMMF8dKVbP1Nzo&start_radio=1",false); 
+					"may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=pC9GgoP9ycE",false); 
 			
 			builder.addField("/remove-my-oc <customcharacter>", "Remove your specified oc. Required argument <customcharacter>",false);
 			builder.addField("/remove-user-oc <user> <customcharacter>", "@Helluva Admin only command to remove another users oc. Required arguments <user> and <customcharacter>", false); 

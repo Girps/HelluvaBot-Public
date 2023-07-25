@@ -8,7 +8,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 
 
@@ -23,10 +28,11 @@ import java.util.Date;
 
 public class CharacterSelection {
 	
-	public static String AdminName; 
-	public static String password; 
-	public static String urlDbs; 
-	
+	private static String AdminName; 
+	private  static String password; 
+	private static String urlDbs; 
+	private static HikariConfig config = new HikariConfig(); 
+	private static HikariDataSource dataSource; 
 	public CharacterSelection()
 	{
 		
@@ -36,7 +42,19 @@ public class CharacterSelection {
 	{
 		urlDbs = urlArg; 
 		AdminName = nameArg; 
-		password = passwordArg; 
+		password = passwordArg;
+		config.setJdbcUrl(urlArg);
+		config.setUsername(nameArg);
+		config.setPassword(passwordArg);
+		config.setConnectionTimeout(3000);
+		config.setLeakDetectionThreshold(3000);
+		config.setMaximumPoolSize(50);
+		dataSource = new HikariDataSource(config); 
+	}
+	
+	public HikariDataSource getPool() 
+	{
+		return dataSource;
 	}
 	
 	/*Method to get all characters on the database */
@@ -50,7 +68,7 @@ public class CharacterSelection {
 		try 
 		{
 			
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = ""; 
 		
@@ -149,7 +167,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -183,7 +201,7 @@ public class CharacterSelection {
 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = ""; 
 		switch(type) 
@@ -254,7 +272,7 @@ public class CharacterSelection {
 		boolean result = false; 
 		try 
 		{	
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(); 
 			String query = "SELECT * FROM waifus " + 
 						"WHERE user_id = " + userID + " AND server_id = " + serverID + 
@@ -291,7 +309,7 @@ public class CharacterSelection {
 		try
 		{
 			
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 			query = "SELECT * FROM waifus " + 
 				"WHERE user_id = " + userID + " AND server_id = " + serverID + 
@@ -327,7 +345,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			// Now insert the data 
 			stat.executeUpdate(query); 
@@ -354,7 +372,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = "SELECT waifu_id FROM waifus " + 
 					"WHERE user_id = " + userID + " AND server_id = " + serverID + 
@@ -388,13 +406,14 @@ public class CharacterSelection {
 			CharacterFactory factory = new CharacterFactory(Long.valueOf(res3.getString(1)), res3.getString(2), res3.getString(3), res3.getString(4), SETUPTYPE.LIGHT); 
 			 found = factory.getCharacter(); 
 			// Now get the date for next switch 
-			query = "SELECT * FROM timeTable";
+			query = "SELECT LAST_EXECUTED FROM INFORMATION_SCHEMA.events\r\n"
+					+ "WHERE EVENT_NAME = \"waifu_Reset_Event\"";
 			
 			res2 = stat.executeQuery(query);
 			
 			res2.next(); 
 			
-			Date date = res2.getTimestamp(1); 
+			Date date = res2.getTimestamp(1, Calendar.getInstance(TimeZone.getTimeZone("GMT")));  
 			
 			
 			found.setDate(date);
@@ -700,14 +719,13 @@ public class CharacterSelection {
 		ResultSet  res = null; 
 		ResultSet timeRes = null;
 		Character arr[] = null; 
-		Connection conn = null; 
-		try 
+		try (Connection conn = dataSource.getConnection())
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
 			stat = conn.createStatement();
 	
 			// Now get the date for next switch 
-			String queryLcl = "SELECT * FROM timeTable";
+			String queryLcl = "SELECT LAST_EXECUTED FROM INFORMATION_SCHEMA.events\r\n"
+					+ "WHERE EVENT_NAME = \"waifu_Reset_Event\"";
 				
 			timeRes = stat.executeQuery(queryLcl);
 				
@@ -726,7 +744,7 @@ public class CharacterSelection {
 	
 			CharacterFactory factory = null; 
 			
-				factory = new CharacterFactory(Long.valueOf(res.getString(1)), res.getString(2), res.getString(3), res.getString(4),type); 
+			factory = new CharacterFactory(Long.valueOf(res.getString(1)), res.getString(2), res.getString(3), res.getString(4),type); 
 			
 			Character chtr = factory.getCharacter(); 
 			chtr.setDate(date);
@@ -752,7 +770,6 @@ public class CharacterSelection {
 			try {  if(timeRes!= null) {timeRes.close(); } } catch(Exception e){} 
 			try {  if(res != null) { res.close(); } } catch(Exception e){} 
 			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
-			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 
 		}
 		
@@ -772,7 +789,7 @@ public class CharacterSelection {
 		Connection conn = null ;
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = "SELECT * FROM sonas " + 
 						"WHERE user_Id = " + userID + " AND server_Id = " + serverID + 
@@ -804,7 +821,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = "SELECT * FROM sonas " + 
 						"WHERE user_Id = " + userID + " AND server_Id = " + serverID + 
@@ -840,7 +857,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = "DELETE character_Ids FROM character_Ids \r\n"
 				+ "INNER JOIN sonas ON sonas.sona_Id = character_Ids.id \r\n"
@@ -867,7 +884,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			String query = "DELETE FROM waifus " + 
 					"WHERE user_Id = " + userID + " AND " + "server_Id = " + serverID; 
@@ -908,7 +925,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs,AdminName,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.addBatch(queryOne);
 			stat.addBatch(queryTwo);
@@ -936,6 +953,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{		
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(); 
 			stat.execute(query);
 		} catch (SQLException e) {
@@ -959,7 +977,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		} catch (SQLException e) {
@@ -1014,7 +1032,7 @@ public class CharacterSelection {
 		int value = -1; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res =  stat.executeQuery(query);
 			res.next();
@@ -1054,7 +1072,7 @@ public class CharacterSelection {
 			Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.execute(query); 
 		} 
@@ -1087,7 +1105,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -1126,7 +1144,7 @@ public class CharacterSelection {
 		String title = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -1166,7 +1184,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			CharacterFactory factory = null; 
@@ -1211,7 +1229,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			res = stat.executeQuery(query);  
 			res.next(); 
@@ -1240,7 +1258,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query);
 		} 
@@ -1274,7 +1292,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password) ; 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			stat.execute(query); 
 		} 
@@ -1304,9 +1322,9 @@ public class CharacterSelection {
 		int value = -1; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
-			 res = stat.executeQuery(query); 
+			res = stat.executeQuery(query); 
 			res.next(); 
 			value = res.getInt(1); 
 		
@@ -1336,7 +1354,7 @@ public class CharacterSelection {
 		boolean result = false; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			result = res.next(); 
@@ -1395,7 +1413,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password ); 
+			conn = dataSource.getConnection(); 		
 			stat = conn.createStatement();
 			 res = stat.executeQuery(query); 
 			result = res.next(); 
@@ -1418,7 +1436,6 @@ public class CharacterSelection {
 			inKins, String inWaifu, String inFav, String inGuess, String inCollect)  
 	{
 		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
-		  System.out.println(serverId); 
 		String queryTwo = "";   
 		if(!name.contains("\"")) 
 		{  
@@ -1436,7 +1453,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.addBatch(queryOne);
 			stat.addBatch(queryTwo);
@@ -1468,7 +1485,7 @@ public class CharacterSelection {
 		int value = -1;
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -1508,7 +1525,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		} catch (SQLException e) {
@@ -1534,7 +1551,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			result = res.next(); 
@@ -1567,7 +1584,7 @@ public class CharacterSelection {
 	 ArrayList<Character> list = new ArrayList<Character>(); 
 	try
 	{
-		conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+		conn = dataSource.getConnection(); 
 		stat = conn.createStatement();
 		res = stat.executeQuery(query); 
 		
@@ -1622,7 +1639,7 @@ public class CharacterSelection {
 		Character result = null; 
 		try 
 		{
-			conn =DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			if(!res.next()) 
@@ -1657,7 +1674,7 @@ public class CharacterSelection {
 		boolean result = false; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			result =  res.next(); 
@@ -1685,7 +1702,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		} catch (SQLException e) 
@@ -1721,7 +1738,7 @@ public class CharacterSelection {
 		Connection conn = null;
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password);  
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.execute(query); 
 		}
@@ -1748,7 +1765,7 @@ public class CharacterSelection {
 		Connection conn = null ;
 		try
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next();	
@@ -1784,7 +1801,7 @@ public class CharacterSelection {
 		
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		}
@@ -1807,7 +1824,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query);
 		} catch (SQLException e)
@@ -1834,7 +1851,7 @@ public class CharacterSelection {
 		int value = -1; 
 		try
 		{	
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(); 	
 			res = stat.executeQuery(query);
 			res.next(); 
@@ -1870,7 +1887,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -1912,7 +1929,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -1950,7 +1967,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.addBatch(queryOne); 
 			stat.addBatch(quertyTwo);
@@ -1980,12 +1997,12 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
 			Date now = new Date(); 
-			Date end = res.getTimestamp(1); 
+			Date end = res.getTimestamp(1, Calendar.getInstance(TimeZone.getTimeZone("GMT")));  
 			
 			long millDelta = ( end.getTime() + ( 3600000L * 2 ) )  - now.getTime(); 
 			Long min =  millDelta / (60000) % 60; 
@@ -2027,11 +2044,11 @@ public class CharacterSelection {
 		Connection conn = null ;
 		try 
 		{
-			conn  = DriverManager.getConnection(urlDbs ,AdminName, password ); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
-			Date end = res.getTimestamp(1);
+			Date end = res.getTimestamp(1, Calendar.getInstance(TimeZone.getTimeZone("GMT")));  
 			Date now = new Date(); 
 			long millDelta = ( end.getTime() + 3600000L) - now.getTime(); 
 			Long min =  millDelta / (60000) % 60; 
@@ -2076,12 +2093,11 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			res.next(); 
 			value = res.getString(1); 
-			System.out.println(value); 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2106,7 +2122,7 @@ public class CharacterSelection {
 		Connection conn =null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query);
 		} catch (SQLException e) 
@@ -2117,6 +2133,7 @@ public class CharacterSelection {
 		 finally 
 		 {
 				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try { if (conn != null) {conn.close();} } catch (Exception e ) {} 
 		 }
 	}
 
@@ -2130,7 +2147,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.execute(query); 
 		} catch (SQLException e) 
@@ -2159,7 +2176,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			result = res.next(); 
@@ -2190,7 +2207,7 @@ public class CharacterSelection {
 		long value = -1; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -2221,7 +2238,7 @@ public class CharacterSelection {
 		boolean result = false; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			result = res.next(); 
@@ -2252,7 +2269,7 @@ public class CharacterSelection {
 		Connection conn = null ; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		}
@@ -2281,7 +2298,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			result = res.next(); 
@@ -2311,7 +2328,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			res.next(); 
@@ -2351,7 +2368,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.addBatch(queryOne); 
 			stat.addBatch(queryTwo);
@@ -2379,7 +2396,7 @@ public class CharacterSelection {
 		Connection conn = null;
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.execute(query); 
 
@@ -2404,8 +2421,9 @@ public class CharacterSelection {
 		ResultSet res = null; 
 		Connection conn = null; 
 		boolean value = false; 
-		try {
-			conn = DriverManager.getConnection(urlDbs ,AdminName , password); 
+		try 
+		{
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			res = stat.executeQuery(query);
 			value = res.next();
@@ -2433,7 +2451,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		} catch (SQLException e) {
@@ -2460,7 +2478,7 @@ public class CharacterSelection {
 		int value = -1; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -2494,7 +2512,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			res.next(); 
@@ -2532,7 +2550,7 @@ public class CharacterSelection {
 		boolean value = false; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();	
 			res = stat.executeQuery(query); 
 			value = res.next(); 
@@ -2563,7 +2581,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn  = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			result = res.next(); 
@@ -2592,7 +2610,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query);
 		} catch (SQLException e) {
@@ -2619,7 +2637,7 @@ public class CharacterSelection {
 		Connection conn = null ;
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query);
 			res.next(); 
@@ -2657,7 +2675,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(query); 
 			
@@ -2700,7 +2718,7 @@ public class CharacterSelection {
 		Connection conn = null ; 
 		try 
 		{
-			conn= DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			stat.execute(query); 
 		} catch (SQLException e) {
@@ -2727,7 +2745,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs, AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.addBatch(queryOne); 
 			stat.addBatch(queryTwo);
@@ -2759,7 +2777,7 @@ public class CharacterSelection {
 		Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName, password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);	
 			stat.addBatch(queryOne); 
 			stat.addBatch(queryTwo);
@@ -2798,7 +2816,7 @@ public class CharacterSelection {
 		
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			res = stat.executeQuery(query); 
 		
@@ -2846,7 +2864,7 @@ public class CharacterSelection {
 		 Connection conn = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs ,AdminName ,password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement();
 			res = stat.executeQuery(queryOne); 
 			res.next(); 
@@ -2914,7 +2932,7 @@ public class CharacterSelection {
 		Connection conn  = null; 
 		try 
 		{
-			conn = DriverManager.getConnection(urlDbs , AdminName , password); 
+			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			stat.execute(query); 
 		} 

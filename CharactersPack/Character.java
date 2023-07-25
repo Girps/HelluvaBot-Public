@@ -13,11 +13,14 @@ import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
+import java.util.Calendar;
 import java.util.Date;
-
+import java.util.TimeZone;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 
 
@@ -63,11 +66,15 @@ public class Character
 	public String getDate() 
 	{
 	
-		Date now = new Date();
+		Date now = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime(); 
 		
-		 long millDelta = date.getTime() - now.getTime() ; 
+		 long millDelta =  ( date.getTime() + 86400000L ) - now.getTime() ; 
 		 
 		 
+	
+		 
+		 System.out.println(now); 
+		 System.out.println(date); 
 		 
 		 Long min = millDelta / (60000) % 60;  
 		 Long hour = millDelta / (3600000);

@@ -1,8 +1,6 @@
 package events;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+
 import java.util.ArrayList;
 
 import CharactersPack.CharacterSelection;
@@ -12,6 +10,7 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class UserManager extends ListenerAdapter  
@@ -143,5 +142,26 @@ public class UserManager extends ListenerAdapter
 			e.printStackTrace(); 
 		}
 	}
+	
+	/* Called when the bot is terminaed */ 
+	@Override 
+	public void onShutdown(ShutdownEvent event)
+	{
+		System.out.println("Bot shutdown"); 
+		CharacterSelection select = new CharacterSelection(); 
+		
+		if ( select.getPool() != null )
+		{
+			try
+			{
+				select.getPool().close();
+				
+			}
+			catch (Exception e)
+			{
+				
+			}
+		}
+	} 
 	
 }

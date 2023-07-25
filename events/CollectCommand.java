@@ -31,21 +31,6 @@ public class CollectCommand extends ListenerAdapter{
 	{	
 		event.deferReply().queue();
 		
-		
-		
-		// Insert player into the collect game 
-		try 
-		{		
-			CharacterSelection select = new CharacterSelection();
-
-			select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
-		}
-		catch (Exception e2)
-		{
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		} 
-		
 		switch (event.getName())
 		{
 			case "roll": // roll a random character claim with a reaction 
@@ -53,7 +38,7 @@ public class CollectCommand extends ListenerAdapter{
 			try 
 			{
 				CharacterSelection select = new CharacterSelection();
-
+				select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
 				// if player has no turn return 
 				if ( select.getPlayerRollsLimit(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{

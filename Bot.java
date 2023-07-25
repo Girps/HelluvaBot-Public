@@ -62,30 +62,34 @@ public class Bot {
 		{
 			e.printStackTrace();
 			System.out.println("Failed to connect to mySQL database"); 
-		}
+		}	
 		
 		
-		Connection conn = null; 
-		
-		// Now connect 
-		try 
-		{
-			conn = DriverManager.getConnection(url, name, password); 
+			// Now connect 
 			CharacterSelection select = new CharacterSelection(url, name, password); 
-		}
-		catch(SQLException e)
-		{
-			e.printStackTrace();
-			System.out.println("Failed to connect to mySQL database"); 
-		}
-		finally
-		{
-			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			Runtime.getRuntime().addShutdownHook(new Thread() 
+			{
+				public void run() 
+				{
+					System.out.println("Shutdown bot with interrupt"); 
+					if(select.getPool() != null) 
+					{
+						try 
+						{
+							select.getPool().close(); 
+						}
+						catch (Exception e)
+						{
+							
+						}
+					} 
+				}
+			
+			}); 
 
-		}
-		
+			
 		// Add event listners 
-		jda.addEventListener(new TestCommand(prefix, conn));
+		jda.addEventListener(new TestCommand(prefix));
 		jda.addEventListener(new UserInfoCommand());
 		jda.addEventListener(waiter);
 		jda.addEventListener(new EventWaiterCommand(waiter));
