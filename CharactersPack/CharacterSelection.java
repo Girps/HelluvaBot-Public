@@ -46,9 +46,9 @@ public class CharacterSelection {
 		config.setJdbcUrl(urlArg);
 		config.setUsername(nameArg);
 		config.setPassword(passwordArg);
-		config.setConnectionTimeout(3000); // will throw if connection not retireved in time
-		config.setLeakDetectionThreshold(3000); 
-		config.setMaximumPoolSize(50);
+		config.setConnectionTimeout(6000); // will throw if connection not retireved in time
+		config.setLeakDetectionThreshold(6000); 
+		config.setMaximumPoolSize(40); 
 		
 		dataSource = new HikariDataSource(config); 
 	}

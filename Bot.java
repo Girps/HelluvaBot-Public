@@ -55,9 +55,7 @@ public class Bot {
 				final String PASSWORD = properties.getProperty("DATABASE_PASSWORD"); 
 				final String MYURL = properties.getProperty("MYURL") ; 
 				final String NAME = properties.getProperty("NAME"); 
-		
-		System.out.println(TOKEN + "\n" + PASSWORD + "\n" + "URL" + MYURL+ "\n" + NAME); 
-				
+						
 				
 		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TOKEN); 
 		builder.setActivity(Activity.listening("/help for help")); 
