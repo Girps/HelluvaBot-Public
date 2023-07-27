@@ -71,7 +71,6 @@ public class Bot {
 		String name = NAME; 
 		String password = PASSWORD;
 		
-				
 		
 			// Now connect 
 			CharacterSelection select = new CharacterSelection(url, name, password); 
