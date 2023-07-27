@@ -1,20 +1,18 @@
 
-import events.TestCommand;
+
 import events.UserInfoCommand;
 import events.UserManager;
 import events.WaifuCommand;
 import events.WikiCommand;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
 import CharactersPack.CharacterSelection;
 import events.CollectCommand;
 import events.CommandManger;
-import events.EventWaiterCommand;
 import events.FrameCommand;
 import events.GuessCommand;
 import events.HelpCommand;
@@ -31,43 +29,56 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 
 public class Bot {
 
-	public static String prefix = "$"; 
 	private final static EventWaiter waiter = new EventWaiter(); 
 	public static void main(String[] args) throws Exception
 	{
-		 
-		 
-		builder.setActivity(Activity.listening("~man for help")); 
 
+		// Load the configuration file as a resource using ClassLoader
+				InputStream inputStream = null;
+				try
+				{
+					inputStream = Bot.class.getResourceAsStream("config.properties"); 
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					System.out.println("failed to load config file"); 
+				}
 
+				// Use the inputStream to load the properties
+				Properties properties = new Properties();
+				properties.load(inputStream);
+				final String TOKEN = properties.getProperty("TOKEN"); 
+				final String PASSWORD = properties.getProperty("DATABASE_PASSWORD"); 
+				final String MYURL = properties.getProperty("MYURL") ; 
+				final String NAME = properties.getProperty("NAME"); 
 		
-	
-
+		System.out.println(TOKEN + "\n" + PASSWORD + "\n" + "URL" + MYURL+ "\n" + NAME); 
+				
+				
+		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TOKEN); 
+		builder.setActivity(Activity.listening("/help for help")); 
+		builder.setStatus(OnlineStatus.ONLINE); 
+		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
+				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
 		
-
-
-
-		// Check if we have driver 
-		try 
-		{
-			
-			Class.forName( "com.mysql.cj.jdbc.Driver" );
-		}
-		catch(ClassNotFoundException e) 
-		{
-			e.printStackTrace();
-			System.out.println("Failed to connect to mySQL database"); 
-		}	
+		ShardManager jda = builder.build(); 
 		
+		// Connect to database 
+		
+		String url = MYURL; 
+		String name = NAME; 
+		String password = PASSWORD;
+		
+				
 		
 			// Now connect 
 			CharacterSelection select = new CharacterSelection(url, name, password); 
 			Runtime.getRuntime().addShutdownHook(new Thread() 
+					A
 			{
 				public void run() 
 				{
@@ -88,11 +99,9 @@ public class Bot {
 			}); 
 
 			
-		// Add event listners 
-		jda.addEventListener(new TestCommand(prefix));
-		jda.addEventListener(new UserInfoCommand());
+		// Add event listners
 		jda.addEventListener(waiter);
-		jda.addEventListener(new EventWaiterCommand(waiter));
+		jda.addEventListener(new UserInfoCommand());
 		jda.addEventListener(new WikiCommand( )); 
 		jda.addEventListener(new SmashPassCommand(waiter));
 		jda.addEventListener(new SimpsCommand());

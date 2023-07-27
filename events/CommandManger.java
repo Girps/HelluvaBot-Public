@@ -499,7 +499,7 @@ public class CommandManger extends ListenerAdapter {
 		commandList.add(Commands.slash("waifu-trade", "Offer to trade your waifu to another user").addOptions(UserOptionTrade)); 
 		commandList.add(Commands.slash("user-info", "Get general information on specified used").addOptions(UserOption)); 
 		commandList.add(Commands.slash("kdm", "Game were you choose 3 characters to kill, date or marry").addOptions(characterOptionOne,characterOptionTwo, characterOptionThree));
-		commandList.add(Commands.slash("wikiall", "Display all full wikis of the character on the database only HBAdmins can do this procedure").addOptions(optionSelection.addChoice("all", "all characters").addChoice("major", "major").addChoice("minor", "minor"))); 
+		//commandList.add(Commands.slash("wikiall", "Display all full wikis of the character on the database only HBAdmins can do this procedure").addOptions(optionSelection.addChoice("all", "all characters").addChoice("major", "major").addChoice("minor", "minor"))); 
 		commandList.add(Commands.slash("ships", "Generates 2 random characters in a ship")); 
 		commandList.add(Commands.slash("sona", "Return your or other user's sona").addOptions(UserOption)); 
 		commandList.add(Commands.slash("insert-sona", "Insert your sona add name, imgur url and games it can be part of!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav,guess,collect)); 
@@ -623,7 +623,7 @@ public class CommandManger extends ListenerAdapter {
 				commandList.add(Commands.slash("waifu-trade", "Offer to trade your waifu to another user").addOptions(UserOptionTrade)); 
 				commandList.add(Commands.slash("user-info", "Get general information on specified used").addOptions(UserOption)); 
 				commandList.add(Commands.slash("kdm", "Game were you choose 3 characters to kill, date or marry").addOptions(characterOptionOne,characterOptionTwo, characterOptionThree));
-				commandList.add(Commands.slash("wikiall", "Display all full wikis of the character on the database only HBAdmins can do this procedure").addOptions(optionSelection.addChoice("all", "all characters").addChoice("major", "major").addChoice("minor", "minor"))); 
+				//commandList.add(Commands.slash("wikiall", "Display all full wikis of the character on the database only HBAdmins can do this procedure").addOptions(optionSelection.addChoice("all", "all characters").addChoice("major", "major").addChoice("minor", "minor"))); 
 				commandList.add(Commands.slash("ships", "Generates 2 random characters in a ship")); 
 				commandList.add(Commands.slash("sona", "Return your or other user's sona").addOptions(UserOption)); 
 				commandList.add(Commands.slash("insert-sona", "Insert your sona add name, imgur url and games it can be part of!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav,guess,collect)); 
