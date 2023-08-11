@@ -209,7 +209,7 @@ public class CommandManger extends ListenerAdapter {
 		
 			 
 		 }
-		 else if ( event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") &&   event.getFocusedOption().getName().equals("customcharacter") ) 
+		 else if ( event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") || event.getName().equals("oc-available") &&   event.getFocusedOption().getName().equals("customcharacter") ) 
 		 {
 			 Long id = event.getUser().getIdLong(); 
 			 CharacterSelection select = new CharacterSelection();  
@@ -325,8 +325,8 @@ public class CommandManger extends ListenerAdapter {
 		
 			 
 		 }
-		 else if (  ( event.getName().equals("collect-trade")  || event.getName().equals("set-default-collect")  ) &&   ( event.getFocusedOption().getName().equals("trader-character") || event.getFocusedOption().getName().equals("tradee-character") 
-				 || event.getFocusedOption().getName().equals("character") ) ) 
+		 else if (  ( event.getName().equals("gift-collectable") || event.getName().equals("collect-trade")  || event.getName().equals("set-default-collect")  ) &&   ( event.getFocusedOption().getName().equals("trader-character") || event.getFocusedOption().getName().equals("tradee-character") 
+				 || event.getFocusedOption().getName().equals("character") || event.getFocusedOption().getName().equals("gift") ) ) 
 		 {
 			 CharacterSelection select = new CharacterSelection();  
 			
@@ -489,7 +489,12 @@ public class CommandManger extends ListenerAdapter {
 		OptionData favTwo =  new OptionData(OptionType.STRING, "second-character", "Favorite character", true, true ); 
 
 		OptionData cmd =  new OptionData(OptionType.STRING, "command", "Main commands", true, true ); 
+		
+		
+		OptionData gift = new OptionData(OptionType.STRING, "gift", "your character to give" , true, true); 
+		OptionData receiver = new OptionData(OptionType.USER, "receiver", "Enter a user to accept the gift", false, false);
 
+		
 		commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
 		commandList.add(Commands.slash("wiki", "Display general information on entered character").addOptions(characterOption)); 
 		commandList.add(Commands.slash("simps", "Return random character the caller simps for"));
@@ -534,24 +539,33 @@ public class CommandManger extends ListenerAdapter {
 		commandList.add(Commands.slash("swap-favorite-rank","Swap rank of each favorite character!").addOptions(favOne, favTwo)); 
 		commandList.add(Commands.slash("set-default-oc","Set default character picture in your oc!").addOptions(customCharacterOp2)); 
 		commandList.add(Commands.slash("help","Get infromation about each command").addOptions(cmd)); 
+		commandList.add(Commands.slash("gift-collectable","Give a collectable to another user!").addOptions(gift,receiver)); 
+		commandList.add(Commands.slash("sona-available","Check sona is available in following gamemodes!").addOptions(UserOption)); 
+		commandList.add(Commands.slash("oc-available","Check oc is available in following gamemodes!").addOptions(customCharacterOp)); 
+
 
 		if(!debug) 
-		{ 
-			event.getJDA().updateCommands().addCommands(commandList).queue();
-		}
-		else 
-		{
-			System.out.println("DEBUG"); 
-
-			event.getGuild().updateCommands().addCommands(commandList).queue();
-
-		}
+			if(!debug) 
+			{ 
+				event.getJDA().updateCommands().addCommands(commandList).queue();
+				event.getGuild().updateCommands().addCommands(commandList).queue(); 
+			}
+			else 
+			{
+				System.out.println("DEBUG"); 
+				event.getGuild().updateCommands().addCommands(commandList).queue();
+			
+			}
 	}
 	
 	@Override 
 	public void onGuildReady(GuildReadyEvent event) 
 	{
 			
+		// Delete any duplicates 
+		
+
+		
 			// Add command on guild 
 				List<CommandData> commandList = new ArrayList<CommandData>(); 
 				
@@ -612,7 +626,9 @@ public class CommandManger extends ListenerAdapter {
 				OptionData favOne =  new OptionData(OptionType.STRING, "first-character", "Favorite character", true, true ); 
 				OptionData favTwo =  new OptionData(OptionType.STRING, "second-character", "Favorite character", true, true ); 
 				OptionData cmd =  new OptionData(OptionType.STRING, "command", "Main commands", true, true ); 
-
+				
+				OptionData gift = new OptionData(OptionType.STRING, "gift", "your character to give" , true, true); 
+				OptionData receiver = new OptionData(OptionType.USER, "receiver", "Enter a user to accept the gift", false, false);
 				
 				commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
 				commandList.add(Commands.slash("wiki", "Display general information on entered character").addOptions(characterOption)); 
@@ -658,15 +674,22 @@ public class CommandManger extends ListenerAdapter {
 				commandList.add(Commands.slash("swap-favorite-rank","Swap rank of each favorite character!").addOptions(favOne, favTwo)); 
 				commandList.add(Commands.slash("set-default-oc","Set default character picture in your oc!").addOptions(customCharacterOp2)); 
 				commandList.add(Commands.slash("help","Get infromation about each command").addOptions(cmd)); 
+				commandList.add(Commands.slash("gift-collectable","Give a collectable to another user!").addOptions(gift,receiver)); 
+				commandList.add(Commands.slash("sona-available","Check sona is available in following gamemodes!").addOptions(UserOption)); 
+				commandList.add(Commands.slash("oc-available","Check oc is available in following gamemodes!").addOptions(customCharacterOp)); 
+
+				System.out.println("On ready commands"); 
 				if(!debug) 
 				{ 
 					event.getJDA().updateCommands().addCommands(commandList).queue();
+
 				}
 				else 
 				{
 					System.out.println("DEBUG"); 
+				
 					event.getGuild().updateCommands().addCommands(commandList).queue();
-
+					
 				}
 				
 	}

@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.Character;
@@ -198,9 +198,87 @@ public class SonasCommand extends ListenerAdapter
 				else 
 				{
 					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();
-				}
-			default: 
+				} 
 				break; 
+			case "sona-available": 
+			{
+				if(event.getOption("user") == null) 
+				{
+					try 
+					{
+						
+						long userId = event.getUser().getIdLong(); 
+						long serverId = event.getGuild().getIdLong(); 
+						CharacterSelection select = new CharacterSelection(); 
+						
+						if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
+						{
+							event.getHook().sendMessage( "<@" + userId + "> " + "does not have a sona!").queue(); 
+							return; 
+						}
+						
+						Character target = select.getUserSona(userId, serverId); 
+						ArrayList<String> modes = select.CharacterGameModesSona(userId, serverId); 
+						String result = "";
+						for(String col: modes) 
+						{
+							result += col + "\n"; 
+						}
+						EmbedBuilder builder = new EmbedBuilder();
+						builder.setTitle(target.getName());
+						builder.setColor(Color.white); 
+						builder.setThumbnail(target.getDefaultImage()); 
+						builder.setDescription(result);  
+						builder.setFooter(event.getMember().getEffectiveName() + "'s sona", event.getMember().getEffectiveAvatarUrl()); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+					}
+					catch(Exception  e)
+					{
+						event.getHook().sendMessage("Something went wrong!").queue(); 
+					}
+				}
+				else 
+				{
+					try 
+					{
+						long userId = event.getOption("user").getAsUser().getIdLong(); 
+						long serverId =event.getGuild().getIdLong(); 
+					 
+						CharacterSelection select = new CharacterSelection(); 
+						
+						if (!select.searchUserInSona(userId, serverId)) 
+						{
+							event.getHook().sendMessage( "<@" + event.getOption("user").getAsUser().getId() + "> " + "does not have a sona!").queue(); 
+							return; 
+						}
+						
+						
+						Character target = select.getUserSona(userId, serverId); 
+						ArrayList<String> modes = select.CharacterGameModesSona(userId, serverId); 
+						String result = "";
+						for(String col: modes) 
+						{
+							result += col + "\n"; 
+						}
+						EmbedBuilder builder = new EmbedBuilder();
+						builder.setTitle(target.getName());
+						builder.setColor(Color.white); 
+						builder.setThumbnail(target.getDefaultImage()); 
+						builder.setDescription(result);  
+						builder.setFooter(event.getOption("user").getAsMember().getEffectiveName() + "'s sona", 
+								event.getOption("user").getAsMember().getEffectiveAvatarUrl()); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+					}
+					catch(Exception  e)
+					{
+						event.getHook().sendMessage("Something went wrong!").queue(); 
+					}
+				}
+				
+			}
+			break;
+			default: 
+				break;
 		}
 		
 		

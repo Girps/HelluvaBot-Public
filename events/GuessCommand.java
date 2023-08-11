@@ -40,10 +40,6 @@ public class GuessCommand extends ListenerAdapter{
 		{
 			event.deferReply(); 
 			
-			
-			
-			
-			
 			// Get 4 random characters and pick one to guess correctly 
 			CharacterSelection select = new CharacterSelection(); 
 			try 

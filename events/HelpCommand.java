@@ -137,6 +137,7 @@ public class HelpCommand extends ListenerAdapter
 				builder.addField("/collection [user]", "Returns list of characters claimed in collect game " + 
 							"optional arguement [user] to return another players list of character claimed in the game. Limit"
 							+ " of 30 characters can be on a player's collection list.", false); 
+				builder.addField("/gift-collectable <character> <user>", "Give collectable to another user.", false); 
 				builder.addField("/reset-collect"," @Helluva Admin only command to reset collect game. Reset clears all collection list and "
 						+ "releases characters back to game and resets all players claims and rolls." ,false); 
 				builder.addField("","",false); 
@@ -153,6 +154,7 @@ public class HelpCommand extends ListenerAdapter
 						+ "back to the collect game to be claimed by other players.",false); 
 				builder.addField("/force-release <user> <character>","@Helluva Admin only command to force a user to release a character "
 						+ "from their collection. Required arguments <user>, <character>",false); 
+	
 		break; 
 		case 2:
 			builder.addField("/frame", " Returns a random frame from a helluva boss or hazbin hotel episode.", false); 	
@@ -185,9 +187,10 @@ public class HelpCommand extends ListenerAdapter
 			builder.addField("/sona [user]", "Returns a sona of another player. Optional arguemnt [user]",false); 
 			builder.addField("/insert-sona <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>",
 					"Inserts a sona into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they"
-					+ " may not load inside small embeds.Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=pC9GgoP9ycE",false); 
+					+ " may not load inside small embeds.Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ",false); 
 			builder.addField("/remove-sona", "Remove your sona from the server.", false); 
 			builder.addField("/remove-sona [user]", "@Helluva Admin only command to remove another user's sona.",false); 
+			builder.addField("/sona-available [user]", "Check if your or another user's sona is available in each gamemode",false); 
 			break; 
 		case 10: 
 			builder.addField("/user-info","Return general information",false); 
@@ -219,7 +222,7 @@ public class HelpCommand extends ListenerAdapter
 		case 14 : 
 			builder = new EmbedBuilder(); 
 			builder.addField("/insert-oc <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>", "Insert your oc into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they " + 
-					"may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=pC9GgoP9ycE",false); 
+					"may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ",false); 
 			
 			builder.addField("/remove-my-oc <customcharacter>", "Remove your specified oc. Required argument <customcharacter>",false);
 			builder.addField("/remove-user-oc <user> <customcharacter>", "@Helluva Admin only command to remove another users oc. Required arguments <user> and <customcharacter>", false); 
@@ -229,6 +232,7 @@ public class HelpCommand extends ListenerAdapter
 			builder.addField("/my-oc [customcharacter]" , "Return a full image of a specified oc. Optional argument [customcharacter]", false); 
 			builder.addField("/search-oc <user> <customcharacter>", "Search a specifed oc of a user. Required arguments <user> <customcharacter>",false);
 			builder.addField("/set-default-oc <customcharacter>","Set default image of your oc list. Required argument <customcharacter>",false); 
+			builder.addField("/oc-available <customcharacter>", "Check if your oc is available in each gamemode",false); 
 			break; 
 		case 15 : 
 			builder = new EmbedBuilder(); 

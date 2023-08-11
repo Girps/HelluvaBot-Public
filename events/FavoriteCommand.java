@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 import CharactersPack.Character;
 import CharactersPack.CharacterSelection;
+import CharactersPack.GAMETYPE;
+import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -128,7 +130,7 @@ public class FavoriteCommand extends ListenerAdapter{
 			CharacterSelection select = new CharacterSelection();
 			Long userId = event.getUser().getIdLong(); 
 			Long serverId = event.getGuild().getIdLong(); 
-			ArrayList<CharactersPack.Character> list = null; 
+			ArrayList<String> list = null; 
 			try
 			{
 				if(event.getOptions().isEmpty())
@@ -142,19 +144,19 @@ public class FavoriteCommand extends ListenerAdapter{
 				
 				
 					title = select.getTitleList(userId, serverId); 
-					list = select.getFavoritesList(userId,serverId);
+					list = select.getFavListNames(userId,serverId);
 					
 					// Now send Embed 
 					EmbedBuilder builder = new EmbedBuilder(); 
 					
 					builder.setAuthor(title, event.getMember().getEffectiveAvatarUrl(),event.getMember().getEffectiveAvatarUrl()); 
-					builder.setThumbnail(list.get(0).getDefaultImage());   
+					builder.setThumbnail(select.requestSingleCharacter(list.get(0), event.getGuild().getIdLong(), GAMETYPE.FAVORITES, SETUPTYPE.LIGHT).getDefaultImage());   
 					// build a string 
 					String res = "";
 					int count = 1;
-					for(Character characters : list) 
+					for(String characters : list) 
 					{
-						res += count + "." + characters.getName() + "\n";
+						res += count + "." + characters + "\n";
 						count++; 
 					}
 					builder.setDescription(res); 
@@ -173,19 +175,19 @@ public class FavoriteCommand extends ListenerAdapter{
 					} 
 					
 					title = select.getTitleList(targetId, serverId); 
-					list = select.getFavoritesList(targetId,serverId);
+					list = select.getFavListNames(targetId,serverId);
 					
 					// Now send Embed 
 					EmbedBuilder builder = new EmbedBuilder(); 
 					
 					builder.setAuthor(title, event.getOptions().get(0).getAsUser().getEffectiveAvatarUrl(),event.getOptions().get(0).getAsMember().getEffectiveAvatarUrl()); 
-					builder.setThumbnail(list.get(0).getDefaultImage());   
+					builder.setThumbnail(select.requestSingleCharacter(list.get(0), event.getGuild().getIdLong(), GAMETYPE.FAVORITES, SETUPTYPE.LIGHT).getDefaultImage());   
 					// build a string 
 					String res = "";
 					int count = 1;
-					for(Character characters : list) 
+					for(String characters : list) 
 					{
-						res += count + "." + characters.getName() + "\n";
+						res += count + "." + characters + "\n";
 						count++; 
 					}
 					builder.setDescription(res); 

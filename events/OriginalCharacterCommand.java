@@ -200,19 +200,19 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			// print all ocs 
 				if(event.getOptions().isEmpty()) 
 				{	
-					ArrayList<Character> chars = null; 
-					chars = select.getOCList(userId, serverId);
+					ArrayList<String> chars = null; 
+					chars = select.getUsersOCName(userId, serverId);
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", event.getMember().getEffectiveAvatarUrl(),event.getMember().getEffectiveAvatarUrl()); 
 					builder.setColor(Color.WHITE);
 					String result = ""; 
 					// Now print them in a list 
-					for(CharactersPack.Character temps : chars)
+					for(String temps : chars)
 					{
-						result += "- " + temps.getName() + "\n";  
+						result += "- " + temps + "\n";  
 					}
 					builder.setDescription(result); 
-					builder.setThumbnail(chars.get(0).getDefaultImage()); 
+					builder.setThumbnail(select.getOC(chars.get(0), userId, serverId).getDefaultImage()); 
 					
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
@@ -277,21 +277,21 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					}
 					
 					
-					ArrayList<Character> chars = null; 
-					chars = select.getOCList(userId, serverId);
+					ArrayList<String> chars = null; 
+					chars = select.getUsersOCName(userId, serverId);
 					
 					
 					EmbedBuilder builder = new EmbedBuilder(); 
-					builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),event.getOption("user").getAsMember().getEffectiveAvatarUrl());  
+					builder.setAuthor( event.getOption("user").getAsMember().getEffectiveName() + "'s OC list ", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),event.getOption("user").getAsMember().getEffectiveAvatarUrl());  
 					builder.setColor(Color.WHITE);
 					String result = ""; 
 					// Now print them in a list 
-					for(CharactersPack.Character temps : chars)
+					for(String temps : chars)
 					{
-						result += "- " + temps.getName() + "\n";  
+						result += "- " + temps + "\n";  
 					}
 					builder.setDescription(result); 
-					builder.setThumbnail(chars.get(0).getDefaultImage()); 
+					builder.setThumbnail(select.getOC(chars.get(0), userId, serverId).getDefaultImage()); 
 					
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
@@ -319,6 +319,45 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			
 			
 			break; 
+		case "oc-available" : 
+		{
+			try 
+			{
+				
+					String charName = event.getOption("customcharacter").getAsString(); 
+					CharacterSelection select = new CharacterSelection(); 
+					
+					if (!select.searchOC(charName,event.getUser().getIdLong(), event.getGuild().getIdLong())) 
+					{
+						event.getHook().sendMessage( "<@" + userId + "> " + "does not this oc!").queue(); 
+						return; 
+					}
+					
+					
+					Character target = select.getOC(charName, userId, serverId);  
+					ArrayList <String> modes = select.CharacterGameModesOc(userId, serverId, target.getId()); 
+										
+					String result = "";
+					for(String col: modes) 
+					{
+						result += col + "\n"; 
+					}
+					EmbedBuilder builder = new EmbedBuilder();
+					builder.setTitle(charName);
+					builder.setColor(Color.white); 
+					builder.setThumbnail(target.getDefaultImage()); 
+					builder.setDescription(result);  
+					builder.setFooter(event.getMember().getEffectiveName() + "'s oc", event.getMember().getEffectiveAvatarUrl()); 
+					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+				
+				
+			}
+			catch(Exception e) 
+			{
+				event.getHook().sendMessage("Something went wrong!").queue(); 
+			}
+		}
+		break ; 
 		}
 		
 	}

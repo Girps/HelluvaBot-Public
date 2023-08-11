@@ -12,6 +12,7 @@ import CharactersPack.GAMETYPE;
 import CharactersPack.Character;
 import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -211,19 +212,19 @@ public class CollectCommand extends ListenerAdapter{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you have not collected a character from the collect game"+ "!").queue(); 
 						return; 
 					}
-					ArrayList<Character> list = select.getCollectionList(event.getUser().getIdLong(), event.getGuild().getIdLong());
+					ArrayList<String> list = select.getCollectionListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
 					String names = "";
 					
 					
 					
 					EmbedBuilder builder = new EmbedBuilder();
 					
-					for(Character temp : list) 
+					for(String temp : list) 
 					{
-						names += "- "  + temp.getName() + "\n"; 
+						names += "- "  + temp + "\n"; 
 					}
 					builder.setAuthor(event.getMember().getEffectiveName() + "'s Collection!", event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl());
-					builder.setThumbnail(list.get(0).getDefaultImage()); 
+					builder.setThumbnail(select.requestSingleCharacter(list.get(0), event.getGuild().getIdLong(), GAMETYPE.COLLECT, SETUPTYPE.LIGHT).getDefaultImage()); 
 					builder.setColor(Color.YELLOW); 
 					builder.setDescription(names); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
@@ -239,17 +240,17 @@ public class CollectCommand extends ListenerAdapter{
 					}
 					
 					long idtarget = event.getOption("user").getAsUser().getIdLong();  
-					ArrayList<Character> list = select.getCollectionList(idtarget, event.getGuild().getIdLong()); 
+					ArrayList<String> list = select.getCollectionListNames(idtarget, event.getGuild().getIdLong()); 
 					String names = ""; 
 					EmbedBuilder builder = new EmbedBuilder(); 
 						
-					for(Character temp : list) 
+					for(String temp : list) 
 					{
-						names += "- "  + temp.getName() + "\n"; 
+						names += "- "  + temp+ "\n"; 
 					}
 					builder.setAuthor(event.getOption("user").getAsMember().getEffectiveName() + "'s Collection!", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),
 							event.getOption("user").getAsMember().getEffectiveAvatarUrl());
-					builder.setThumbnail(list.get(0).getDefaultImage()); 
+					builder.setThumbnail(select.requestSingleCharacter(list.get(0), event.getGuild().getIdLong(), GAMETYPE.COLLECT, SETUPTYPE.LIGHT).getDefaultImage()); 
 					builder.setColor(Color.YELLOW); 
 					builder.setDescription(names); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
@@ -445,7 +446,14 @@ public class CollectCommand extends ListenerAdapter{
 						
 							for(Character temp : list) 
 							{
-								names += "- "  + temp.getName() + "\n"; 
+								if(!select.hasBeenClaimed(temp.getId(), event.getGuild().getIdLong())) 
+								{  
+									names += "- "  + temp.getName() + "\n"; 
+								}
+								else 
+								{
+									names += "- " + temp.getName() + " :x:" +"\n"; 
+								}
 							}
 							builder.setAuthor(event.getOption("user").getAsMember().getEffectiveName() + "'s wishlist!", event.getOption("user").getAsMember().getEffectiveAvatarUrl(),
 									event.getOption("user").getAsMember().getEffectiveAvatarUrl());
@@ -608,6 +616,84 @@ public class CollectCommand extends ListenerAdapter{
 					event.getHook().sendMessage("Something went wrong!").queue(); 
 				} 
 			}	
+				break; 
+			case "gift-collectable" :
+			{
+				// Two required options character and user 
+				String giftCharacterName = event.getOption("gift").getAsString(); 
+				long recieverId =  event.getOption("receiver").getAsUser().getIdLong(); 
+				
+				if(event.getOption("receiver").getAsUser().isBot()) 
+				{
+					event.getHook().sendMessage("Cannot trade with a bot!").queue();
+					return; 
+				}
+				
+				try 
+				{ 
+					CharacterSelection select = new CharacterSelection(); 
+					// Check recevier reached limit 
+					if(select.checkCollectLimit(recieverId, event.getGuild().getIdLong())) 
+					{
+						event.getHook().sendMessage(event.getOption("receiver").getAsMentionable() + " cannot receive character they have hit the limit of "
+								+ "30 collectables!").queue(); 
+						return; 
+					}
+					
+					// Check if gifter has that character 
+					if(select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong()).contains(giftCharacterName) == false) 
+					{
+						event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have character " + MarkdownUtil.bold(giftCharacterName) + " to give!").queue(); 
+						return; 
+					}
+					
+					else 
+					{
+						
+						event.getHook().sendMessage(event.getUser().getAsMention() +  " wants to give their collectible " +  MarkdownUtil.bold(giftCharacterName) 
+						+ " to " + event.getOption("receiver").getAsUser().getAsMention()+  "! React to accept this gift!").queue
+						( (eMessage) -> 
+							{
+								this.waiter.waitForEvent(
+										MessageReactionAddEvent.class, 
+										(eReact) ->  
+											{ 
+												// Make sure not a bot and same user and message and conduct gift 
+												if(!eReact.getUser().isBot() && eReact.getUser().getIdLong() == recieverId 
+														&& eReact.getMessageIdLong() == eMessage.getIdLong() ) 
+												{
+													// now trade 
+													return true; 
+												}
+												else 
+												{
+													return false;
+												}
+											},	// success 
+											(eSuccess) -> 	
+											{
+												// now give 
+												select.giveCharacter(event.getUser().getIdLong(), recieverId,event.getGuild().getIdLong(), giftCharacterName); 
+												event.getHook().sendMessage("Gift successful!").queue(); 
+											} 
+											,
+											// Waited 10 seconds call this function
+											30L,TimeUnit.SECONDS, 
+											() -> event.getHook().sendMessage("30 seconds passed gift expired!").queue()
+										);
+							}
+						); 
+						
+						
+					}
+				} 
+				catch (Exception e) 
+				{
+					event.getHook().sendMessage("Something went wrong!").queue();
+				}
+				
+				
+			}
 				break; 
 		}
 	}
