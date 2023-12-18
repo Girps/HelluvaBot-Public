@@ -218,11 +218,9 @@ public class WaifuCommand extends ListenerAdapter{
 											one = select.getUserWaifu(trader.getIdLong(), eReact.getGuild().getIdLong());
 											two = select.getUserWaifu(tradee.getIdLong(), eReact.getGuild().getIdLong()); 
 											
-											// Now we got two characters now swap the character we have to update the database!
+											// swap waifus 
+											select.waifuSwap(trader.getIdLong(), tradee.getIdLong(), one.getId(), two.getId(), serverID); 
 											
-											// update trader 
-											select.updateWaifuCharacter(trader.getIdLong(), eReact.getGuild().getIdLong(), two);
-											select.updateWaifuCharacter(tradee.getIdLong(), eReact.getGuild().getIdLong(), one);
 											event.getHook().sendMessage("Trade successful!").queue();
 											
 										 }

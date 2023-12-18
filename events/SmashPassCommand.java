@@ -136,7 +136,7 @@ public class SmashPassCommand extends ListenerAdapter
 								() -> 
 									{
 								messageEmbed.editMessageEmbeds(messageEmbed.getEmbeds().get(0)).setActionRow(buttons.get(0).asDisabled(),buttons.get(1).asDisabled()).queue();  
-								messageEmbed.getChannel().asTextChannel().sendMessage("Session expired!").queue(); 
+								messageEmbed.reply(MarkdownUtil.bold("Session expired!")).queue(); 
 									}
 								); 
 						 });

@@ -163,6 +163,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			else if(Helper.checkRoles(event.getMember().getRoles())) // Not empty
 			{
 				userId = event.getOption("user").getAsUser().getIdLong(); 
+
 				
 				try 
 				{
@@ -243,11 +244,11 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				
 				if(event.getOptions().size() == 2)
 				{
-				if(!select.searchAllUserOcs(userId, serverId)) 
-				{
-					event.getHook().sendMessage("<@" + userId +">" + " does not have any OCs!").queue(); 
-					return;
-				}
+					if(!select.searchAllUserOcs(userId, serverId)) 
+					{
+						event.getHook().sendMessage("<@" + userId +">" + " does not have any OCs!").queue(); 
+						return;
+					}
 				
 				
 				

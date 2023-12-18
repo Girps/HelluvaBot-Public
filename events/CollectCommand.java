@@ -116,7 +116,6 @@ public class CollectCommand extends ListenerAdapter{
 											// If valid claim 
 											if (!claimLimit && !collectLimit && !alreadyClaimed) 
 											{
-												
 												return true; 
 											} 	// Already claimed pass hour interval 
 											else if (claimLimit)	// check if they already claimed the pass hour interval 
@@ -267,6 +266,7 @@ public class CollectCommand extends ListenerAdapter{
 			case "collect-trade" : // trade character in collection
 			
 				String traderCharacter = event.getOption("trader-character").getAsString(); 
+				long trader = event.getUser().getIdLong(); 
 				long tradee = event.getOption("user").getAsUser().getIdLong(); 
 				String tradeeCharacter = event.getOption("tradee-character").getAsString(); 
 				
@@ -306,14 +306,22 @@ public class CollectCommand extends ListenerAdapter{
 										{
 										
 											CharacterSelection select = new CharacterSelection();
-											traderCharacterId = select.getCharacterId(traderCharacter, event.getGuild().getIdLong());
-											tradeeCharacterId = select.getCharacterId (tradeeCharacter,event.getGuild().getIdLong()); 
+											traderCharacterId = select.getCharacterIdFromPlayersCollect(traderCharacter, trader,event.getGuild().getIdLong());
+											tradeeCharacterId = select.getCharacterIdFromPlayersCollect (tradeeCharacter,tradee,event.getGuild().getIdLong()); 
+											if(traderCharacterId == -1 || traderCharacterId == -1) 
+											{
+												throw new Exception(event.getUser().getAsMention() + " Does not have this character to trade!"); 
+											}
+											else if(tradeeCharacterId == -1)
+											{
+												throw new Exception(event.getOption("user").getAsUser().getAsMention() + " Does not have this character to trade!");
+											}
 											select.swapUserCollectible(event.getUser().getIdLong(), tradee, traderCharacterId, tradeeCharacterId, eSuccess.getGuild().getIdLong());
 										}
 										catch (Exception e)
 										{
 											e.printStackTrace();
-											event.getHook().sendMessage("Something went wrong!").queue(); 
+											event.getHook().sendMessage(e.getMessage()).queue(); 
 											return; 
 										} 
 										event.getHook().sendMessage("Trade successful!").queue(); 
@@ -364,9 +372,9 @@ public class CollectCommand extends ListenerAdapter{
 				try 
 				{
 					CharacterSelection select = new CharacterSelection();
-					if(select.getSearchCharIdSelect(select.getCharacterId(targetCharacter, event.getGuild().getIdLong()), event.getUser().getIdLong(), event.getGuild().getIdLong())) 
+					charId = select.getCharacterIdFromPlayersCollect(targetCharacter, event.getUser().getIdLong(),event.getGuild().getIdLong() ); 
+					if( charId != -1) 
 					{ 
-						charId = select.getCharacterId(targetCharacter, event.getGuild().getIdLong());
 						select.setDefCollectCharacter(charId,event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 						event.getHook().sendMessage(event.getUser().getAsMention() + " collectible "+ MarkdownUtil.bold(targetCharacter) + " has been set as default image!").queue(); 
 					}

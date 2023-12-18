@@ -2,9 +2,13 @@ package events;
 
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import CharactersPack.CharacterSelection;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
@@ -70,6 +74,31 @@ public class UserManager extends ListenerAdapter
 						); 
 				}
 			}
+			
+			
+			/*Get all guilds if bot was kicked from the server when offline it must detect this and delete any 
+			 * tuples corresponding to those tuples 
+			 * */ 
+			System.out.println("Checking in servers in Database and JDA"); 
+			// each server from the database 
+			Map<Long, Long> dbServers = select.getAllServersDB(); 
+			for(Map.Entry<Long, Long> server : dbServers.entrySet()) 
+			{
+				long idGuild = server.getValue(); 
+				// Not in server delete it from the database 
+				if ( event.getJDA().getGuildById(idGuild) == null) 
+				{
+					System.out.println("Delete Server: " + idGuild); 
+					select.removeAllSonas(idGuild);
+					select.removeAllOcsInGuild(idGuild);
+					select.removeAllWaifus(idGuild); 
+					select.removeFavListGuild(idGuild);
+					select.removeAllPlayersCollectInGuild(idGuild); 
+				} 
+			}
+			
+		
+			
 		} 
 		catch(Exception e) 
 		{

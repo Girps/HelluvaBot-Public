@@ -52,7 +52,7 @@ public class KinsCommand extends ListenerAdapter{
 				catch (Exception e) 
 				{
 					e.printStackTrace();
-					event.getHook().sendMessage("Kins command failed on " + name).queue();
+					event.getHook().sendMessage(e.getMessage()).queue();
 				}
 		}
 	}

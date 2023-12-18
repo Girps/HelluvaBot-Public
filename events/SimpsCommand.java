@@ -56,7 +56,7 @@ public class SimpsCommand extends ListenerAdapter{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					event.deferReply().queue();
-					event.getHook().sendMessage("simps command failed!").queue();
+					event.getHook().sendMessage(e.getMessage()).queue();
 				} 
 		}
 	}

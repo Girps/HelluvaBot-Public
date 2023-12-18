@@ -413,4 +413,10 @@ public class Character
 		   }
 	}
 	
+	// Return name of the character
+	@Override
+	public String toString() 
+	{
+		return this.getName();  
+	}
 }

@@ -53,13 +53,14 @@ public class KdmCommand extends ListenerAdapter
 			TextChannel  txtChan = event.getChannel().asTextChannel(); 
 			
 			String userId = event.getUser().getId(); 
-		
+			Character[] chtrs = null; 
 			try 
 			{
 			
 				CharacterSelection select = new CharacterSelection(); 
-				Character[] chtrs = new Character[3]; 
-
+				chtrs = new Character[3]; 
+				
+				// No entry get 3 random characters
 				if(event.getOption("first") == null && event.getOption("second") == null && event.getOption("third") == null) 
 				{
 					chtrs = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3);
@@ -68,7 +69,8 @@ public class KdmCommand extends ListenerAdapter
 				{
 					int size = event.getOptions().size();
 					List<OptionMapping> options = event.getOptions(); 
-					// Add into game 
+					
+					// Request by name a character
 					for(int i = 0; i < size; ++i) 
 					{
 						chtrs[i] = select.requestSingleCharacter(options.get(i).getAsString(),  event.getGuild().getIdLong(), GAMETYPE.KDM, SETUPTYPE.LIGHT); 
@@ -192,10 +194,10 @@ public class KdmCommand extends ListenerAdapter
 						, (eBtn) -> 
 						{ 
 							KdmRound temp = currentRound; 
-							eBtn.getChannel().asTextChannel().sendMessage( "<@"+ temp.getUser() + ">" + " would " + MarkdownUtil.italics("kill ") + MarkdownUtil.bold(temp.getKill()) + MarkdownUtil.italics(" date ") + MarkdownUtil.bold(temp.getDate()) + " and "+  MarkdownUtil.italics(" marry ") + MarkdownUtil.bold(temp.getMarry())).queue();  
+							eBtn.reply( "<@"+ temp.getUser() + ">" + " would " + MarkdownUtil.italics("kill ") + MarkdownUtil.bold(temp.getKill()) + MarkdownUtil.italics(" date ") + MarkdownUtil.bold(temp.getDate()) + " and "+  MarkdownUtil.italics(" marry ") + MarkdownUtil.bold(temp.getMarry())).queue();  
 							 
 						}
-						, 5L,TimeUnit.MINUTES, () -> 
+						, 2L,TimeUnit.MINUTES, () -> 
 						{
 								// Delete unfinished game 
 								e.delete().queue();
@@ -211,7 +213,9 @@ public class KdmCommand extends ListenerAdapter
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				event.deferReply().queue();
-				event.getHook().sendMessage("Something went wrong!"); 
+				
+					event.getHook().sendMessage(e.getMessage()).queue(); 
+				
 			}
 		}
 				

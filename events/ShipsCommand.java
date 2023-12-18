@@ -69,8 +69,7 @@ public class ShipsCommand extends ListenerAdapter{
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				event.getHook().sendMessage("Something went wrong!").queue();
-				System.out.println(arr[0].getName() + " " + arr[1].getName()); 
+				event.getHook().sendMessage(e.getMessage()).queue();
 			}
 		}
 		

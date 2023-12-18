@@ -250,7 +250,7 @@ public class FavoriteCommand extends ListenerAdapter{
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-					event.getHook().sendMessage("Something went wrong!").queue(); 
+					event.getHook().sendMessage(e.getMessage()).queue(); 
 				} 
 			
 			}	
