@@ -34,7 +34,43 @@ public class CollectCommand extends ListenerAdapter{
 		
 		switch (event.getName())
 		{
-			case "roll": // roll a random character claim with a reaction 
+			
+			// get roll time 
+			case "next-claim":
+				try 
+				{	
+					
+					CharacterSelection select = new CharacterSelection();
+					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
+					boolean flag = !select.getClaimLimit(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
+					String time = select.getCollectTime(); 
+					
+					event.getHook().sendMessage( event.getUser().getAsMention() + " next claim reset time is " + MarkdownUtil.bold(time + "!")  +   ( (flag ) ? (" You currently have 1 claim!") : (" You currently have no claims!") )   ).queue(); 
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+					event.getHook().sendMessage("Something went wrong!").queue();
+				}
+			break; 
+			
+			case "next-roll":
+				try 
+				{
+					CharacterSelection select = new CharacterSelection(); 
+					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
+					String time = select.getRollRestTime(); 
+					int result = select.getPlayerRolls(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
+					event.getHook().sendMessage(event.getUser().getAsMention() + " next roll time is " + MarkdownUtil.bold(time + "!") + " You have " + result + " rolls left!" ).queue(); 
+				}
+				catch(Exception e) 
+				{
+					e.printStackTrace();
+					event.getHook().sendMessage("Something went wrong!").queue();
+				}
+				break; 
+				
+			case "roll": // roll a random character claim with a reaction  
 				
 			try 
 			{
@@ -44,14 +80,15 @@ public class CollectCommand extends ListenerAdapter{
 				if ( select.getPlayerRollsLimit(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 				{
 					// Get time till next turn reset and 
-					String time = select.getRollRestTime(event.getUser().getIdLong(), event.getUser().getIdLong()); 
+					String time = select.getRollRestTime(); 
 					event.getHook().sendMessage( event.getUser().getAsMention() + " you ran out of rolls! Please wait till " + MarkdownUtil.bold(time) + " to roll again!").queue(); 
 					return; 
 				}
 				
 				// Decrement players roll
-				select.decPlayerRoll(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 				Character temp = select.getRandomCharacters(GAMETYPE.COLLECT, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0];
+				select.decPlayerRoll(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
+				
 				long charId = temp.getId(); 
 				// Get list of users that have this character in their wish list 
 				
@@ -123,7 +160,7 @@ public class CollectCommand extends ListenerAdapter{
 												String time = "";
 												try 
 												{
-													time = innerSelect.getPlayerCollectTime(eReact.getUserIdLong(), eReact.getGuild().getIdLong());
+													time = innerSelect.getCollectTime();
 													event.getHook().sendMessage(eReact.getUser().getAsMention() + " you already claimed! Wait after " + MarkdownUtil.bold(time) + " before you can claim again!" ).queue(); 
 												}
 												catch (Exception e)
@@ -194,6 +231,7 @@ public class CollectCommand extends ListenerAdapter{
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				event.getHook().sendMessage(e.getMessage() + " your roll was refunded!").queue(); 
 			}
 				
 			
@@ -338,7 +376,7 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 			case "reset-collect" : // Can only be decided by Helluva Admin
 				
-				if ( Helper.checkRoles(event.getMember().getRoles())) 
+				if ( Helper.checkAdminRole(event.getMember().getRoles())) 
 				{
 					// Reset the game for the server 
 					try 
@@ -358,7 +396,12 @@ public class CollectCommand extends ListenerAdapter{
 				}
 				else 
 				{
-					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();
+					EmbedBuilder builder = new EmbedBuilder(); 
+					builder.setImage("https://i.imgur.com/gPWckoI.jpg"); 
+					builder.setDescription("Make sure this role (same name no special permissons required) is created and Assigned to admins of this server in order to use this command!"); 
+					builder.setColor(Color.RED); 
+					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+					event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only " + MarkdownUtil.bold("Helluva Admins") + " can reset the collect game!").queue();				
 				}
 				
 
@@ -597,9 +640,15 @@ public class CollectCommand extends ListenerAdapter{
 				try 
 				{
 					
-					if ( !Helper.checkRoles(event.getMember().getRoles())) 
+					if ( !Helper.checkAdminRole(event.getMember().getRoles())) 
 					{
-						event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only Helluva Admins can use that command!").queue();
+						
+						EmbedBuilder builder = new EmbedBuilder(); 
+						builder.setImage("https://i.imgur.com/gPWckoI.jpg"); 
+						builder.setDescription("Make sure this role (same name no special permissons required) is created and Assigned to admins of this server in order to use this command!"); 
+						builder.setColor(Color.RED); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+						event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only " + MarkdownUtil.bold("Helluva Admins") + " can release another players colectible!").queue();				
 						return; 
 					}
 					

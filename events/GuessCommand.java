@@ -78,6 +78,8 @@ public class GuessCommand extends ListenerAdapter{
 							}
 							else 
 							{
+								e.getMessage().editMessageEmbeds(e.getMessage().getEmbeds().get(0))
+								.setActionRow(buttons.get(0).asDisabled(), buttons.get(1).asDisabled(), buttons.get(2).asDisabled(), buttons.get(3).asDisabled()).queue( );
 								e.getChannel().asTextChannel().sendMessage(event.getUser().getAsMention() + " you answered " + MarkdownUtil.bold(e.getInteraction().getButton().getLabel()) 
 								+ " you are wrong! The answer is " + MarkdownUtil.bold(chts[rand].getName() + "!")).queue(); 
 							}

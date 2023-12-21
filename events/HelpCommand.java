@@ -107,7 +107,7 @@ public class HelpCommand extends ListenerAdapter
 					builder = getEmbed(14); 
 					break; 
 				}
-				case "Credits" : 
+				case "Terms Of Service" : 
 				{
 					builder = getEmbed(15);
 				}
@@ -134,6 +134,8 @@ public class HelpCommand extends ListenerAdapter
 				builder.setTitle("Collect commands list"); 
 				builder.addField("/roll", "Returns a random character for a player to claim within a 15 second interval." 
 						+ "Each player has 3 rolls every hour it resets!", false) ;
+				builder.addField("/next-roll", "Returns time till next roll reset and number of rolls player has left",false); 
+				builder.addField("/next-claim", "Returns time till next claim reset and number of claims player has left",false); 
 				builder.addField("/collection [user]", "Returns list of characters claimed in collect game " + 
 							"optional arguement [user] to return another players list of character claimed in the game. Limit"
 							+ " of 30 characters can be on a player's collection list.", false); 
@@ -188,6 +190,7 @@ public class HelpCommand extends ListenerAdapter
 			builder.addField("/insert-sona <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>",
 					"Inserts a sona into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they"
 					+ " may not load inside small embeds.Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ",false); 
+			builder.addField("/update-oc [url] [kdm] [smashpass] [simps] [ships] [kins] [waifu] [favorite] [guess] [collect>]","Edit your sona select at least 1 field to update.", false); 
 			builder.addField("/remove-sona", "Remove your sona from the server.", false); 
 			builder.addField("/remove-sona [user]", "@Helluva Admin only command to remove another user's sona.",false); 
 			builder.addField("/sona-available [user]", "Check if your or another user's sona is available in each gamemode",false); 
@@ -223,7 +226,7 @@ public class HelpCommand extends ListenerAdapter
 			builder = new EmbedBuilder(); 
 			builder.addField("/insert-oc <name> <url> <kdm> <smashpass> <simps> <ships> <kins> <waifu> <favorite> <guess> <collect>", "Insert your oc into each game. Use direct url link containing image of your sona must end with .jpg, .png or .gif. Gifs aren't recommended as they " + 
 					"may not load inside small embeds. Recommended sites for url link https://imgur.com and https://postimages.org.  Limit of 10 Ocs!" + "\nTutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ",false); 
-			
+			builder.addField("/update-oc <customcharacter> [url] [kdm] [smashpass] [simps] [ships] [kins] [waifu] [favorite] [guess] [collect>]","Edit your oc must pick the name of custom character select at least 1 field to update.", false); 
 			builder.addField("/remove-my-oc <customcharacter>", "Remove your specified oc. Required argument <customcharacter>",false);
 			builder.addField("/remove-user-oc <user> <customcharacter>", "@Helluva Admin only command to remove another users oc. Required arguments <user> and <customcharacter>", false); 
 			builder.addField("/remove-all-ocs","Remove all your ocs in this server.",false); 
@@ -237,6 +240,8 @@ public class HelpCommand extends ListenerAdapter
 		case 15 : 
 			builder = new EmbedBuilder(); 
 			builder.addField("Credits","https://twitter.com/Girpsy",false); 
+			builder.addField("Terms Of Service","https://girps.github.io/Helluva-Bot-TOS/",false); 
+			builder.addField("Privacy and Conditions","https://girps.github.io/Helluva-Bot-TOS/privacy",false); 
 			break; 
 		}
 		return builder;

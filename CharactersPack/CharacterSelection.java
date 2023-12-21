@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -65,7 +66,7 @@ public class CharacterSelection {
 	public ArrayList<String> getAllCharacterNames(GAMETYPE type, long serverId) 
 	{
 		// Query 
-		Statement stat = null;
+		PreparedStatement stat = null;
 		ResultSet res = null; 
 		Connection conn = null; 
 		ArrayList<String> names = null; 
@@ -73,13 +74,13 @@ public class CharacterSelection {
 		{
 			
 			conn = dataSource.getConnection(); 
-			stat = conn.createStatement();
 			String query = ""; 
 		
 			switch(type) 
 			{
 			case WIKI :
 				query = "SELECT name FROM characters"; 
+				stat = conn.prepareStatement(query);
 				break; 
 			case KDM :
 			query = "SELECT name FROM characters \r\n"
@@ -89,10 +90,13 @@ public class CharacterSelection {
 					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
-					+ "WHERE sonas.inKDM = \"T\" " + " AND " + "server_Id = " + serverId  
+					+ "WHERE sonas.inKDM = \"T\" " + " AND " + "server_Id = ? "   
 					+ " UNION "
 					+ "SELECT name FROM customCharacters\r\n"
-					+ "WHERE inKDM = \"T\"" + " AND " + "server_Id = " + serverId ; 
+					+ "WHERE inKDM = \"T\"" + " AND " + "server_Id = ? " ; 
+			stat = conn.prepareStatement(query);
+			stat.setLong(1, serverId);
+			stat.setLong(2, serverId);
 			break; 
 			case SMASHPASS :
 			query = "SELECT name FROM characters \r\n"
@@ -102,10 +106,13 @@ public class CharacterSelection {
 					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
-					+ "WHERE sonas.inSP = \"T\" " + " AND " + "server_Id = " + serverId   
+					+ "WHERE sonas.inSP = \"T\" " + " AND " + "server_Id = ? "
 					+ " UNION "
 					+ " SELECT name FROM customCharacters\r\n"
-					+ " WHERE inSP = \"T\""  + " AND " + "server_Id = " + serverId ;  
+					+ " WHERE inSP = \"T\""  + " AND " + "server_Id = ? ";  
+			stat = conn.prepareStatement(query);
+			stat.setLong(1, serverId);
+			stat.setLong(2, serverId);
 			break; 
 		case FAVORITES :
 			query = "SELECT name FROM characters \r\n"
@@ -113,10 +120,14 @@ public class CharacterSelection {
 					+ "SELECT name FROM gameCharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
-					+ "WHERE sonas.inFav = \"T\" " + " AND " + "server_Id = " + serverId  
+					+ "WHERE sonas.inFav = \"T\" " + " AND " + "server_Id = ? "   
 					+ " UNION "
 					+ " SELECT name FROM customCharacters\r\n"
-					+ " WHERE inFav = \"T\"" + " AND " + "server_Id = " + serverId ;  
+					+ " WHERE inFav = \"T\"" + " AND " + "server_Id = ? " ;  
+			stat = conn.prepareStatement(query);
+			stat.setLong(1, serverId);
+			stat.setLong(2, serverId);
+			break; 
 			
 		case COLLECT : 
 			query = "SELECT name FROM characters \r\n"
@@ -124,14 +135,18 @@ public class CharacterSelection {
 					+ "SELECT name FROM gameCharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
-					+ "WHERE sonas.inCollect = \"T\" " + " AND " + "server_Id = " + serverId  
+					+ "WHERE sonas.inCollect = \"T\" " + " AND " + "server_Id = ? "
 					+ " UNION "
 					+ " SELECT name FROM customCharacters\r\n"
-					+ " WHERE inCollect = \"T\"" + " AND " + "server_Id = " + serverId ;  
+					+ " WHERE inCollect = \"T\"" + " AND " + "server_Id = ?";  
+			
+			stat = conn.prepareStatement(query);
+			stat.setLong(1, serverId);
+			stat.setLong(2, serverId);
 			break; 
 		}
-		
-			res = stat.executeQuery(query); 
+			
+			res = stat.executeQuery();  
 		
 			res.next(); 
 		
@@ -917,9 +932,53 @@ public class CharacterSelection {
 			try {  if(res != null) { res.close(); } } catch(Exception e){} 
 			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
 			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
-
 		}
 		return found; 
+	}
+	
+	/* Method get user's sonas fields from the database */
+	public HashMap<String, String> getSonaFields(long userId, long serverId)
+	{
+		PreparedStatement stat = null; 
+		ResultSet res= null; 
+		Connection conn = null; 
+		HashMap<String, String> fields = new HashMap<>(11); 
+		try 
+		{
+			String query = "SELECT name, url , inKDM , inSP, inSimps , inShips , inKins , inWaifu, inFav , inGuess, inCollect FROM "
+					+ "sonas WHERE  user_Id = ? AND server_Id = ?"; 
+			
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, userId);
+			stat.setLong(2, serverId);
+			res = stat.executeQuery(); 
+			res.next(); 
+			// Have results now add to hash Map 
+			fields.put("name", res.getString("name"));
+			fields.put("url", res.getString("url"));
+			fields.put("kdm", res.getString("inKDM")); 
+			fields.put("smashpass", res.getString("inSP")); 
+			fields.put("simps", res.getString("inSimps")); 
+			fields.put("ships", res.getString("inShips"));
+			fields.put("kins", res.getString("inKins") );
+			fields.put("waifu", res.getString("inWaifu")); 
+			fields.put("favorite", res.getString("inFav")); 
+			fields.put("guess", res.getString("inGuess"));
+			fields.put("collect", res.getString("inCollect")); 
+			
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try {  if(res != null) { res.close(); } } catch(Exception e){} 
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		return fields; 
 	}
 	
 	// Remove sona from the table 
@@ -1039,6 +1098,57 @@ public class CharacterSelection {
 		
 	}
 	
+	/* Method updates a users sona fields*/ 
+	public void updateSona(long userId,long serverId, HashMap<String, String> newFields)
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 		
+		String query=  null; 
+		try 
+		{
+			query = "UPDATE sonas "
+					+ " SET "
+					+ " name = ? "
+					+ ", url = ? "
+					+ ", inKDM = ? "
+					+ ", inSP = ? "
+					+ ", inSimps = ?"
+					+ ", inShips =? "
+					+ ", inKins = ? "
+					+ ", inWaifu = ? "
+					+ ", inFav = ? "
+					+ ", inGuess = ? "
+					+ ", inCollect = ? "
+					+ " WHERE user_Id = ? AND server_Id = ? "; 
+			
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setString(1, newFields.get("name"));
+			stat.setString(2, newFields.get("url"));
+			stat.setString(3, newFields.get("kdm"));
+			stat.setString(4, newFields.get("smashpass"));
+			stat.setString(5, newFields.get("simps"));
+			stat.setString(6, newFields.get("ships"));
+			stat.setString(7, newFields.get("kins"));
+			stat.setString(8, newFields.get("waifu"));
+			stat.setString(9, newFields.get("favorite"));
+			stat.setString(10, newFields.get("guess"));
+			stat.setString(11, newFields.get("collect"));
+			stat.setLong(12, userId);
+			stat.setLong(13, serverId); 
+			stat.execute(); 
+		}
+		catch(Exception e) 
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) {  conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
 	
 	public void removeAllSonas(Long  guildId)  
 	{
@@ -1143,16 +1253,16 @@ public class CharacterSelection {
 	/* Get character ids of a from a playersCollection from the data base*/ 
 	public int getCharacterIdFromPlayersCollect(String characterName, long userId ,long serverId )  
 	{
-		String queryCharacterId = "SELECT col_Id FROM playerscollection as chid \r\n"
+		String queryCharacterId = "SELECT col_Id FROM playersCollection as chid \r\n"
 				+ "INNER JOIN characters as ch ON ch.char_Id = chid.col_Id AND ch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playerscollection as chid \r\n"
-				+ "INNER JOIN customcharacters as csh ON csh.cusChar_Id = chid.col_Id AND csh.name  = ? AND chid.server_Id =  csh.server_Id AND csh.server_Id = ? AND chid.user_Id = ? \r\n"
+				+ "SELECT col_Id FROM playersCollection as chid \r\n"
+				+ "INNER JOIN customCharacters as csh ON csh.cusChar_Id = chid.col_Id AND csh.name  = ? AND chid.server_Id =  csh.server_Id AND csh.server_Id = ? AND chid.user_Id = ? \r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playerscollection as chid \r\n"
-				+ "INNER JOIN gamecharacters as gch ON gch.gameCharacter_Id = chid.col_Id AND gch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
+				+ "SELECT col_Id FROM playersCollection as chid \r\n"
+				+ "INNER JOIN gameCharacters as gch ON gch.gameCharacter_Id = chid.col_Id AND gch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playerscollection as chid \r\n"
+				+ "SELECT col_Id FROM playersCollection as chid \r\n"
 				+ "INNER JOIN sonas as s ON s.sona_Id = chid.col_Id AND s.name = ? AND chid.server_Id = s.server_Id AND s.server_Id = ? AND chid.user_Id = ?";   
 		
 
@@ -1531,8 +1641,8 @@ public class CharacterSelection {
 		
 	}
 	
-	
-	public boolean isAvailable(String name, Long userId, Long serverId) 
+	/* Check if name is available in a guild */ 
+	public boolean isAvailable(String name, Long serverId) 
 	{
 		String query = "SELECT characters.name FROM characters \r\n"
 					+ " WHERE characters.name = ? \r\n"
@@ -1541,10 +1651,10 @@ public class CharacterSelection {
 					+ " WHERE name = ? \r\n"
 					+ " UNION \r\n"
 					+ " SELECT sonas.name FROM sonas\r\n"
-					+ " WHERE sonas.name =  ? AND sonas.server_Id = ? AND sonas.user_Id = ? "
+					+ " WHERE sonas.name =  ? AND sonas.server_Id = ?"
 					+ " UNION "
 					+ " SELECT customCharacters.name FROM customCharacters\r\n"
-					+ " WHERE customCharacters.name = ? AND customCharacters.server_Id = ? AND customCharacters.user_Id = ?" ; 
+					+ " WHERE customCharacters.name = ? AND customCharacters.server_Id = ? " ; 
 	
 		
 		PreparedStatement stat = null;
@@ -1559,10 +1669,8 @@ public class CharacterSelection {
 			stat.setString(2, name);
 			stat.setString(3,name);
 			stat.setLong(4,serverId);
-			stat.setLong(5, userId);
-			stat.setString(6,name); 
-			stat.setLong(7, serverId);
-			stat.setLong(8, userId);
+			stat.setString(5,name); 
+			stat.setLong(6, serverId);
 			 res = stat.executeQuery();
 			result = res.next(); 
 		} catch (SQLException e) {
@@ -1645,6 +1753,104 @@ public class CharacterSelection {
 			try {  if(conn != null) { conn.setAutoCommit(true); conn.close(); } } catch(Exception e){} 
 		}
 		
+	}
+	
+	public HashMap<String, String> getOCFields(String name, long userId, long serverId) 
+	{
+		PreparedStatement  stat =null; 
+		Connection conn = null;
+		ResultSet res  = null; 
+		String query = "SELECT name , url , inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, "
+				+ " inGuess, inCollect FROM customCharacters"
+				+ " WHERE user_Id = ? AND server_Id = ? AND name = ?"; 
+		HashMap<String, String> fields = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, userId);
+			stat.setLong(2, serverId);
+			stat.setString(3, name);
+			res = stat.executeQuery();
+			res.next(); 
+			fields = new HashMap<String, String>(11); 
+			fields.put("name", res.getString("name"));
+			fields.put("url", res.getString("url"));
+			fields.put("kdm", res.getString("inKDM")); 
+			fields.put("smashpass", res.getString("inSP")); 
+			fields.put("simps", res.getString("inSimps")); 
+			fields.put("ships", res.getString("inShips"));
+			fields.put("kins", res.getString("inKins") );
+			fields.put("waifu", res.getString("inWaifu")); 
+			fields.put("favorite", res.getString("inFav")); 
+			fields.put("guess", res.getString("inGuess"));
+			fields.put("collect", res.getString("inCollect")); 
+			System.out.println(fields); 
+		} 
+		catch(SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(res != null) { res.close(); } } catch(Exception e){} 
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		return fields; 
+	}
+	
+	/* Method updates fields of the OC of given user */ 
+	public void updateOC(String name, long userId, long serverId, HashMap<String, String> newFields) 
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 
+		
+		String query = null; 
+		try 
+		{
+			query = "UPDATE customCharacters "
+					+ " SET "
+					+ " name = ? "
+					+ ", url = ? "
+					+ ", inKDM = ? "
+					+ ", inSP = ? "
+					+ ", inSimps = ?"
+					+ ", inShips =? "
+					+ ", inKins = ? "
+					+ ", inWaifu = ? "
+					+ ", inFav = ? "
+					+ ", inGuess = ? "
+					+ ", inCollect = ? "
+					+ " WHERE user_Id = ? AND server_Id = ? AND name = ? "; 
+			
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setString(1, newFields.get("name"));
+			stat.setString(2, newFields.get("url"));
+			stat.setString(3, newFields.get("kdm"));
+			stat.setString(4, newFields.get("smashpass"));
+			stat.setString(5, newFields.get("simps"));
+			stat.setString(6, newFields.get("ships"));
+			stat.setString(7, newFields.get("kins"));
+			stat.setString(8, newFields.get("waifu"));
+			stat.setString(9, newFields.get("favorite"));
+			stat.setString(10, newFields.get("guess"));
+			stat.setString(11, newFields.get("collect"));
+			stat.setLong(12, userId);
+			stat.setLong(13, serverId); 
+			stat.setString(14, name); 
+			stat.execute(); 
+		}
+		catch(SQLException  e)
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
 	}
 	
 	/* Check how many characters the user has in this server */ 
@@ -1929,16 +2135,18 @@ public class CharacterSelection {
 	{
 		ArrayList<String> names = new ArrayList<String>(); 
 		String query = " SELECT name FROM favorites " + 
-				"WHERE user_Id = " + userId + " AND " + "server_Id = " + serverId + 
+				"WHERE user_Id = ?  AND " + "server_Id = ? " + 
 				" ORDER BY timeCreated ASC"; 
-		Statement stat = null;
+		PreparedStatement stat = null;
 		ResultSet  res = null; 
 		Connection conn = null ;
 		try
 		{
 			conn = dataSource.getConnection(); 
-			stat = conn.createStatement();
-			res = stat.executeQuery(query); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, userId);
+			stat.setLong(2, serverId);
+			res = stat.executeQuery(); 
 			res.next();	
 			do
 			{
@@ -2026,7 +2234,7 @@ public class CharacterSelection {
 			stat = conn.prepareStatement(query);
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
-			res = stat.executeQuery(query);
+			res = stat.executeQuery();
 			res.next(); 
 			value = res.getInt(1); 
 		} 
@@ -2152,6 +2360,44 @@ public class CharacterSelection {
 		
 			return (value < 1) ? true : (false); 
 	}
+	
+	
+	/* Method returns amount of rolls a player has left */
+	public int getPlayerRolls(long userId, long serverId) 
+	{
+		int result = 0; 
+		
+		String query = "SELECT turns FROM playersInCollect "
+				+ "WHERE user_Id = ? AND server_Id = ? ";
+		
+		PreparedStatement stat = null; 
+		ResultSet res = null; 
+		Connection conn = null; 
+		
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, userId);
+			stat.setLong(2, serverId);
+			res = stat.executeQuery(); 
+			res.next(); 
+			result = res.getInt(1); 
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		finally 
+		{
+			try {  if(res != null) { res.close(); } } catch(Exception e){} 
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		
+		return result; 
+	}
 
 	
 
@@ -2190,7 +2436,7 @@ public class CharacterSelection {
 	}
 
 	/*Get the time needed till the player can colllect again  */ 
-	public String getPlayerCollectTime(long userId, long serverId) 
+	public String getCollectTime() 
 	{
 		String query = "SELECT LAST_EXECUTED FROM INFORMATION_SCHEMA.events "
 				+ " WHERE EVENT_NAME = \"claim_Reset_Event\""; 
@@ -2238,7 +2484,7 @@ public class CharacterSelection {
 	}
 
 	/* Time till turns are reset */ 
-	public String getRollRestTime(long userId, long serverId)  {
+	public String getRollRestTime()  {
 		String query = "SELECT LAST_EXECUTED FROM INFORMATION_SCHEMA.events " 
 				+ " WHERE EVENT_NAME = \"turn_Reset_Event\""; 
 		PreparedStatement stat = null;
@@ -2376,7 +2622,7 @@ public class CharacterSelection {
 	/* Check if character has already been claimed in the server */ 
 	public boolean hasBeenClaimed(long charId, long serverId ) 
 	{
-		String query = "SELECT * FROM playerscollection " + 
+		String query = "SELECT * FROM playersCollection " + 
 				"WHERE server_Id = ? AND col_Id = ? " ; 
 		
 		PreparedStatement stat = null;
@@ -2888,17 +3134,19 @@ public class CharacterSelection {
 	public ArrayList<String> getWishListNames(long userId, long serverId) 
 	{
 		String query = " SELECT wish_Id FROM wishList" 
-				+ " WHERE user_Id = " + userId + " AND server_Id = " + serverId; 
+				+ " WHERE user_Id = ?  AND server_Id = ? "; 
 	
 		ArrayList<String > names = new ArrayList<String>(); 
-		Statement stat = null;
+		PreparedStatement stat = null;
 		ResultSet res = null; 
 		Connection conn = null ;
 		try 
 		{
 			conn = dataSource.getConnection(); 
-			stat = conn.createStatement();
-			res = stat.executeQuery(query);
+			stat = conn.prepareStatement(query);
+			stat.setLong(1, userId);
+			stat.setLong(2, serverId);
+			res = stat.executeQuery();
 			res.next(); 
 			do 
 			{
@@ -3156,17 +3404,17 @@ public class CharacterSelection {
 			stat5 = conn.createStatement();
 			stat6 = conn.createStatement();
 			stat7 = conn.createStatement(); 
-			String query = "SELECT server_Id FROM playersincollect";
+			String query = "SELECT server_Id FROM playersInCollect";
 			res = stat.executeQuery(query); 
-			query = "SELECT server_Id FROM playerscollection"; 
+			query = "SELECT server_Id FROM playersCollection"; 
 			res2 = stat2.executeQuery(query); 
 			query = "SELECT server_Id FROM sonas";
 			res3 = stat3.executeQuery(query); 
 			query = "SELECT server_Id FROM waifus"; 
 			res4 = stat4.executeQuery(query); 
-			query = "SELECT server_Id FROM wishlist"; 
+			query = "SELECT server_Id FROM wishList"; 
 			res5 = stat5.executeQuery(query); 
-			query = "SELECT server_Id FROM customcharacters"; 
+			query = "SELECT server_Id FROM customCharacters"; 
 			res6 = stat6.executeQuery(query); 
 			query = "SELECT server_Id FROM favorites"; 
 			res7 = stat7.executeQuery(query); 
@@ -3528,4 +3776,85 @@ public class CharacterSelection {
 		}
 		return result; 
 	}
+	
+	/* Bool method check if has whitelisting enabled in the database */ 
+	public boolean serverWhiteList(long serverId)
+	{
+		String query = "SELECT * FROM whitelist WHERE server_Id = ?"; 
+		Connection conn = null; 
+		PreparedStatement stat = null;
+		ResultSet res = null; 
+		boolean result = false; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, serverId);
+			res = stat.executeQuery(); 
+			result = res.next(); 
+			
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(res != null) { res.close(); } } catch(Exception e){} 
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		return result;
+	}
+	
+	/* Method inserts white list into database */ 
+	public void insertWhiteList(long serverId)
+	{
+		
+		String query = "INSERT IGNORE INTO whitelist (server_Id) VALUES (?) "; 
+		Connection conn = null; 
+		PreparedStatement stat = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, serverId);
+			stat.execute(); 
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		
+	}
+	
+    /* Delete from white list */ 
+	public void removeFromWhiteList(long serverId) 
+	{
+		String query = "DELETE FROM whitelist WHERE server_Id = ? "; 
+		Connection conn = null; 
+		PreparedStatement stat = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query); 
+			stat.setLong(1, serverId);
+			stat.execute(); 
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
 }

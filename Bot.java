@@ -4,8 +4,8 @@ import events.UserInfoCommand;
 import events.UserManager;
 import events.WaifuCommand;
 import events.WikiCommand;
-
 import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
@@ -24,11 +24,13 @@ import events.ShipsCommand;
 import events.SimpsCommand;
 import events.SmashPassCommand;
 import events.SonasCommand;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 
 public class Bot {
@@ -61,9 +63,21 @@ public class Bot {
 		builder.setActivity(Activity.listening("/help for help")); 
 		builder.setStatus(OnlineStatus.ONLINE); 
 		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
-				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
-		
-		ShardManager jda = builder.build(); 
+				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS);  
+		 
+		 // Add event listeners
+		builder.addEventListeners(waiter, new UserInfoCommand(), new events.CommandManger(), new WikiCommand()
+				, new SmashPassCommand(waiter), new SimpsCommand(), new KinsCommand(), new ShipsCommand(), new WaifuCommand(waiter)
+				, new KdmCommand(waiter), new SonasCommand(waiter), new FavoriteCommand(), new OriginalCharacterCommand(waiter)
+				, new GuessCommand(waiter), new FrameCommand() ,new CollectCommand(waiter), new UserManager(), new HelpCommand() ); 
+		 
+		ShardManager shardManager = builder.build(); 
+
+		List<JDA> getShards = shardManager.getShards(); 
+		for (int i = 0; i < getShards.size(); ++i) 
+		{
+			getShards.get(i).getGuilds().size(); 
+		}
 		
 		// Connect to database 
 		
@@ -94,27 +108,8 @@ public class Bot {
 				}
 			
 			}); 
-
-			
-		// Add event listners
-		jda.addEventListener(waiter);
-		jda.addEventListener(new UserInfoCommand());
-		jda.addEventListener(new WikiCommand( )); 
-		jda.addEventListener(new SmashPassCommand(waiter));
-		jda.addEventListener(new SimpsCommand());
-		jda.addEventListener(new KinsCommand());
-		jda.addEventListener(new ShipsCommand());
-		jda.addEventListener(new WaifuCommand(waiter));
-		jda.addEventListener(new KdmCommand(waiter));
-		jda.addEventListener(new CommandManger()); 
-		jda.addEventListener(new SonasCommand());
-		jda.addEventListener(new FavoriteCommand()); 
-		jda.addEventListener(new OriginalCharacterCommand()); 
-		jda.addEventListener(new GuessCommand(waiter));
-		jda.addEventListener(new FrameCommand()); 
-		jda.addEventListener(new CollectCommand(waiter)); 
-		jda.addEventListener(new UserManager()); 
-		jda.addEventListener(new HelpCommand()); 
+		
+		
 	}
 
 }

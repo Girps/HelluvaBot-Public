@@ -82,7 +82,7 @@ public class WikiCommand extends ListenerAdapter{
 				event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
 			} 
 		}
-		else if(event.getName().equals("wikiall") && Helper.checkRoles(event.getMember().getRoles()) 
+		else if(event.getName().equals("wikiall") && Helper.checkAdminRole(event.getMember().getRoles()) 
 				&& event.getUser().getIdLong() == 673992089733955646L) 
 		{
 			// Get array of every character and print them all 

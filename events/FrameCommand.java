@@ -42,7 +42,7 @@ public class FrameCommand extends ListenerAdapter
 					"HELLUVA BOSS - QUEEN BEE (S1)： Episode 8.mp4", "HELLUVA BOSS - SEEING STARS (S2)： Episode 2.mp4", "HELLUVA BOSS - Spring Broken (S1)： Episode 3.mp4", 
 					"HELLUVA BOSS - THE CIRCUS (S2)： Episode 1.mp4", "HELLUVA BOSS - The Harvest Moon Festival (S1)： Episode 5.mp4", "HELLUVA BOSS - Truth Seekers  (S1)： Episode 6.mp4", 
 					"HELLUVA BOSS - WESTERN ENERGY  (S2)： Episode 4.mp4", "HELLUVA BOSS (PILOT).mp4", "HELLUVA BOSS - UNHAPPY CAMPERS (S2)： Episode 5.mp4"
-					, "HELLUVA BOSS - OOPS S2： Episode 6.mp4" , "HELLUVA BOSS - MAMMON’S MAGNIFICENT MUSICAL MID-SEASON SPECIAL  S2： Episode 7.mp4", 
+					, "HELLUVA BOSS - OOPS (S2)： Episode 6.mp4" , "HELLUVA BOSS - MAMMON’S MAGNIFICENT MUSICAL MID-SEASON SPECIAL (S2)： Episode 7.mp4", 
 					"JUST LOOK MY WAY - (OFFICIAL MUSIC VIDEO) - HELLUVA BOSS.mp4"}; 
 			
 			Random gen = new Random(); 

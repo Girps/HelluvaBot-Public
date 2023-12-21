@@ -10,12 +10,17 @@ import de.tudarmstadt.ukp.wikipedia.parser.mediawiki.MediaWikiParserFactory;
 import net.sourceforge.jwbf.core.contentRep.Article;
 import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
-
+import java.awt.Image;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+
+import javax.swing.ImageIcon;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -373,6 +378,28 @@ public class Character
 		   
 		   // Default image of the character set 
 		   this.defImage = this.imageList.get(0);
+		   
+		   // Check size 
+		   try 
+		   {
+			URL imageUrl = new URL(this.imageList.get(0));
+			Image image = new ImageIcon(imageUrl).getImage(); 
+			int width = image.getWidth(null);
+			int height = image.getHeight(null); 
+			
+			if( (width < 50 || height < 50 )  && this.imageList.size() != 1 ) 
+			{
+				this.imageList.remove(0); 
+				this.defImage = this.imageList.get(0); 
+			}
+			
+		   }
+		   catch (MalformedURLException e1)
+		   {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		   }
+		   
 		   
 		   switch(this.set) 
 		   {
