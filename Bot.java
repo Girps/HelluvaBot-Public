@@ -36,6 +36,12 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 public class Bot {
 
 	private final static EventWaiter waiter = new EventWaiter(); 
+	private static ShardManager shardManager; 
+	
+	
+	
+	
+	
 	public static void main(String[] args) throws Exception
 	{
 
@@ -71,6 +77,7 @@ public class Bot {
 				, new KdmCommand(waiter), new SonasCommand(waiter), new FavoriteCommand(), new OriginalCharacterCommand(waiter)
 				, new GuessCommand(waiter), new FrameCommand() ,new CollectCommand(waiter), new UserManager(), new HelpCommand() ); 
 		 
+
 		ShardManager shardManager = builder.build(); 
 
 		List<JDA> getShards = shardManager.getShards(); 
@@ -79,15 +86,20 @@ public class Bot {
 			getShards.get(i).getGuilds().size(); 
 		}
 		
+		// Have shard manager
+		shardManager = builder.build(); 
 		// Connect to database 
 		
 		String url = MYURL; 
 		String name = NAME; 
 		String password = PASSWORD;
 		
+		 
+		// Delete 
 		
 			// Now connect 
 			CharacterSelection select = new CharacterSelection(url, name, password); 
+			
 			Runtime.getRuntime().addShutdownHook(new Thread() 
 					A
 			{
