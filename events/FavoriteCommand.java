@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import CharactersPack.Character;
 import CharactersPack.CharacterSelection;
@@ -29,104 +31,125 @@ public class FavoriteCommand extends ListenerAdapter{
 	@Override
 	public void  onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
-		event.deferReply().queue();
-		
-
-		
 		
 		switch (event.getName()) 
 		{
 		case "add-favorite" :
 		{	
-			// Now add characters into the list 
-			Long userId = event.getUser().getIdLong(); 
-			Long serverId = event.getGuild().getIdLong(); 
-			String characterName = event.getOptions().get(0).getAsString(); 
-	
-
-			CharacterSelection select = new CharacterSelection(); 
-				try 
-				{
-					// check if list already exists
-					if(!select.checkFavLimit(userId, serverId)) 
-					{
-						event.getHook().sendMessage(event.getUser().getAsMention() + " you reached the 10 character limit!").queue(); 
-						return;
-					} 
-					// Now insert the character 
-					select.insertFavorite(characterName, userId, serverId);
-					event.getHook().sendMessage(event.getUser().getAsMention() + " character " + MarkdownUtil.bold(characterName) + " succesfully entered!").queue();
-				}
-				catch (Exception e) 
-				{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						event.getHook().sendMessage("<@"+ userId + ">" + " falied to insert character" + MarkdownUtil.bold(MarkdownUtil.bold(characterName)) + "!" ).queue();; 
-				} 
-				break;
 			
-		}
+			CompletableFuture.runAsync(() -> 
+			{
+				event.deferReply(); 
+				// Now add characters into the list 
+				Long userId = event.getUser().getIdLong(); 
+				Long serverId = event.getGuild().getIdLong(); 
+				String characterName = event.getOptions().get(0).getAsString(); 
+				CharacterSelection select = new CharacterSelection(); 
+					try 
+					{
+						// check if list already exists
+						if(!select.checkFavLimit(userId, serverId)) 
+						{
+							event.getHook().sendMessage(event.getUser().getAsMention() + " you reached the 10 character limit!").queue(); 
+							return;
+						} 
+						// Now insert the character 
+						select.insertFavorite(characterName, userId, serverId);
+						event.getHook().sendMessage(event.getUser().getAsMention() + " character " + MarkdownUtil.bold(characterName) + " succesfully entered!").queue();
+					}
+					catch (Exception e) 
+					{
+						event.getHook().sendMessage( event.getUser().getAsMention() + " falied to insert character" + MarkdownUtil.bold(MarkdownUtil.bold(characterName)) + "!" ).queue();; 
+					} 
+			}).exceptionally(ex -> 
+			{
+				event.getHook().sendMessage(ex.getMessage()).queue(); 
+				ex.printStackTrace(); 
+				return null; 
+			}); 
+			
+				break;
+		} 
+		
 		case "clear-favorites" : 
 		{
 			
-
-			// delete list from the database
-			CharacterSelection select = new CharacterSelection();
-			Long  userId = event.getUser().getIdLong(); 
-			Long serverId = event.getGuild().getIdLong(); 
-			try 
+			CompletableFuture.runAsync(() -> 
 			{
-				if(select.checkFavList(userId, serverId))
+				event.deferReply().queue(); 
+				// delete list from the database
+				CharacterSelection select = new CharacterSelection();
+				Long  userId = event.getUser().getIdLong(); 
+				Long serverId = event.getGuild().getIdLong(); 
+				try 
 				{
-					select.removeFavList(userId, serverId);
-					event.getHook().sendMessage("<@" + userId + "> favorites list deleted!").queue(); 
+					if(select.checkFavList(userId, serverId))
+					{
+						select.removeFavList(userId, serverId);
+						event.getHook().sendMessage("<@" + userId + "> favorites list deleted!").queue(); 
+					}
+					else
+					{
+						event.getHook().sendMessage("<@" + userId + "> you do not have a favorites list!").queue(); 
+						return; 
+					}
+				} 
+				catch (Exception e) {
+					// TODO Auto-generated catch block
+					throw new CompletionException(e); 
 				}
-				else
-				{
-					event.getHook().sendMessage("<@" + userId + "> you do not have a favorites list!").queue(); 
-					return; 
-				}
-			} 
-			catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return; 
-			}
+			}).exceptionally( (ex) -> 
+			{
+				event.getHook().sendMessage(ex.getMessage()).queue(); 
+				ex.printStackTrace(); 
+				return null;
+			}); 
+			
 		
 			break; 
 		}
+		
 		case "remove-favorite": 
 		{
 			
-			String characterName = event.getOptions().get(0).getAsString(); 
-			
-			CharacterSelection select = new CharacterSelection();
-			try 
+			CompletableFuture.runAsync( () -> 
 			{
-				// Check if list exists 
-				if(!select.checkFavList(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
+				event.deferReply().queue(); 
+				String characterName = event.getOptions().get(0).getAsString(); 
+				CharacterSelection select = new CharacterSelection();
+				try 
 				{
-					event.getHook().sendMessage( event.getUser().getAsMention() + " you do not have a favorites list!").queue(); 
-					return;
+					// Check if list exists 
+					if(!select.checkFavList(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
+					{
+						event.getHook().sendMessage( event.getUser().getAsMention() + " you do not have a favorites list!").queue(); 
+						return;
+					} 
+					
+					select.removeFavCharacter(characterName, event.getUser().getIdLong(), event.getGuild().getIdLong());
+					event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterName) + " has been removed from your list!" ).queue(); 
 				} 
-				
-				select.removeFavCharacter(characterName, event.getUser().getIdLong(), event.getGuild().getIdLong());
-				event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterName) + " has been removed from your list!" ).queue(); 
-			} 
-			catch (Exception e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				event.getHook().sendMessage("Something went wrong!").queue();
-			}
+				catch (Exception e) 
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					event.getHook().sendMessage("Something went wrong!").queue();
+				}
+			}).exceptionally( (ex) -> {
+				ex.printStackTrace(); 
+				return null; 
+			});
 			
 			break;
 		}
+		
 		case "favorites" : 
 		{
+			
+			CompletableFuture.runAsync( () -> {
+				event.deferReply().queue(); 
 			// Get the list from the table 
 			String title = null;
-		
 			CharacterSelection select = new CharacterSelection();
 			Long userId = event.getUser().getIdLong(); 
 			Long serverId = event.getGuild().getIdLong(); 
@@ -198,21 +221,23 @@ public class FavoriteCommand extends ListenerAdapter{
 			catch (Exception e)
 			{
 				// TODO Auto-generated catch block
+				throw new CompletionException(e); 
+			}}).exceptionally( (ex) -> 
+			{
 				event.getHook().sendMessage("something went wrong!").queue();
-				e.printStackTrace();
-				return; 
-			}
-			
-		
+				ex.printStackTrace();
+				return null; 
+			}); 
 			break; 
 		}
+		
 		case "change-favorites-title" : 
 		{
 			
+			CompletableFuture.runAsync( () -> { 
+			event.deferReply().queue(); 
 			String title = event.getOption("title").getAsString();
-			
 			CharacterSelection select = new CharacterSelection();
-		
 			try 
 			{
 				if ( !select.checkFavList(event.getUser().getIdLong(), event.getGuild().getIdLong()) ) 
@@ -226,37 +251,41 @@ public class FavoriteCommand extends ListenerAdapter{
 			catch (Exception e) 
 			{
 				// TODO Auto-generated catch block
-				event.getHook().sendMessage("Something went wrong!").queue(); 
-				e.printStackTrace();
-				return; 
+				throw new CompletionException(e);
 			}
-			
+			}).exceptionally( (ex) -> 
+			{
+				event.getHook().sendMessage("Something went wrong!").queue(); 
+				ex.printStackTrace();
+				return null; 
+			}); 
 			break; 
 		}
 		case "swap-favorite-rank" :
 			{
-			String characterOne = event.getOption("first-character").getAsString(); 
-			String characterTwo = event.getOption("second-character").getAsString();
-			
-			CharacterSelection select = new CharacterSelection(); 
-			
-				try 
-				{
-					select.favSwapCharacter(characterOne, characterTwo, event.getUser().getIdLong(),event.getGuild().getIdLong());
-					event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterOne) 
-					+ " has been swapped with " + MarkdownUtil.bold(characterTwo) + "!").queue(); 
-				} 
-				catch (Exception e)
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					event.getHook().sendMessage(e.getMessage()).queue(); 
-				} 
-			
-			}	
+				CompletableFuture.runAsync( () -> {
+					event.deferReply().queue(); 
+					String characterOne = event.getOption("first-character").getAsString(); 
+					String characterTwo = event.getOption("second-character").getAsString();
+					CharacterSelection select = new CharacterSelection(); 
+					try 
+					{
+						select.favSwapCharacter(characterOne, characterTwo, event.getUser().getIdLong(),event.getGuild().getIdLong());
+						event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterOne) 
+						+ " has been swapped with " + MarkdownUtil.bold(characterTwo) + "!").queue(); 
+					} 
+					catch (Exception e)
+					{
+						// TODO Auto-generated catch block
+						throw new CompletionException(e);  
+					} 
+				}).exceptionally((ex) -> {
+					event.getHook().sendMessage(ex.getMessage()).queue(); 
+					return null; 
+				});
+			}
 			break; 
+			
 		}
 	}
-	
-	
 }

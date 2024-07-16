@@ -2620,14 +2620,14 @@ public class CharacterSelection {
 	}
 
 	/* Check if character has already been claimed in the server */ 
-	public boolean hasBeenClaimed(long charId, long serverId ) 
+	public Long hasBeenClaimed(long charId, long serverId ) 
 	{
-		String query = "SELECT * FROM playersCollection " + 
+		String query = "SELECT user_Id FROM playersCollection " + 
 				"WHERE server_Id = ? AND col_Id = ? " ; 
 		
 		PreparedStatement stat = null;
 		ResultSet res = null; 
-		boolean result = false;
+		Long result = (long) -1;
 		Connection conn = null; 
 		try 
 		{
@@ -2636,7 +2636,8 @@ public class CharacterSelection {
 			stat.setLong(1, serverId);
 			stat.setLong(2, charId);
 			res = stat.executeQuery(); 
-			result = res.next(); 
+			res.next();  
+			result = res.getLong(0); 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -3329,15 +3330,15 @@ public class CharacterSelection {
 	public ArrayList<Long> getServerUsers(long serverId )  
 	{
 		String query = "SELECT DISTINCT user_Id FROM sonas \r\n"
-				+ "UNION \r\n"
-				+ "SELECT DISTINCT user_Id FROM favorites  \r\n"
-				+ "UNION \r\n"
-				
-				+ "SELECT DISTINCT user_Id FROM customCharacters\r\n"
-				+ "UNION \r\n"
-				+ "SELECT DISTINCT user_Id FROM playersInCollect\r\n"
-				+ "UNION	\r\n"
-				+ "SELECT DISTINCT user_Id FROM playersCollection "; 
+				+ "  WHERE sonas.server_Id = " + serverId +" \r\n"
+				+ "  UNION SELECT DISTINCT user_Id FROM favorites\r\n"
+				+ "  WHERE favorites.server_Id = "+ serverId +" \r\n"
+				+ "  UNION SELECT DISTINCT user_Id FROM customCharacters\r\n"
+				+ "  WHERE customCharacters.server_Id = "+ serverId +" \r\n"
+				+ "  UNION SELECT DISTINCT user_Id FROM playersInCollect \r\n"
+				+ "  WHERE playersInCollect.server_Id = "+serverId+" \r\n"
+				+ "  UNION	SELECT DISTINCT user_Id FROM playersCollection \r\n"
+				+ "  WHERE playersCollection.server_Id = "+serverId+" ; "; 
 		Statement stat = null;
 		ResultSet res = null; 
 		Connection conn = null; 
@@ -3347,6 +3348,7 @@ public class CharacterSelection {
 		{
 			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+			
 			res = stat.executeQuery(query); 
 		
 			users = new ArrayList<Long>(); 

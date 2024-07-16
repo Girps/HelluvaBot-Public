@@ -32,7 +32,6 @@ public class HelpCommand extends ListenerAdapter
 				case "Frame command" : 
 				{
 					builder = getEmbed(2);
-
 				}				
 				break; 
 				case "Guess command" : 

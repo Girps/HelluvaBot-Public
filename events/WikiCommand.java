@@ -147,10 +147,7 @@ public class WikiCommand extends ListenerAdapter{
 						// Now check in database for the character 
 						try 
 						{
-
-								CharacterSelection select = new CharacterSelection(); 
-								
-								
+								CharacterSelection select = new CharacterSelection(); 		
 								// We have the fields now create our character object 
 								Character charactFound = select.requestSingleCharacter(characterName, event.getGuild().getIdLong(),GAMETYPE.WIKI,SETUPTYPE.HEAVY);
 								

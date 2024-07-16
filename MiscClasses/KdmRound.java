@@ -28,13 +28,15 @@ public class KdmRound {
 		characterNames.add(nameOne);
 		characterNames.add(nameTwo);
 		characterNames.add(nameThree); 
-		
-		
 	}
 	
 	public void setArrayList (ArrayList<Long> arg)
-	{
-		ids = arg; 
+	{ 
+		for (int i =0; i < arg.size(); i++) 
+		{
+			ids.add(arg.get(i)); 
+		}
+		System.out.println("Inital: "+ ids); 
 	}
 	
 	public ArrayList<Long> getArrayList() 
@@ -75,13 +77,11 @@ public class KdmRound {
 		{
 			case "Kill" : 
 			{
-				
 				kill = name; 
 				break; 
 			}
 			case "Date": 
-			{
-				
+			{	
 				date = name; 
 				break; 
 			}
@@ -91,9 +91,6 @@ public class KdmRound {
 				break; 
 			}
 		}
-		
-		
-
 		if (characterNames.size() == 1) 
 		{ 
 			if(kill == null)
@@ -110,23 +107,16 @@ public class KdmRound {
 			}
 			
 			// Now disable last message 
-			
-			
-					
-			
-					List<Button> list = null;
-					
-						list = eBtn.getChannel().retrieveMessageById(ids.get(0)).submit().get().getActionRows().get(0).getButtons(); 
-					
-				
-						eBtn.getChannel().asTextChannel().editMessageById(ids.get(0)," ").setActionRow(list.get(0).asDisabled(), list.get(1).asDisabled(), list.get(2).asDisabled()).queue();
-
+			List<Button> list = null;
+			list = eBtn.getChannel().retrieveMessageById(ids.get(0)).submit().get().getActionRows().get(0).getButtons(); 
+			eBtn.getChannel().asTextChannel().editMessageById(ids.get(0)," ").setActionRow(list.get(0).asDisabled(), list.get(1).asDisabled(), list.get(2).asDisabled()).queue();
 			return; 
 		} 
 		
 		
 		Button disButton = eBtn.getButton().asDisabled(); 
 		
+		System.out.println(this.ids); 
 		// Now modify the rest besides idTarget 
 		for(int i =0; i < ids.size(); ++i) 
 		{
@@ -143,7 +133,6 @@ public class KdmRound {
 				if(disButton.getLabel().equalsIgnoreCase("kill")) 
 				{
 					eBtn.getChannel().asTextChannel().editMessageById(ids.get(i)," ").setActionRow(list.get(0).asDisabled(), list.get(1), list.get(2)).queue();
-
 				}
 				else if(disButton.getLabel().equalsIgnoreCase("date") ) 
 				{

@@ -1,20 +1,15 @@
 package events;
 
 import java.awt.Color;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 import CharactersPack.Character;
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
-
 import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
-
+import java.util.concurrent.*;
 
 public class KinsCommand extends ListenerAdapter{
 
@@ -28,32 +23,50 @@ public class KinsCommand extends ListenerAdapter{
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
 		
+		
+		
 		// 	Check if bot
 		if(event.getUser().isBot()) {return;}
 		
 		// Check valid command 
 		if(event.getName().equals("kins")) 
 		{
+			
+			// Aync get the character and send it to the channel
+		  CompletableFuture.supplyAsync( () -> 
+			{
 				event.deferReply().queue();
-				String name = null; 
-				String userName = event.getUser().getId();  
-				try 
+				CharacterSelection select = new CharacterSelection(); 
+				Character found = null;
+				try
 				{
-					CharacterSelection select = new CharacterSelection(); 
-					Character found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),1)[0];
-					EmbedBuilder builder = new EmbedBuilder(); 
-					name = found.getName(); 
-					builder.setTitle(found.getName()); 
-					builder.setThumbnail(found.getDefaultImage());
-					builder.setColor(Color.CYAN); 
-					event.getHook().sendMessageEmbeds(builder.build()).queue();
-					event.getHook().sendMessage( "<@"+ userName + ">" + " kins " + MarkdownUtil.bold(found.getName()) + "!").queue();
-				} 
+					found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0];
+				}
 				catch (Exception e) 
 				{
-					e.printStackTrace();
-					event.getHook().sendMessage(e.getMessage()).queue();
-				}
+					throw new CompletionException(e); 
+				}  
+				return found; 
+			}).thenAccept( (characterFound) -> 
+			{
+				String name = characterFound.getName(); 
+				EmbedBuilder builder = new EmbedBuilder(); 
+				builder.setTitle(characterFound.getName()); 
+				builder.setThumbnail(characterFound.getDefaultImage());
+				builder.setColor(Color.CYAN);
+				event.getHook().sendMessageEmbeds(builder.build()).queue( (message) -> 
+				{
+					message.reply( event.getUser().getAsMention() + " kins for " +  MarkdownUtil.bold(name + "!")).queue();
+					System.out.println( "Name in queue: " + Thread.currentThread().getName() + "|"); 
+				}); 
+			}).exceptionally(ex -> 
+			{
+				System.out.println(ex.getMessage()); 
+				event.getHook().sendMessage(ex.getMessage()).queue(); 
+				return null; 
+			}); 
+			
+			System.out.println( "Name Main?: " + Thread.currentThread().getName() + "|"); 
 		}
 	}
 }

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -13,6 +14,7 @@ import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
 import CharactersPack.SETUPTYPE;
 import CharactersPack.Character;
+import java.util.concurrent.*;
 
 public class SimpsCommand extends ListenerAdapter{
 
@@ -37,27 +39,34 @@ public class SimpsCommand extends ListenerAdapter{
 		if(event.getName().equals("simps")) 
 		{
 				
-				String userName = event.getUser().getId();  
-		
-				try 
-				{		
+			 CompletableFuture.supplyAsync( () ->
+				{
 					CharacterSelection select = new CharacterSelection(); 
-					Character found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
-					EmbedBuilder builder = new EmbedBuilder(); 
-					builder.setTitle(found.getName()); 
-					builder.setThumbnail(found.getDefaultImage());
-					builder.setColor(Color.PINK);
+					Character found = null; 
+					try 
+					{
+						found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
+					} catch (Exception e)
+					{
+						// TODO Auto-generated catch block
+						throw new CompletionException(e); 
+					}
+					return found; 
+				}).thenAccept( characterFound -> 
+				{
+					EmbedBuilder builder = new EmbedBuilder().
+					setTitle(characterFound.getName()).
+					setThumbnail(characterFound.getDefaultImage()).
+					setColor(Color.PINK);
 					event.deferReply().queue();
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-					event.getHook().sendMessage( "<@"+ userName + ">" + " simps for " + MarkdownUtil.bold(found.getName()) + "!").queue();
-				} 
-				catch (Exception e) 
+					event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(characterFound.getName()) + "!").queue();
+				}).exceptionally(ex -> 
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					event.deferReply().queue();
-					event.getHook().sendMessage(e.getMessage()).queue();
-				} 
+					System.out.println(ex.getMessage()); 
+					event.getHook().sendMessage(ex.getMessage()).queue(); 
+					return null; 
+				}); 
 		}
 	}
 	

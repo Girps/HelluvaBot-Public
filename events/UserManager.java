@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import CharactersPack.CharacterSelection;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA.ShardInfo;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -23,12 +24,13 @@ import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class UserManager extends ListenerAdapter  
 {
 	
-	final int MAX = 1700; 
+	final int MAX = 2200; 
 	public UserManager() 
 	{
 		
@@ -40,23 +42,63 @@ public class UserManager extends ListenerAdapter
 	@Override 
 	public void onReady(ReadyEvent event) 
 	{
-		System.out.println("onReady event fired for UserManger class "); 
+		System.out.println("onReady event fired for UserManger class "+ event.getJDA().getShardInfo()); 
+		ShardInfo shardInfo = event.getJDA().getShardInfo(); 
+		int guildSize = event.getJDA().getShardManager().getGuilds().size(); 
+		ShardManager shMan = event.getJDA().getShardManager(); 
+		shMan.setActivity(Activity.listening("/help | " + guildSize + " servers"));
 		
-		int size  = event.getJDA().getGuilds().size(); 
-		event.getJDA().getPresence().setActivity(Activity.listening("/help | " + size + " servers")); 
-		
-	
 		try 
 		{ 
 			
 			CharacterSelection select = new CharacterSelection(); 
-		// pull all users from the database in particular server 
+		
+			// iterate every guild from every shard 
+			for(int i = 0; i < guildSize; ++i) 
+			{
+				
+				// Get users from current guild from the database
+				ArrayList<Long> userIds = select.getServerUsers(shMan.getGuilds().get(i).getIdLong()); 
+				System.out.println(userIds); 
+				if(!userIds.isEmpty()) 
+				{
+					// load current members from given guild index
+					shMan.getGuilds().get(i).loadMembers().onSuccess( users -> 
+					{
+						int count =0; 
+						ArrayList<Long> memberIds = new ArrayList<Long>(); 
+						// get all users from current server using their ids.
+						for(Member user : users)
+						{
+							memberIds.add(user.getIdLong()); 
+						}
+						
+						for (int x = 0; x < userIds.size(); ++x) 
+						{
+							// Check if current guild has this member if not delete their data
+							if(memberIds.contains(userIds.get(x)) == false)
+							{
+								select.removeSona(userIds.get(x), users.get(0).getGuild().getIdLong()); 
+					    		select.removeAllOcs(userIds.get(x), users.get(0).getGuild().getIdLong());
+								select.removeWaifu(userIds.get(x), users.get(0).getGuild().getIdLong()); 
+								select.removeFavList(userIds.get(x), users.get(0).getGuild().getIdLong());	
+								select.removeCollect(userIds.get(x), users.get(0).getGuild().getIdLong());  
+								System.out.println(userIds.get(x) + " left server in SHARD: " + users.get(0).getJDA().getShardInfo());
+								System.out.println(++count); 
+							}
+							
+						}
+					} ); 
+				}
+			}
+			
+			/* 
+			// Check if any users left the server 
 			for(int i = 0; i < event.getJDA().getGuilds().size(); ++i) 
 			{ 
 				ArrayList<Long> userIds = select.getServerUsers(event.getJDA().getGuilds().get(i).getIdLong());
-				
-				System.out.println(userIds); 
 				if(!userIds.isEmpty()) {
+				event.getJDA().getShardManager();
 				event.getJDA().getGuilds().get(i).loadMembers().onSuccess( users -> 
 					{
 						ArrayList<Long> memberIds = new ArrayList<Long>(); 
@@ -86,6 +128,8 @@ public class UserManager extends ListenerAdapter
 				}
 			}
 			
+			*/ 
+			
 			
 			/*Get all guilds if bot was kicked from the server when offline it must detect this and delete any 
 			 * tuples corresponding to those tuples 
@@ -95,12 +139,11 @@ public class UserManager extends ListenerAdapter
 			Map<Long, Long> dbServers = select.getAllServersDB(); 
 			for(Map.Entry<Long, Long> server : dbServers.entrySet()) 
 			{
-				long idGuild = server.getValue(); 
-				
-				// Not in server delete it from the database 
-				if ( event.getJDA().getGuildById(idGuild) == null) 
+				long idGuild = server.getValue();   
+				// Not in any shards delete it from the database 
+				if ( shMan.getGuildById(idGuild) == null) 
 				{
-					System.out.println("Delete Server: " + idGuild); 
+					System.out.println("Delete Server: " + idGuild ); 
 					select.removeAllSonas(idGuild);
 					select.removeAllOcsInGuild(idGuild);
 					select.removeAllWaifus(idGuild); 
@@ -111,65 +154,7 @@ public class UserManager extends ListenerAdapter
 				} 
 			}
 			
-			/*
-			List<Guild> servers = event.getJDA().getGuilds(); 
-			// Now send a message to servers that do not hold role Helluva Admin
-			for (int i = 0; i < event.getGuildTotalCount(); ++i) 
-			{
-				if ( servers.get(i).getRolesByName("Helluva Admin", false).isEmpty())
-				{
-					// empty send a message to the general chat
-					EmbedBuilder builder = new EmbedBuilder(); 
-					builder.setTitle("Recommended roles"); 
-					builder.setImage("https://i.imgur.com/x5zkc8p.jpg");
-					builder.setDescription("Create and assign this role to your Admins of the server.No special permissions required! Role needed for using following commands");
-					builder.addField("/require-permission","Only allow users with 'Helluva Admin' and 'Helluva Permission' role to insert or update their OCs/Sonas into the bot! Make"
-							+ "sure to have 'Helluva Permission' assigned to users who want this privilege",true);
-					builder.addField("/reset-collect","Only users with 'Helluva Admin' role can reset the collect game!",true); 
-					builder.addField("/remove-sona [user]", "Only users with 'Helluva Admin' role can remove other users' sonas!", true); 
-					builder.addField("/remove-user-oc <user> <customcharacter>"," Only users with 'Helluva Admin' role can remove another users' OC!",true); 
-					builder.addField("/remove-all-ocs [user]"," Only users with 'Helluva Admin' role can remove another users' OCs!",true); 
-					builder.setColor(Color.RED);
-					System.out.println("Server doesnt have Helluva Admin");  
-					event.getJDA().retrieveUserById(servers.get(i).getOwnerId()).queue( (owner) -> 
-					{
-						owner.openPrivateChannel().flatMap(channel -> channel.sendMessage(owner.getAsMention() +
-								" Hello please make sure to add the role 'Hellua Admin' to use Admin only commands! "
-								+ "There are important for management of the collect game! Use /help command for more infromation on each command!")).queue(null,new ErrorHandler().handle(ErrorResponse.CANNOT_SEND_TO_USER,
-										(ex) -> {System.out.println("Unable to send to user");}));
-						owner.openPrivateChannel().flatMap(channel -> channel.sendMessageEmbeds(builder.build())).queue(null,new ErrorHandler().handle(ErrorResponse.CANNOT_SEND_TO_USER,
-								(ex) -> {System.out.println("Unable to send to user");}));;
-					}); 
-					
-				}
-			} 
-			*/
 			
-			// leave the server if above max 
-			// leave server that last added this bot 
-			/*
-			int currentSize  = event.getJDA().getGuilds().size();
-			List<Guild> currentServers = event.getJDA().getGuilds(); 
-			
-			List<Guild> unmod = Collections.unmodifiableList(currentServers);
-			List<Guild> newList = new ArrayList<Guild>(unmod); 
-
-			Collections.sort(newList, (Guild a, Guild b) -> a.getTimeCreated().compareTo(b.getTimeCreated())); 
-			
-			for( int i = 0 ; i < newList.size(); ++i ) 
-			{
-					System.out.println(newList.get(i).getTimeCreated()); 
-			}
-			
-			// now 
-			while (newList.size()  > this.MAX) 
-			{
-				Guild removed = newList.remove(newList.size() - 1);
-				
-				removed.leave().queue(); 
-				System.out.println(removed.getName()); 
-			} 
-			*/ 
 			
 		} 
 		catch(Exception e) 
@@ -184,24 +169,22 @@ public class UserManager extends ListenerAdapter
 	// Update number of server bot is in 
 	public void onGuildJoin(GuildJoinEvent event) 
 	{
-		int size  = event.getJDA().getGuilds().size(); 
+		int guildSize  = event.getJDA().getShardManager().getGuilds().size(); 
 		// leave server if number exceeds a const
 		
-		if(size > MAX) 
+		if(guildSize > MAX) 
 		{
 			// Leave the server 
 			event.getGuild().leave().queue(); 
 			System.out.println("Left server"); 
 			return; 
 		}
-		
-		
-		event.getJDA().getPresence().setActivity(Activity.listening("/help | " + size + " servers")); 
-		
+		System.out.println("Bot join event success"); 
 
+		// update amount of servers   
+		event.getJDA().getShardManager().setActivity(Activity.listening("/help | " + guildSize + " servers"));
 		// Leave server if number exceeds  a const 
 		 
-		
 		// Notify roles to add 
 		if ( event.getGuild().getRolesByName("Helluva Admin", false).isEmpty())
 		{
@@ -235,9 +218,10 @@ public class UserManager extends ListenerAdapter
 	@Override
 	public void onGuildLeave(GuildLeaveEvent event)
 	{
-		int size  = event.getJDA().getGuilds().size(); 
+		int size  = event.getJDA().getShardManager().getGuilds().size(); 
 		
 		event.getJDA().getPresence().setActivity(Activity.listening("/help | " + size + " servers")); 
+		
 		
 		Long idGuild = event.getGuild().getIdLong(); 
 		
