@@ -341,6 +341,7 @@ public class SonasCommand extends ListenerAdapter
 				
 				CompletableFuture.runAsync( () -> 
 				{
+					event.deferReply().queue(); 
 					System.out.println(Thread.currentThread().getName()); 
 					CharacterSelection select =  new CharacterSelection(); 
 					// Check if user has sona or a field has been picked or if name is picked make sure not a duplicated

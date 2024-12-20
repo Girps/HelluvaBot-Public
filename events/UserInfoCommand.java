@@ -140,7 +140,6 @@ public class UserInfoCommand extends ListenerAdapter
 						}
 						
 						// End of roles list 
-						
 						EmbedBuilder builder = new EmbedBuilder(); 
 						builder.setTitle(nameRaw + " Info"); 
 						builder.setImage(bannerId); 

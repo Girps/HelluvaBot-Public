@@ -34,44 +34,48 @@ public class ShipsCommand extends ListenerAdapter{
 		if(event.getName().equals("ships")) 
 		{
 		
-		  CompletableFuture.supplyAsync( () -> 
-		  {
-			  // get characters 
-			  CharacterSelection select = new CharacterSelection(); 
-			  Character[] arr = null; 
-			  // get array of two characters 
-			  try {
-				arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),2);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				throw new CompletionException(e); 
-			}
-			  return arr; 
-		  }
-		  ).thenAccept((characters) -> 
-		  {
-			  EmbedBuilder builderFirst = new EmbedBuilder()
-					  .setTitle(characters[0].getName())
-					  .setColor(Color.MAGENTA)
-					  .setThumbnail(characters[0].getDefaultImage());
-			  
-			  EmbedBuilder builderSecond = new EmbedBuilder()
-					  .setTitle(characters[1].getName())
-					  .setColor(Color.MAGENTA)
-					  .setThumbnail(characters[1].getDefaultImage());
-			  
-			  event.getHook().sendMessageEmbeds(builderFirst.build(),builderSecond.build()).queue( (message) -> 
-			  {
-				  message.reply( event.getUser().getAsMention() + " ships " + MarkdownUtil.bold( message.getEmbeds().get(0).getTitle()) + " x " + MarkdownUtil.bold(message.getEmbeds().get(1).getTitle()) + "!" ).queue(); 
-			  }); 
-			  
-		  }).exceptionally(ex -> 
+			
+			event.deferReply().queue( (v) -> 
 			{
-				System.out.println(ex.getMessage()); 
-				event.getHook().sendMessage(ex.getMessage()).queue(); 
-				return null; 
+				 CompletableFuture.supplyAsync( () -> 
+				  {
+					  // get characters 
+					  CharacterSelection select = new CharacterSelection(); 
+					  Character[] arr = null; 
+					  // get array of two characters 
+					  try {
+						arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),2);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						throw new CompletionException(e); 
+					}
+					  return arr; 
+				  }
+				  ).thenAccept((characters) -> 
+				  {
+					  EmbedBuilder builderFirst = new EmbedBuilder()
+							  .setTitle(characters[0].getName())
+							  .setColor(Color.MAGENTA)
+							  .setThumbnail(characters[0].getDefaultImage());
+					  
+					  EmbedBuilder builderSecond = new EmbedBuilder()
+							  .setTitle(characters[1].getName())
+							  .setColor(Color.MAGENTA)
+							  .setThumbnail(characters[1].getDefaultImage());
+					  
+					  event.getHook().sendMessageEmbeds(builderFirst.build(),builderSecond.build()).queue( (message) -> 
+					  {
+						  message.reply( event.getUser().getAsMention() + " ships " + MarkdownUtil.bold( message.getEmbeds().get(0).getTitle()) + " x " + MarkdownUtil.bold(message.getEmbeds().get(1).getTitle()) + "!" ).queue(); 
+					  }); 
+					  
+				  }).exceptionally(ex -> 
+					{
+						System.out.println(ex.getMessage()); 
+						event.getHook().sendMessage(ex.getMessage()).queue(); 
+						return null; 
+					});
+				
 			});
-		
 		}
    }
 }

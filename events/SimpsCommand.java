@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -38,35 +40,41 @@ public class SimpsCommand extends ListenerAdapter{
 		// Check valid command 
 		if(event.getName().equals("simps")) 
 		{
-				
-			 CompletableFuture.supplyAsync( () ->
+				event.deferReply().queue( (v) -> 
 				{
-					CharacterSelection select = new CharacterSelection(); 
-					Character found = null; 
-					try 
-					{
-						found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
-					} catch (Exception e)
-					{
-						// TODO Auto-generated catch block
-						throw new CompletionException(e); 
-					}
-					return found; 
-				}).thenAccept( characterFound -> 
-				{
-					EmbedBuilder builder = new EmbedBuilder().
-					setTitle(characterFound.getName()).
-					setThumbnail(characterFound.getDefaultImage()).
-					setColor(Color.PINK);
-					event.deferReply().queue();
-					event.getHook().sendMessageEmbeds(builder.build()).queue();
-					event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(characterFound.getName()) + "!").queue();
-				}).exceptionally(ex -> 
-				{
-					System.out.println(ex.getMessage()); 
-					event.getHook().sendMessage(ex.getMessage()).queue(); 
-					return null; 
-				}); 
+					Instant start = Instant.now();  
+					
+					CompletableFuture.supplyAsync( () ->
+						{
+							CharacterSelection select = new CharacterSelection(); 
+							Character found = null; 
+							try 
+							{
+								found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
+							} catch (Exception e)
+							{
+								// TODO Auto-generated catch block
+								throw new CompletionException(e); 
+							}
+							return found; 
+						}).thenAccept( characterFound -> 
+						{
+							EmbedBuilder builder = new EmbedBuilder().
+							setTitle(characterFound.getName()).
+							setThumbnail(characterFound.getDefaultImage()).
+							setColor(Color.PINK);
+							event.getHook().sendMessageEmbeds(builder.build()).queue();
+							event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(characterFound.getName()) + "!").queue();
+						}).exceptionally(ex -> 
+						{
+							System.out.println(ex.getMessage()); 
+							event.getHook().sendMessage(ex.getMessage()).queue(); 
+							return null; 
+						}).join(); 
+					 
+					 Instant end = Instant.now(); 
+					 System.out.println(Duration.between(start, end)); 
+				} );
 		}
 	}
 	

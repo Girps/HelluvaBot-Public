@@ -24,23 +24,17 @@ import events.ShipsCommand;
 import events.SimpsCommand;
 import events.SmashPassCommand;
 import events.SonasCommand;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 
 public class Bot {
 
 	private final static EventWaiter waiter = new EventWaiter(); 
 	private static ShardManager shardManager; 
-	
-	
-	
-	
 	
 	public static void main(String[] args) throws Exception
 	{
@@ -65,7 +59,8 @@ public class Bot {
 				final String NAME = properties.getProperty("NAME"); 
 						
 				
-		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TOKEN); 
+		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TOKEN);  
+		
 		builder.setActivity(Activity.listening("/help for help")); 
 		builder.setStatus(OnlineStatus.ONLINE); 
 		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
@@ -87,7 +82,8 @@ public class Bot {
 		}
 		
 		// Have shard manager
-		shardManager = builder.build(); 
+		shardManager = builder.build();
+		
 		// Connect to database 
 		
 		String url = MYURL; 

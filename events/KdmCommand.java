@@ -53,7 +53,6 @@ public class KdmCommand extends ListenerAdapter
 			CompletableFuture.supplyAsync( () -> 
 			{
 				event.deferReply().queue();
-				
 				// get the characters 
 				// No entry get 3 random characters
 				Character[] chtrs = new Character[3]; 
@@ -73,7 +72,6 @@ public class KdmCommand extends ListenerAdapter
 				{
 					int size = event.getOptions().size();
 					List<OptionMapping> options = event.getOptions(); 
-					
 					// Request by name a character
 					for(int i = 0; i < size; ++i) 
 					{
@@ -87,7 +85,6 @@ public class KdmCommand extends ListenerAdapter
 							throw new CompletionException(e);
 						} 
 					}
-					
 					// length difference computation 
 					int delta = chtrs.length - options.size(); 
 					switch(delta) 
@@ -107,7 +104,9 @@ public class KdmCommand extends ListenerAdapter
 						try 
 						{
 							temp = select.getRandomCharacters(GAMETYPE.KDM, SETUPTYPE.LIGHT, event.getGuild().getIdLong(),2);
-						} catch (Exception e) {
+						} 
+						catch (Exception e)
+						{
 							// TODO Auto-generated catch block
 							throw new CompletionException(e); 
 						} 
@@ -178,6 +177,7 @@ public class KdmCommand extends ListenerAdapter
 											(eBtn.getMessage().getIdLong() == messageIds.get(0) || eBtn.getMessage().getIdLong() == messageIds.get(1)
 											|| eBtn.getMessage().getIdLong() == messageIds.get(2) ) ) 
 									{
+										eBtn.deferEdit().queue(); 
 										// Disable entire selection
 										MessageEmbed original = eBtn.getMessage().getEmbeds().get(0);
 											eBtn.getMessage().editMessageEmbeds(original).setActionRow(buttons.get(0).asDisabled(), 
@@ -205,8 +205,16 @@ public class KdmCommand extends ListenerAdapter
 								}
 								, (eBtn) -> CompletableFuture.runAsync( () ->  
 								{ 
+									System.out.println("Game done"); 
 									KdmRound temp = currentRound; 
-									eBtn.getHook().sendMessage( "<@"+ temp.getUser() + ">" + " would " + MarkdownUtil.italics("kill ") + MarkdownUtil.bold(temp.getKill()) + MarkdownUtil.italics(" date ") + MarkdownUtil.bold(temp.getDate()) + " and "+  MarkdownUtil.italics(" marry ") + MarkdownUtil.bold(temp.getMarry())).queue();
+									eBtn.getHook().sendMessage( "<@"+ temp.getUser() + ">" 
+									+ " would " +
+											MarkdownUtil.italics("kill ") +
+											MarkdownUtil.bold(temp.getKill()) +
+											MarkdownUtil.italics(" date ") + 
+											MarkdownUtil.bold(temp.getDate()) +
+											" and "+  MarkdownUtil.italics(" marry ") +
+											MarkdownUtil.bold(temp.getMarry())).queue();
 								})
 								, 1L,TimeUnit.MINUTES, () -> 
 								{

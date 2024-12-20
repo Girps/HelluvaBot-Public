@@ -33,38 +33,43 @@ public class KinsCommand extends ListenerAdapter{
 		{
 			
 			// Aync get the character and send it to the channel
-		  CompletableFuture.supplyAsync( () -> 
-			{
-				event.deferReply().queue();
-				CharacterSelection select = new CharacterSelection(); 
-				Character found = null;
-				try
+		  event.deferReply().queue( v -> 
+		  {
+			  
+			  CompletableFuture.supplyAsync( () -> 
 				{
-					found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0];
-				}
-				catch (Exception e) 
+					CharacterSelection select = new CharacterSelection(); 
+					Character found = null;
+					try
+					{
+						found = select.getRandomCharacters(GAMETYPE.KINS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0];
+					}
+					catch (Exception e) 
+					{
+						throw new CompletionException(e); 
+					}  
+					return found; 
+				}).thenAccept( (characterFound) -> 
 				{
-					throw new CompletionException(e); 
-				}  
-				return found; 
-			}).thenAccept( (characterFound) -> 
-			{
-				String name = characterFound.getName(); 
-				EmbedBuilder builder = new EmbedBuilder(); 
-				builder.setTitle(characterFound.getName()); 
-				builder.setThumbnail(characterFound.getDefaultImage());
-				builder.setColor(Color.CYAN);
-				event.getHook().sendMessageEmbeds(builder.build()).queue( (message) -> 
+					String name = characterFound.getName(); 
+					EmbedBuilder builder = new EmbedBuilder(); 
+					builder.setTitle(characterFound.getName()); 
+					builder.setThumbnail(characterFound.getDefaultImage());
+					builder.setColor(Color.CYAN);
+					event.getHook().sendMessageEmbeds(builder.build()).queue( (message) -> 
+					{
+						message.reply( event.getUser().getAsMention() + " kins for " +  MarkdownUtil.bold(name + "!")).queue();
+						System.out.println( "Name in queue: " + Thread.currentThread().getName() + "|"); 
+					}); 
+				}).exceptionally(ex -> 
 				{
-					message.reply( event.getUser().getAsMention() + " kins for " +  MarkdownUtil.bold(name + "!")).queue();
-					System.out.println( "Name in queue: " + Thread.currentThread().getName() + "|"); 
+					System.out.println(ex.getMessage()); 
+					event.getHook().sendMessage(ex.getMessage()).queue(); 
+					return null; 
 				}); 
-			}).exceptionally(ex -> 
-			{
-				System.out.println(ex.getMessage()); 
-				event.getHook().sendMessage(ex.getMessage()).queue(); 
-				return null; 
-			}); 
+			  
+		  }); 
+		 
 			
 			System.out.println( "Name Main?: " + Thread.currentThread().getName() + "|"); 
 		}

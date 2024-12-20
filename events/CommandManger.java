@@ -4,6 +4,7 @@ package events;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,9 +24,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 public class CommandManger extends ListenerAdapter {
 
-
-	private static ArrayList<String> wikiNames;
-	private ArrayList<String> MiscNames; 
 	private ArrayList<String> cmds; 
 	private boolean debug; 
 	List<CommandData> commandList = null; 
@@ -133,8 +131,13 @@ public class CommandManger extends ListenerAdapter {
 					OptionData cmd =  new OptionData(OptionType.STRING, "command", "Main commands", true, true ); 
 					
 					OptionData gift = new OptionData(OptionType.STRING, "gift", "your character to give" , true, true); 
-					OptionData receiver = new OptionData(OptionType.USER, "receiver", "Enter a user to accept the gift", false, false);
-					OptionData choice = new OptionData(OptionType.BOOLEAN, "permission" , "Enter true or false",true,false); 
+					OptionData receiver = new OptionData(OptionType.USER, "receiver", "Enter a user to accept the gift", true, false);
+					OptionData choice = new OptionData(OptionType.BOOLEAN, "permission" , "Enter true or false",true,false);
+					
+					//OptionData firstUserCollect= new OptionData(OptionType.USER, "gifter" , "Enter user to force gift from", true, false);
+					OptionData characterForceGift = new OptionData(OptionType.STRING, "receiver-character", "Pick character to force gift" , true, true); 
+
+					
 					commandList.add(Commands.slash("require-permission", "Require users to have the Helluva Permission role to insert OCs/Sonas into the bot!").addOptions(choice)); 
 					commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
 					commandList.add(Commands.slash("wiki", "Display general information on entered character").addOptions(characterOption)); 
@@ -187,8 +190,12 @@ public class CommandManger extends ListenerAdapter {
 					commandList.add(Commands.slash("gift-collectable","Give a collectable to another user!").addOptions(gift,receiver)); 
 					commandList.add(Commands.slash("sona-available","Check sona is available in following gamemodes!").addOptions(UserOption)); 
 					commandList.add(Commands.slash("oc-available","Check oc is available in following gamemodes!").addOptions(customCharacterOp)); 
+					commandList.add( Commands.slash("force-gift", "Force gift from one users collection to another").addOptions(requiredUserOp,characterForceGift,receiver)); 		
 		
-		
+					for (int i =0; i < commandList.size(); i++) 
+					{
+						System.out.println(commandList.get(i).getNameLocalizations()); 
+					}
 	}
 	
 	@Override
@@ -198,74 +205,38 @@ public class CommandManger extends ListenerAdapter {
 		 // Check type of of command 
 		 if( ( event.getName().equals("wiki-full") || event.getName().equals("wiki") ) ) 
 		 { 
-			 // Search the letter and get 25 possible options including that lettter 
-			 
-			 CharacterSelection select = new CharacterSelection(); 
-				ArrayList<String> names = null ; 
-				 names = select.getAllCharacterNames(GAMETYPE.WIKI,0);
-				wikiNames = names; 
-			 ArrayList<String> subList = new ArrayList<String>(); 
-			 
-			 for(int i =0; i < wikiNames.size(); ++i) 
+			 // Search the letter and get 25 possible options including that lettter 			 
+			 CompletableFuture.supplyAsync( () -> 
 			 {
-				 if(wikiNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || wikiNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-				 {
-					subList.add(wikiNames.get(i)); 
-				 }
-			 }
-			 // Convert to arrays
-			 String [] subset = new String[subList.size()]; 
-			 
-			 subList.toArray(subset); 
-			 
-			 List<Command.Choice> options = Stream.of(subset).limit(25)
-					 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-					 .map(name -> new Command.Choice(name, name))
-					 .collect(Collectors.toList()); 
-			 event.replyChoices(options).queue();   
+				 CharacterSelection select = new CharacterSelection(); 
+					ArrayList<String> names = null ; 
+					names = select.getAllCharacterNames(GAMETYPE.WIKI,0);
+					
+				 return names; 
+			 }).thenAccept((names) -> 
+			 {
+				List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally((ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null; 
+			 }); 
 		 }
 		 
 		 else if(event.getName().equals("help") || 
 				 event.getFocusedOption().getName().equals("command") )  
-	 {
-		
-		 ArrayList<String> subList = new ArrayList<String>(); 
-		MiscNames = cmds; 
-		for(int i =0; i < MiscNames.size(); ++i) 
 		 {
-			 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
+			 CompletableFuture.runAsync(() -> 
 			 {
-				subList.add(MiscNames.get(i)); 
-			 }
-		 }
-		
-		 // Convert to arrays
-		 String [] subset = new String[subList.size()]; 
-		 
-		 subList.toArray(subset); 
-		 
-		 List<Command.Choice> options = Stream.of(subset).limit(25)
-				 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-				 .map(name -> new Command.Choice(name, name))
-				 .collect(Collectors.toList()); 
-		 event.replyChoices(options).queue();
-		 
-	 } 
-		 else if(event.getName().equals("kdm")  ||  event.getFocusedOption().getName().equals("first") || 
-					 event.getFocusedOption().getName().equals("second") || event.getFocusedOption().getName().equals("third") )  
-		 {
-			 CharacterSelection select = new CharacterSelection(); 
-			
 				 ArrayList<String> subList = new ArrayList<String>(); 
-				MiscNames = select.getAllCharacterNames(GAMETYPE.KDM,event.getGuild().getIdLong());
-				for(int i =0; i < MiscNames.size(); ++i) 
+				 for(int i =0; i < cmds.size(); ++i) 
 				 {
-					 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
+					 if(cmds.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || cmds.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
 					 {
-						subList.add(MiscNames.get(i)); 
+						subList.add(cmds.get(i)); 
 					 }
 				 }
-				
 				 // Convert to arrays
 				 String [] subset = new String[subList.size()]; 
 				 
@@ -275,311 +246,252 @@ public class CommandManger extends ListenerAdapter {
 						 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
 						 .map(name -> new Command.Choice(name, name))
 						 .collect(Collectors.toList()); 
-				 event.replyChoices(options).queue();   
-		
+				 event.replyChoices(options).queue(); 
+			 }).exceptionally((ex) -> 
+			 {
+				 ex.printStackTrace(); 
+				 return null; 
+			 }); 
+			 
+		 } 
+		 else if(event.getName().equals("kdm")  ||  event.getFocusedOption().getName().equals("first") || 
+					 event.getFocusedOption().getName().equals("second") || event.getFocusedOption().getName().equals("third") )  
+		 { 
+			 CompletableFuture.supplyAsync(() ->
+			 {
+				 CharacterSelection select = new CharacterSelection(); 
+				ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.KDM,event.getGuild().getIdLong());
+				return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue(); 
+			 })
+			 .exceptionally((ex)->
+			 {
+				 ex.printStackTrace(); 
+				 return null; 
+			 }); 
 		 }
  		 else if (event.getName().equals("smashpass") 
 			 && ( event.getFocusedOption().getName().equals("character"))) 
 		 {
-			 CharacterSelection select = new CharacterSelection(); 
-			
-				 ArrayList<String> subList = new ArrayList<String>(); 
-					MiscNames = select.getAllCharacterNames(GAMETYPE.SMASHPASS,event.getGuild().getIdLong());
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-			
+ 			 
+ 			 CompletableFuture.supplyAsync( () -> 
+ 			 {
+ 				 CharacterSelection select = new CharacterSelection(); 
+				 
+					ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.SMASHPASS,event.getGuild().getIdLong());
+ 				 return names; 
+ 			 }).thenAccept( (names) -> 
+ 			 {
+ 			 
+ 				List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue(); 
+				 event.replyChoices(options).queue();
+ 			 }).exceptionally( (ex) ->
+ 			 {
+ 				 ex.printStackTrace(); 
+ 				 return null;
+ 			 }); ; 
 		 }
 		 else if ( event.getName().equals("add-favorite") && event.getFocusedOption().getName().equals("character")  ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-				
-				 ArrayList<String> subList = new ArrayList<String>(); 
-					MiscNames = select.getAllCharacterNames(GAMETYPE.FAVORITES, event.getGuild().getIdLong());
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-		
+			 CompletableFuture.supplyAsync( () -> 
+ 			 {
+ 				 CharacterSelection select = new CharacterSelection(); 
+				ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.FAVORITES, event.getGuild().getIdLong());
+ 				 return names; 
+ 			 }).thenAccept( (names) -> 
+ 			 {
+ 				List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+ 			 }).exceptionally( (ex) ->
+ 			 {
+ 				 ex.printStackTrace(); 
+ 				 return null;
+ 			 }); ; 
 		 }
 		 else if ( ( event.getName().equals("remove-favorite")  || event.getName().equals("swap-favorite-rank") ) 
 				 &&  ( event.getFocusedOption().getName().equals("character") || event.getFocusedOption().getName().equals("first-character") ||
 						 event.getFocusedOption().getName().equals("second-character")) ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-				
-				 ArrayList<String> subList = new ArrayList<String>(); 
-					MiscNames = select.getFavListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-		
+			 CompletableFuture.supplyAsync( () -> 
+ 			 {
+ 				 CharacterSelection select = new CharacterSelection(); 
+				ArrayList<String> names = select.getFavListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
+ 				 return names; 
+ 			 }).thenAccept( (names) -> 
+ 			 {
+ 				List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+ 			 }).exceptionally( (ex) ->
+ 			 {
+ 				 ex.printStackTrace(); 
+ 				 return null;
+ 			 }); 
 			 
 		 }
 		 else if (  ( event.getName().equals("update-oc") || event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") || event.getName().equals("oc-available") ) &&   ( event.getFocusedOption().getName().equals("customcharacter")) ) 
-		 {
-			 Long id = event.getUser().getIdLong(); 
-			 CharacterSelection select = new CharacterSelection();  
-			System.out.println("Refreshing"); 
-				 ArrayList<String> subList = new ArrayList<String>(); 
-					MiscNames = select.getUsersOCName(id, event.getGuild().getIdLong()); 
-					for(int i =0; i < MiscNames.size(); ++i) 
-						
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-			
-			 
+		 {		 
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 Long id = event.getUser().getIdLong(); 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getUsersOCName(id, event.getGuild().getIdLong()); 
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });  
 		 }
 		 else if ( event.getName().equals("search-oc") || event.getName().equals("remove-user-oc")  &&   event.getFocusedOption().getName().equals("customcharacter") ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-			
-				
-				 ArrayList<String> subList = new ArrayList<String>();  
-					MiscNames = select.getUsersOCName(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-			
+ 					 
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getUsersOCName(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });  
+
 			 
 		 }
 		 else if ( event.getName().equals("release")  &&  event.getFocusedOption().getName().equals("character") ) 
-		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-			
-				 ArrayList<String> subList = new ArrayList<String>();  
-					MiscNames = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-		
-			 
+		 {	 
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });   
 		 }
 		 else if ( event.getName().equals("force-release") &&   event.getFocusedOption().getName().equals("character") ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-			
-				 ArrayList<String> subList = new ArrayList<String>();  
-					MiscNames = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-		
-			 
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });   
 		 }
-		 else if (  ( event.getName().equals("gift-collectable") || event.getName().equals("collect-trade")  || event.getName().equals("set-default-collect")  ) &&   ( event.getFocusedOption().getName().equals("trader-character") || event.getFocusedOption().getName().equals("tradee-character") 
-				 || event.getFocusedOption().getName().equals("character") || event.getFocusedOption().getName().equals("gift") ) ) 
+		 else if (  event.getName().equals("force-gift") || ( event.getName().equals("gift-collectable") || event.getName().equals("collect-trade")  || event.getName().equals("set-default-collect")  )  &&   
+				 ( event.getFocusedOption().getName().equals("trader-character") || event.getFocusedOption().getName().equals("tradee-character") 
+				 || event.getFocusedOption().getName().equals("character") || event.getFocusedOption().getName().equals("gift")  || event.getFocusedOption().getName().equals("receiver-character") ) ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-			
-				 ArrayList<String> subList = new ArrayList<String>(); 
-				 if(event.getInteraction().getOption("user") != null) 
-				 { 
-					MiscNames = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
+			 
+				// Needs to be fixed 
+			 CompletableFuture.supplyAsync( () -> 
+			 {		
+				 ArrayList<String> names = null; 
+				 CharacterSelection select = new CharacterSelection(); 
+				 if (event.getInteraction().getOption("user") != null)
+				 {  
+					 names = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong());
 				 }
 				 else 
 				 {
-					 MiscNames = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong());
+					 names = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong());
 				 }
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-				
-			
-			 
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });
+
 		 }
 		 else if ( event.getName().equals("add-wish") &&   event.getFocusedOption().getName().equals("character")  ) 
 		 {
-			 CharacterSelection select = new CharacterSelection();  
-
-			
-				
-				 ArrayList<String> subList = new ArrayList<String>(); 
-				
-					 MiscNames = select.getAllCharacterNames(GAMETYPE.COLLECT, event.getGuild().getIdLong());
-
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
-		
-			 
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.COLLECT, event.getGuild().getIdLong());  
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });		 
 		 }
 		 else if ( event.getName().equals("remove-wish") &&   event.getFocusedOption().getName().equals("character")  ) 
-		 {
-			 CharacterSelection select = new CharacterSelection();  
-			
-				
-				 ArrayList<String> subList = new ArrayList<String>(); 
-				
-					 MiscNames = select.getWishListNames(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
-					for(int i =0; i < MiscNames.size(); ++i) 
-					 {
-						 if(MiscNames.get(i).toLowerCase().contains(event.getFocusedOption().getValue().toLowerCase()) || MiscNames.get(i).equalsIgnoreCase(event.getFocusedOption().getValue())) 
-						 {
-							subList.add(MiscNames.get(i)); 
-						 }
-					 }
-					
-					 // Convert to arrays
-					 String [] subset = new String[subList.size()]; 
-					 
-					 subList.toArray(subset); 
-					 
-					 List<Command.Choice> options = Stream.of(subset).limit(25)
-							 .filter(name -> name.startsWith(event.getFocusedOption().getValue()))
-							 .map(name -> new Command.Choice(name, name))
-							 .collect(Collectors.toList()); 
-					 event.replyChoices(options).queue();   
+		 {		  		
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> names = select.getWishListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());  
+				 return names; 
+			 }).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });
 		 }
 	}
 		 
-	
+	public List<Command.Choice> filteredCommands(CommandAutoCompleteInteractionEvent event , ArrayList<String> names)
+	{
+		System.out.println(Thread.currentThread().getName());
+		 ArrayList<String> subList = new ArrayList<String>(); 
+		 for(int i =0; i < names.size(); ++i) 
+		 {
+			 if(names.get(i).toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()) ) 
+			 {
+				subList.add(names.get(i)); 
+			 }
+		 }
+		 // Convert to arrays
+		 String [] subset = new String[subList.size()]; 
+		 
+		 subList.toArray(subset); 
+		 
+		 List<Command.Choice> options = Stream.of(subset).limit(25)
+				 .filter(name -> name.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
+				 .map(name -> new Command.Choice(name, name))
+				 .collect(Collectors.toList()); 
+		return options; 
+	}; 
 	
 	// Up
 	@Override

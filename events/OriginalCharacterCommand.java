@@ -414,7 +414,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 			catch (Exception e) 
 			{
 				// TODO Auto-generated catch block
-				event.getHook().sendMessage("Something went wrong!").queue(); 
+				
 				e.printStackTrace();
 			}
 			} ).exceptionally( (ex) -> 

@@ -7,7 +7,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.awt.Color;
-
+import java.time.Duration;
+import java.time.Instant;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 
@@ -99,10 +100,12 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 				
 			case "roll": // roll a random character claim with a reaction  
-			
+				  
+				event.deferReply().queue( (ev) -> { 
+				Instant now = Instant.now(); 
 				CompletableFuture.runAsync(() -> 
 				{
-					event.deferReply().queue();
+					
 					CharacterSelection select = new CharacterSelection(); 
 					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
 					
@@ -114,7 +117,10 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						// Get time till next turn reset and 
 						String time = select.getRollRestTime(); 
-						event.getHook().sendMessage( event.getUser().getAsMention() + " you ran out of rolls! Please wait till " + MarkdownUtil.bold(time) + " to roll again!").queue(); 
+						event.getHook().sendMessage( event.getUser().getAsMention() 
+								+ " you ran out of rolls! Please wait till "
+								+ MarkdownUtil.bold(time)
+								+ " to roll again!").queue(); 
 						throw new RuntimeException(" "); 
 					}
 					
@@ -126,10 +132,10 @@ public class CollectCommand extends ListenerAdapter{
 					try 
 					{
 						temp = select.getRandomCharacters(GAMETYPE.COLLECT, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0];
+						temp.getName();  
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
-						event.getHook().sendMessage("Error with character: " + MarkdownUtil.bold(temp.getName()) + " roll refunded in mean time wait till character is fixed.").queue(); 
-						e.printStackTrace();
+						event.getHook().sendMessage( e.getMessage() + " roll refunded in the mean time wait till the character is fixed.").queue(); 
 						throw new RuntimeException(e.getMessage()); 
 					}
 					return temp; 
@@ -144,8 +150,6 @@ public class CollectCommand extends ListenerAdapter{
 					CompletableFuture.allOf(claimFuture,decRollFuture,wishesFuture).thenRun( () -> 
 					{
 						Long alreadyClaimed = claimFuture.join(); 
-						
-						
 						if (alreadyClaimed != -1) 
 						{
 							// Get the person who has the character 
@@ -153,6 +157,8 @@ public class CollectCommand extends ListenerAdapter{
 							event.getGuild().retrieveMemberById(alreadyClaimed).queue( (user) -> 
 							{
 								EmbedBuilder builder = new EmbedBuilder()
+										.setTitle(character.getName())
+										.setImage(character.getDefaultImage())
 										.setColor(user.getColor())
 										.setFooter("Already claimed!", event.getGuild().getIconUrl())
 										.setDescription("Owned by " + user.getAsMention() + " !"); 
@@ -176,7 +182,7 @@ public class CollectCommand extends ListenerAdapter{
 							// now set up event waiter for claims
 							decRollFuture.join(); 
 							ArrayList<String> usersName = wishesFuture.join();
-							String list = null; 
+							String list = ""; 
 							for(String names : usersName) 
 							{
 								list += names + " "; 
@@ -190,7 +196,6 @@ public class CollectCommand extends ListenerAdapter{
 											MessageReactionAddEvent.class, 
 											(eReact) -> 
 											{ 
-												boolean collectLimit = false,claimLimit = false; 
 												if(  !eReact.getUser().isBot() &&     eReact.getMessageIdLong() == Emessage.getIdLong()) 
 												{
 														CharacterSelection  innerSelect = new CharacterSelection(); 
@@ -206,11 +211,11 @@ public class CollectCommand extends ListenerAdapter{
 														CompletableFuture<Boolean> combinedFuture = claimLimitFuture.thenCombine( collectLimitFuture, (claim,collect) -> 
 														{
 															// If valid claim 
-															if (!claimLimit && !collectLimit && alreadyClaimed == -1) 
+															if (!collect && !claim && alreadyClaimed == -1) 
 															{
 																return true; 
 															} 	// Already claimed pass hour interval 
-															else if (claimLimit)	// check if they already claimed the pass hour interval 
+															else if (claim)	// check if they already claimed the pass hour interval 
 															{
 																String time = "";
 																try 
@@ -225,9 +230,10 @@ public class CollectCommand extends ListenerAdapter{
 																} 
 																return false; 
 															}
-															else if (collectLimit) 
+															else if (collect) 
 															{
-																event.getHook().sendMessage(eReact.getUser().getAsMention() + " you reached the max number of characters to collect!" ).queue(); 
+																event.getHook().sendMessage(eReact.getUser().getAsMention() +
+																		" you reached the max number of characters to collect! Release a character to open a slot!" ).queue(); 
 																return false; 
 															}
 															return false; 
@@ -266,7 +272,7 @@ public class CollectCommand extends ListenerAdapter{
 												} 
 											}) 
 											,
-												// Waited 15 seconds call this function
+												// Waited 15 seconds call this function 
 												15L,TimeUnit.SECONDS, 
 												() -> event.getHook().editMessageEmbedsById(Emessage.getIdLong(), builder.setFooter(
 												"Claim has expired!",event.getGuild().getIconUrl()).build()).queue()
@@ -279,19 +285,21 @@ public class CollectCommand extends ListenerAdapter{
 								event.getHook().sendMessage(list + " character " + MarkdownUtil.bold(character.getName()) + " has been rolled!").queue(); 
 							}
 						}
-						
-					});  
+					});   
 					
 				}).exceptionally( (ex) -> 
 				{
 					ex.printStackTrace(); 
 					return null; 
 				}); 
+				
+				Instant end = Instant.now(); 
+				
+				System.out.println(Duration.between(now, end));
+				}); 
 			
 			break; 
 			case "collection" : // shows collect list of calling user or option of another user 
-				
-				
 				CompletableFuture.supplyAsync( () -> 
 				{
 					event.deferReply().queue();
@@ -326,8 +334,11 @@ public class CollectCommand extends ListenerAdapter{
 							try 
 							{
 								builder.setAuthor(event.getMember().getEffectiveName() + 
-										"'s Collection!", event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()) 
-								.setThumbnail(select.requestSingleCharacter(list.get(0), event.getGuild().getIdLong(), GAMETYPE.COLLECT, SETUPTYPE.LIGHT).getDefaultImage())
+										"'s Collection!", event.getMember().getEffectiveAvatarUrl(), 
+										event.getMember().getEffectiveAvatarUrl()) 
+								.setThumbnail(select.requestSingleCharacter(list.get(0), 
+										event.getGuild().getIdLong(),
+										GAMETYPE.COLLECT, SETUPTYPE.LIGHT).getDefaultImage())
 								.setColor(Color.YELLOW)
 								.setDescription(names)
 								.setFooter(size + "/" + "30 characters"); 
@@ -570,9 +581,14 @@ public class CollectCommand extends ListenerAdapter{
 								
 								for(Character temp : list) 
 								{
-									if(select.hasBeenClaimed(temp.getId(), event.getGuild().getIdLong()) == -1) 
+									Long claimId = select.hasBeenClaimed(temp.getId(), event.getGuild().getIdLong()); 
+									if( claimId == -1) 
 									{  
 										names += "- "  + temp.getName() + "\n"; 
+									}
+									else if(claimId == event.getUser().getIdLong()) 
+									{
+										names += "- " + temp.getName() + " :white_check_mark:" +"\n"; 
 									}
 									else 
 									{
@@ -707,8 +723,6 @@ public class CollectCommand extends ListenerAdapter{
 				break; 
 			case "force-release" : 
 			{
-					
-					
 					event.deferReply().queue( (v) -> 
 					{
 						long targetUser = event.getOption("user").getAsUser().getIdLong(); 		
@@ -757,7 +771,6 @@ public class CollectCommand extends ListenerAdapter{
 				
 				event.deferReply().queue(v -> 
 				{
-					System.out.println("in Queue:" + Thread.currentThread().getName()); 
 					if (event.getOption("receiver").getAsUser().isBot() || event.getOption("receiver").getAsUser().getIdLong() == event.getUser().getIdLong()) 
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " invalid gift to " + event.getOption("receiver").getAsUser().getAsMention() ).queue();
@@ -775,8 +788,8 @@ public class CollectCommand extends ListenerAdapter{
 						{
 							if(limit) 
 							{
-								event.getHook().sendMessage(event.getOption("receiver").getAsMentionable() + " cannot receive character they have hit the limit of "
-										+ "30 collectables!").queue(); 
+								event.getHook().sendMessage(event.getOption("receiver").getAsUser().getAsMention() + " cannot receive a character they have hit the limit of "
+										+ "30 collectables! They must release a character to open a slot!").queue(); 
 								return false; 
 							} 
 							else if(available) 
@@ -830,9 +843,80 @@ public class CollectCommand extends ListenerAdapter{
 						}); 	
 					}
 				});  
-				System.out.println("Main:" + Thread.currentThread().getName()); 
 			}
 				break; 
+			case  "force-gift":
+			{
+				event.deferReply().queue( (v) -> 
+				{
+					User gifter = event.getOption("user").getAsUser(); 
+					User receiver = event.getOption("receiver").getAsUser();
+					String giftCharacterName = event.getOption("receiver-character").getAsString(); 
+					if( gifter.isBot() || receiver.isBot() ) 
+					{
+						v.sendMessage(event.getUser().getAsMention() + " the reciever or gifter cannot be a bot!").queue(); 
+					}
+					else if (gifter.getIdLong() == receiver.getIdLong()) 
+					{
+						v.sendMessage(event.getUser().getAsMention() + " the reciever or gifter cannot be the same!").queue(); 
+					}
+					else if (!Helper.checkAdminRole(event.getMember().getRoles())) 
+					{
+						EmbedBuilder builder = new EmbedBuilder(); 
+						builder.setImage("https://i.imgur.com/gPWckoI.jpg"); 
+						builder.setDescription("Make sure this role (same name no special permissons required) is created and Assigned to admins of this server in order to use this command!"); 
+						builder.setColor(Color.RED); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+						event.getHook().sendMessage( event.getUser().getAsMention() + " only " + MarkdownUtil.bold("Helluva Admins") + " can force gift to other players!").queue();	
+					}
+					else 
+					{
+						// Run async 
+						CompletableFuture.runAsync( () -> 
+						{
+							CharacterSelection select = new CharacterSelection(); 
+							// get the receiver characters 
+							CompletableFuture<Boolean> limitFuture = CompletableFuture.supplyAsync( () -> select.checkCollectLimit(receiver.getIdLong(), event.getGuild().getIdLong()) ); 
+							CompletableFuture<Boolean> avaFuture = CompletableFuture.supplyAsync(() -> select.getCollectNamesOfUser(gifter.getIdLong(),
+									event.getGuild().getIdLong()).contains(giftCharacterName) == false); 
+							
+							limitFuture.thenCombine(avaFuture, (limit, available) -> 
+							{
+								
+								if( limit ) 
+								{
+									v.sendMessage(event.getUser().getAsMention() + " the user " + receiver.getAsMention() + " has reached the limited number of characters! They must release a spot before receiving!" ).queue(); 
+									return false; 
+								}
+								else if(available) 
+								{
+									v.sendMessage(event.getUser().getAsMention() + " the user " + gifter.getAsMention() + " does not have the character " +  MarkdownUtil.bold(giftCharacterName) + "!").queue(); 
+									return false; 
+								}
+								return true; 
+							}).thenAccept((trade) -> 
+							{
+								if (trade) 
+								{
+									// give character from one user to the other
+									select.giveCharacter(gifter.getIdLong(), receiver.getIdLong(),event.getGuild().getIdLong(), giftCharacterName);  
+									v.sendMessage(event.getUser().getAsMention() + " gifted " + gifter.getAsMention() + "'s character " 
+									+ MarkdownUtil.bold(giftCharacterName) + " to " + receiver.getAsMention()).queue(); 
+								}
+							});  
+						}
+						).exceptionally((ex) -> 
+						{
+							System.out.println("Some error"); 
+							ex.printStackTrace(); 
+							event.reply("An error occured!").queue(); 
+							return null; 
+						});  
+					}
+				} ); 
+			}
+			break; 
+			
 		}
 	}
 }

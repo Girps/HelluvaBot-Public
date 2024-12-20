@@ -37,12 +37,12 @@ public class GuessCommand extends ListenerAdapter{
 		
 		if(event.getName().equals("guess")) 
 		{
-			event.deferReply(); 
 			
 			// Get 4 random characters and pick one to guess correctly 
 			CompletableFuture.supplyAsync( () -> 
 			{
 				// db get 4 random characters 
+				event.deferReply().queue(); 
 				CharacterSelection select = new CharacterSelection(); 
 				CharactersPack.Character[] chts = null; 
 				try 
@@ -76,6 +76,7 @@ public class GuessCommand extends ListenerAdapter{
 						(e) -> !e.getUser().isBot() && e.getMessageIdLong() == messageEmbed.getIdLong(), 
 						(e) -> CompletableFuture.runAsync( () -> 
 						{
+							e.deferEdit().queue(); 
 							if ( e.getInteraction().getButton().getLabel().equals(chrsArray[rand].getName()) ) 
 							{
 								e.getMessage().editMessageEmbeds(e.getMessage().getEmbeds().get(0))

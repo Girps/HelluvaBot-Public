@@ -99,8 +99,6 @@ public class SmashPassCommand extends ListenerAdapter
 				event.getHook().sendMessage(ex.getMessage()).queue(); 
 				return null; 
 			});
-			System.out.println("MAIN:" + Thread.currentThread().getName()); 
-
 		}	
 		else if(event.getName().equals("smashpass") && event.getOption("character") != null)	// Smash pass event gets a single character 	 
 		{
@@ -111,7 +109,7 @@ public class SmashPassCommand extends ListenerAdapter
 		 		CharacterSelection selection = new CharacterSelection(); 
 		 		String targetName = event.getOption("character").getAsString(); 
 		 		// Use a query to get the character
-		 		Character target;
+		 		Character target = null;
 				try
 				{
 					target = selection.requestSingleCharacter(targetName,event.getGuild().getIdLong(), GAMETYPE.SMASHPASS,SETUPTYPE.LIGHT);
@@ -119,8 +117,8 @@ public class SmashPassCommand extends ListenerAdapter
 				catch (Exception e) 
 				{
 					// TODO Auto-generated catch block
-					throw new CompletionException(e); 
-				} 
+					throw new CompletionException(e);   
+				}
 		 		return target; 
 		 } 
 		 ).thenAccept( (character) -> {
@@ -158,7 +156,7 @@ public class SmashPassCommand extends ListenerAdapter
 		 } )
 			.exceptionally( ex -> 
 		 {
-			System.out.println(ex.getMessage()); 
+			ex.printStackTrace(); 
 			event.getHook().sendMessage(ex.getMessage()).queue(); 
 			return null; 
 		 }); 

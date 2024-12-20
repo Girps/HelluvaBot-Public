@@ -51,18 +51,18 @@ public class WikiCommand extends ListenerAdapter{
 		if(event.getName().equals("wiki")) 
 		{
 			// Get character name  
-			String characterName = event.getOption("character").getAsString(); 
-			OffsetDateTime time = event.getTimeCreated(); 
-			Date date = Date.from(time.toInstant());
-			// Now check in database for the character 
-			try 
+			event.deferReply().queue( (v) -> 
 			{
-
+				String characterName = event.getOption("character").getAsString(); 
+				OffsetDateTime time = event.getTimeCreated(); 
+				Date date = Date.from(time.toInstant());
+				// Now check in database for the character 
+				try 
+				{
 					CharacterSelection select = new CharacterSelection(); 				
-				
 					// We have the fields now create our character object 
 					Character charactFound = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.LIGHT);
-					
+
 					// We have the character now build an embed for the character 
 					EmbedBuilder builder = new EmbedBuilder(); 
 					builder.setAuthor(charactFound.getName(), charactFound.getUrl());
@@ -72,15 +72,15 @@ public class WikiCommand extends ListenerAdapter{
 					builder.setThumbnail(charactFound.getDefaultImage()); 
 					builder.setFooter(event.getMember().getEffectiveName(), event.getMember().getEffectiveAvatarUrl());  
 					// Now send the embed to the server
-					
-					event.deferReply().queue(); 
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
-			}
-			catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
-			} 
+				}
+				catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
+				} 	
+			});
+			
 		}
 		else if(event.getName().equals("wikiall") && Helper.checkAdminRole(event.getMember().getRoles()) 
 				&& event.getUser().getIdLong() == 673992089733955646L) 
@@ -142,45 +142,44 @@ public class WikiCommand extends ListenerAdapter{
 		else if(event.getName().equals("wiki-full") )	// wiki full pagnation implementation 
 		{
 			// Get character name  
-						String characterName = event.getOption("character").getAsString();
-						 
-						// Now check in database for the character 
-						try 
-						{
-								CharacterSelection select = new CharacterSelection(); 		
-								// We have the fields now create our character object 
-								Character charactFound = select.requestSingleCharacter(characterName, event.getGuild().getIdLong(),GAMETYPE.WIKI,SETUPTYPE.HEAVY);
-								
-								// We have the character now build an embed for the character 
-								EmbedBuilder builder = new EmbedBuilder(); 
-								
-								builder.setColor(Color.red); 
-								builder.setAuthor(charactFound.getName(), charactFound.getUrl());
-								builder.setImage(charactFound.getDefaultImage());
-								builder.setDescription(charactFound.getBasic()); 
-								builder.addField("Quote",  MarkdownUtil.quote(charactFound.getQuote()),false);
-								builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getMember().getEffectiveAvatarUrl()); 
-								
-								// Instantiate list of buttons 
-								List<Button> buttons = new ArrayList<Button>();
-								buttons.add(Button.secondary("leftwiki", "<<")); 
-								buttons.add(Button.primary("left", "<"));
-								buttons.add(Button.danger("close", "Close")); 
-								buttons.add(Button.primary("right", ">")); 
-								buttons.add(Button.secondary("rightwiki", ">>")); 
-								
-
-								// Now send the embed to the server
-								event.deferReply().queue(); 
-								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();
-								
-						}
-						catch(Exception e) 
-						{
-							e.printStackTrace();
-							event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
-						}
 			
+			event.deferReply().queue( (v) -> 
+			{
+				String characterName = event.getOption("character").getAsString();
+				 
+				// Now check in database for the character 
+				try 
+				{
+						CharacterSelection select = new CharacterSelection(); 		
+						// We have the fields now create our character object 
+						Character charactFound = select.requestSingleCharacter(characterName, event.getGuild().getIdLong(),GAMETYPE.WIKI,SETUPTYPE.HEAVY);
+						
+						// We have the character now build an embed for the character 
+						EmbedBuilder builder = new EmbedBuilder(); 
+						
+						builder.setColor(Color.red); 
+						builder.setAuthor(charactFound.getName(), charactFound.getUrl());
+						builder.setImage(charactFound.getDefaultImage());
+						builder.setDescription(charactFound.getBasic()); 
+						builder.addField("Quote",  MarkdownUtil.quote(charactFound.getQuote()),false);
+						builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getMember().getEffectiveAvatarUrl()); 
+						
+						// Instantiate list of buttons 
+						List<Button> buttons = new ArrayList<Button>();
+						buttons.add(Button.secondary("leftwiki", "<<")); 
+						buttons.add(Button.primary("left", "<"));
+						buttons.add(Button.danger("close", "Close")); 
+						buttons.add(Button.primary("right", ">")); 
+						buttons.add(Button.secondary("rightwiki", ">>")); 
+						// Now send the embed to the server
+						event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();		
+				}
+				catch(Exception e) 
+				{
+					e.printStackTrace();
+					event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
+				}
+			});
 		}
 		
 	}
@@ -189,107 +188,115 @@ public class WikiCommand extends ListenerAdapter{
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) 
 	{
-		event.deferEdit().queue();
-		// Implement pagination on embeds called by wikifull command 
-		if( event.getMember().getUser().isBot()) 
-		{
-				// if called by bot return
-			return; 
-		}
-		
-		// Now get title which should hold characters name use it
-	
-		MessageEmbed old = event.getMessage().getEmbeds().get(0); 
-		EmbedBuilder oldBuild = new EmbedBuilder(old); 
-		String characterName = old.getAuthor().getName(); // get the name 
-		
-		// Get page location in the footer 
-		String footerData = event.getMessage().getEmbeds().get(0).getFooter().getText();  
-		
-		// Get number of image 
-		String imageNumberStr = footerData.split("\n")[0]; 
-		imageNumberStr = footerData.split("/")[0]; 
-		imageNumberStr = imageNumberStr.replace("Image: ",""); 
-		int pageNumber = Integer.valueOf(imageNumberStr) - 1 ; 
-		
-		// Get number of wiki 
-		String wikiNumberStr = footerData.split("\n")[1]; 
-		wikiNumberStr = wikiNumberStr.split("/")[0]; 
-		wikiNumberStr = wikiNumberStr.replace("Wiki: ", ""); 
-		int wikiNumber = Integer.valueOf(wikiNumberStr); 
-		
-		// Get the character
-		Character charcTarget = null; 
-		try 
-		{		
-	
-			CharacterSelection select = new CharacterSelection();
-			charcTarget = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.HEAVY);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		
-		
-		// Size of the array  
-		int arraySize = charcTarget.getImageList().size() - 1; 
-		
-		// Get the button name called 
-		String dir_Str = event.getButton().getId(); 
-		
-		// Check which buttons were clicked 
-		if(dir_Str.equalsIgnoreCase("left")) 
-		{
-			pageNumber--; 
-			// Check if negative or above the bounds
-			if(pageNumber < 0) 
+		String dir_Str = event.getButton().getId();
+		if (dir_Str.equalsIgnoreCase("left") || 
+				dir_Str.equalsIgnoreCase("right") || dir_Str.equalsIgnoreCase("close") || 
+				dir_Str.equalsIgnoreCase("leftwiki") || dir_Str.equalsIgnoreCase("rightwiki")) 
+		{  
+			event.deferEdit().queue( (v) ->
 			{
-				// reset it to arraySize 
-				pageNumber = arraySize; 
+				// Implement pagination on embeds called by wikifull command 
+				if( !event.getMember().getUser().isBot() ) 
+				{
+					// Now get title which should hold characters name use it
+					
+					MessageEmbed old = event.getMessage().getEmbeds().get(0); 
+					EmbedBuilder oldBuild = new EmbedBuilder(old); 
+					String characterName = old.getAuthor().getName(); // get the name 
+					
+					// Get page location in the footer 
+					String footerData = event.getMessage().getEmbeds().get(0).getFooter().getText();  
+					
+					// Get number of image 
+					String imageNumberStr = footerData.split("\n")[0]; 
+					imageNumberStr = footerData.split("/")[0]; 
+					imageNumberStr = imageNumberStr.replace("Image: ",""); 
+					int pageNumber = Integer.valueOf(imageNumberStr) - 1 ; 
+					
+					// Get number of wiki 
+					String wikiNumberStr = footerData.split("\n")[1]; 
+					wikiNumberStr = wikiNumberStr.split("/")[0]; 
+					wikiNumberStr = wikiNumberStr.replace("Wiki: ", ""); 
+					int wikiNumber = Integer.valueOf(wikiNumberStr); 
+					
+					// Get the character
+					Character charcTarget = null; 
+					try 
+					{		
 				
-			}
-		} // Right decrement number 
-		else if(dir_Str.equalsIgnoreCase("right"))
-		{
-			pageNumber++; 
-			 if(pageNumber > arraySize) // if above the size set it 0
-			{
-				pageNumber = 0; 
-			}
+						CharacterSelection select = new CharacterSelection();
+						charcTarget = select.requestSingleCharacter(characterName,event.getGuild().getIdLong(), GAMETYPE.WIKI,SETUPTYPE.HEAVY);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} 
+					
+					
+					// Size of the array  
+					int arraySize = charcTarget.getImageList().size() - 1; 
+					
+					// Get the button name called 
+					
+					
+					// Check which buttons were clicked 
+					if(dir_Str.equalsIgnoreCase("left")) 
+					{
+						pageNumber--; 
+						// Check if negative or above the bounds
+						if(pageNumber < 0) 
+						{
+							// reset it to arraySize 
+							pageNumber = arraySize; 
+							
+						}
+					} // Right decrement number 
+					else if(dir_Str.equalsIgnoreCase("right"))
+					{
+						pageNumber++; 
+						 if(pageNumber > arraySize) // if above the size set it 0
+						{
+							pageNumber = 0; 
+						}
+					}
+					else if(dir_Str.equalsIgnoreCase("close")) // Delete the message 
+					{
+						event.deferEdit().queue(); 
+						event.getMessage().delete().queue(); 
+					}
+					else if(dir_Str.equalsIgnoreCase("leftwiki")) 
+					{
+						// Decremenit it 
+						wikiNumber--; 
+						if(wikiNumber < 1) 
+						{
+							wikiNumber = 15; 
+						}
+						
+					}
+					else // deals with right wiki 
+					{
+						wikiNumber++; 
+						if(wikiNumber > 15) 
+						{
+							wikiNumber = 1; 
+						}
+					}
+	
+					
+					
+					// We have a proper index now edit the embed
+					tweakEmbedWiki(oldBuild, charcTarget ,wikiNumber); 
+					oldBuild.setImage(charcTarget.getImageList().get(pageNumber)); 
+					oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageList().size()) + 
+							"\nWiki: " + wikiNumber + "/15",event.getMember().getEffectiveAvatarUrl()); 
+					
+					event.getMessage().editMessageEmbeds(oldBuild.build()).queue( );
+				}
+			});
 		}
-		else if(dir_Str.equalsIgnoreCase("close")) // Delete the message 
-		{
-			event.deferEdit().queue(); 
-			event.getMessage().delete().queue(); 
-		}
-		else if(dir_Str.equalsIgnoreCase("leftwiki")) 
-		{
-			// Decremenit it 
-			wikiNumber--; 
-			if(wikiNumber < 1) 
-			{
-				wikiNumber = 15; 
-			}
-			
-		}
-		else // deals with right wiki 
-		{
-			wikiNumber++; 
-			if(wikiNumber > 15) 
-			{
-				wikiNumber = 1; 
-			}
-		}
-
+	
 		
 		
-		// We have a proper index now edit the embed
-		tweakEmbedWiki(oldBuild, charcTarget ,wikiNumber); 
-		oldBuild.setImage(charcTarget.getImageList().get(pageNumber)); 
-		oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageList().size()) + 
-				"\nWiki: " + wikiNumber + "/15",event.getMember().getEffectiveAvatarUrl()); 
-		
-		event.getMessage().editMessageEmbeds(oldBuild.build()).queue( );
 	}
 	
 	// Helper function to help set up embed of the message 

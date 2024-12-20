@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
+import com.google.common.cache.AbstractCache.StatsCounter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -52,8 +53,7 @@ public class CharacterSelection {
 		config.setPassword(passwordArg);
 		config.setConnectionTimeout(6000); // will throw if connection not retireved in time
 		config.setLeakDetectionThreshold(6000); 
-		config.setMaximumPoolSize(40); 
-		
+		config.setMaximumPoolSize(24); 
 		dataSource = new HikariDataSource(config); 
 	}
 	
@@ -981,6 +981,34 @@ public class CharacterSelection {
 		return fields; 
 	}
 	
+	
+	public void removeSonaList(ArrayList<Long> userIds, Long serverId) 
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			String listStr =  userIds.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			String query = " DELETE character_Ids FROM character_Ids "
+					+ " INNER JOIN sonas ON sonas.sona_Id = character_Ids.id  "
+					+ "	WHERE sonas.user_Id IN " + listStr  
+					+ "	AND sonas.server_Id = " + serverId + " ";  
+			stat = conn.prepareStatement(query); 
+			stat.execute(); 
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
 	// Remove sona from the table 
 	public boolean removeSona(Long userId, Long serverId)  
 	{
@@ -1035,6 +1063,34 @@ public class CharacterSelection {
 		}
 		return result; 
 	}
+	
+	public void removeWaifuList(ArrayList<Long> userIds, Long serverId) 
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			String listStr =  userIds.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			String query = " DELETE waifus FROM waifus "
+					+ " WHERE user_id IN " + listStr
+					+ " AND server_id = " + serverId + " ";  
+			stat = conn.prepareStatement(query); 
+			stat.execute(); 
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
+	
 	
 	/* Method will insert a character to the database on the sona table */ 
 	public void insertSona(String name, Long userId, String url , Long serverId, String inKDM, String inSP, String inSimps,String inShips, String
@@ -1539,7 +1595,34 @@ public class CharacterSelection {
 			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 	
 			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 		} 
-}
+	}
+	
+	public void removeFavListArr(ArrayList<Long> userIds, Long serverId) 
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			String listStr =  userIds.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			String query = "DELETE FROM favorites\r\n"
+					+ "	WHERE favorites.user_Id IN " + listStr  + " "
+					+ "    AND favorites.server_Id = "+ serverId + "";  
+			stat = conn.prepareStatement(query); 
+			stat.execute(); 
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
 	
 	/* Remove list from the database */ 
 	public void removeFavCharacter(String name, Long userId, Long serverId) 
@@ -2100,7 +2183,34 @@ public class CharacterSelection {
 		}
 		
 	}
-
+	
+	public void removeAllOcsList(ArrayList<Long> userIds, Long serverId) 
+	{
+		PreparedStatement stat = null; 
+		Connection conn = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			String listStr =  userIds.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			String query = "DELETE character_Ids FROM character_Ids "
+					+ "	INNER JOIN customCharacters ON customCharacters.cusChar_Id = character_Ids.id "
+					+ "	WHERE customCharacters.user_Id IN " + listStr 
+					+ "    AND customCharacters.server_Id = " + serverId + " ";  
+			stat = conn.prepareStatement(query); 
+			stat.execute(); 
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace(); 
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
 	/* Update favorite list */ 
 	public void changeFavTitle(String title, Long userId, Long serverId)  
 	{
@@ -2410,8 +2520,13 @@ public class CharacterSelection {
 				"SET claim = " + "\"F\""   
 				+ " WHERE user_Id = " + userId + " AND server_Id = " + serverId ; 
 		
-		String quertyTwo = "INSERT INTO playersCollection(col_Id ,user_Id , server_Id ) " 
-				+ "VALUES (" + characterId + "," + userId + "," + serverId + ")" ;
+		String quertyTwo = " INSERT INTO playersCollection (col_Id , user_Id , server_Id ) \r\n"
+				+ " SELECT * FROM ( SELECT " + characterId + " ,  " + userId +" , " + serverId +" ) AS tmp "
+				+ " WHERE NOT EXISTS "
+				+ " ( "
+				+ "	SELECT col_Id,server_Id FROM playersCollection \r\n"
+				+ "    WHERE col_Id = " + characterId + " AND server_Id = " + serverId 
+				+ "  ) LIMIT 1; " ;
 		PreparedStatement updateStat = null ;
 		Connection conn = null; 
 		try
@@ -2421,6 +2536,7 @@ public class CharacterSelection {
 			updateStat.addBatch(queryOne); 
 			updateStat.addBatch(quertyTwo);
 			updateStat.executeBatch(); 
+			
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
@@ -2428,11 +2544,8 @@ public class CharacterSelection {
 		finally // Make sure statement is closed
 		{
 			try {  if(updateStat != null) { updateStat.close(); } } catch(Exception e){} 
-
 			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 		}
-		
-		
 	}
 
 	/*Get the time needed till the player can colllect again  */ 
@@ -2636,8 +2749,11 @@ public class CharacterSelection {
 			stat.setLong(1, serverId);
 			stat.setLong(2, charId);
 			res = stat.executeQuery(); 
-			res.next();  
-			result = res.getLong(0); 
+			
+			if ( res.next())
+			{  
+				result = res.getLong(1);
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2881,7 +2997,9 @@ public class CharacterSelection {
 	{
 		String query = "UPDATE playersCollection " 
 					+ " SET timeCreated = CURRENT_TIMESTAMP " 
-					+ " WHERE col_Id = ?"; 
+					+ " WHERE col_Id = ? "
+					+ " AND  user_Id = ?  "
+					+ " AND  server_Id = ? "; 
 		PreparedStatement stat = null;
 		Connection conn = null;
 		try 
@@ -2889,6 +3007,8 @@ public class CharacterSelection {
 			conn = dataSource.getConnection(); 
 			stat = conn.prepareStatement(query);
 			stat.setLong(1, charId);
+			stat.setLong(2, userId);
+			stat.setLong(3,serverId);
 			stat.execute(); 
 
 		} catch (SQLException e) 
@@ -3310,6 +3430,46 @@ public class CharacterSelection {
 			stat.addBatch(queryOne); 
 			stat.addBatch(queryTwo);
 			stat.addBatch(queryThree);
+			
+		
+			stat.executeBatch(); 
+		} 
+		catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+	}
+	
+	/* Method will remove a particular user from tables playersInCollect , playersCollection and wishlist*/ 
+	public void removeCollectList(ArrayList<Long> userIds, Long serverId) 
+	{
+		
+		String listStr =  userIds.toString().replace("[", "(");
+		listStr = listStr.replace("]", ")"); 
+		String queryOne = "DELETE FROM playersInCollect "
+				+ "WHERE user_Id IN " + listStr + " " 
+				+ "	 AND server_Id = " + serverId ;
+		String queryTwo = "DELETE FROM playersCollection "
+				+ "	WHERE user_Id IN " + listStr + " " 
+				+ "    AND server_Id = " + serverId;
+		String queryThree = "DELETE FROM wishList "
+				+ "	WHERE user_Id IN " + listStr + " "
+				+ "	AND server_Id = " + serverId;
+		Statement stat = null;
+		Connection conn = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);	
+			stat.addBatch(queryOne); 
+			stat.addBatch(queryTwo);
+			stat.addBatch(queryThree);
 			stat.executeBatch(); 
 		} 
 		catch (SQLException e)
@@ -3350,7 +3510,7 @@ public class CharacterSelection {
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 			
 			res = stat.executeQuery(query); 
-		
+			
 			users = new ArrayList<Long>(); 
 			if(res.next())
 			{

@@ -39,7 +39,7 @@ public class FavoriteCommand extends ListenerAdapter{
 			
 			CompletableFuture.runAsync(() -> 
 			{
-				event.deferReply(); 
+				event.deferReply().queue(); 
 				// Now add characters into the list 
 				Long userId = event.getUser().getIdLong(); 
 				Long serverId = event.getGuild().getIdLong(); 
@@ -59,7 +59,7 @@ public class FavoriteCommand extends ListenerAdapter{
 					}
 					catch (Exception e) 
 					{
-						event.getHook().sendMessage( event.getUser().getAsMention() + " falied to insert character" + MarkdownUtil.bold(MarkdownUtil.bold(characterName)) + "!" ).queue();; 
+						event.getHook().sendMessage( event.getUser().getAsMention() + " falied to insert character" + MarkdownUtil.bold(MarkdownUtil.bold(characterName)) + "!" ).queue(); 
 					} 
 			}).exceptionally(ex -> 
 			{
