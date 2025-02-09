@@ -44,6 +44,9 @@ public class SimpsCommand extends ListenerAdapter{
 				{
 					Instant start = Instant.now();  
 					
+					
+					
+					
 					CompletableFuture.supplyAsync( () ->
 						{
 							CharacterSelection select = new CharacterSelection(); 
@@ -67,13 +70,13 @@ public class SimpsCommand extends ListenerAdapter{
 							event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(characterFound.getName()) + "!").queue();
 						}).exceptionally(ex -> 
 						{
-							System.out.println(ex.getMessage()); 
+						
 							event.getHook().sendMessage(ex.getMessage()).queue(); 
 							return null; 
 						}).join(); 
 					 
 					 Instant end = Instant.now(); 
-					 System.out.println(Duration.between(start, end)); 
+					
 				} );
 		}
 	}

@@ -59,19 +59,15 @@ public class KinsCommand extends ListenerAdapter{
 					event.getHook().sendMessageEmbeds(builder.build()).queue( (message) -> 
 					{
 						message.reply( event.getUser().getAsMention() + " kins for " +  MarkdownUtil.bold(name + "!")).queue();
-						System.out.println( "Name in queue: " + Thread.currentThread().getName() + "|"); 
 					}); 
 				}).exceptionally(ex -> 
 				{
-					System.out.println(ex.getMessage()); 
 					event.getHook().sendMessage(ex.getMessage()).queue(); 
 					return null; 
 				}); 
 			  
 		  }); 
 		 
-			
-			System.out.println( "Name Main?: " + Thread.currentThread().getName() + "|"); 
 		}
 	}
 }

@@ -60,7 +60,6 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				CompletableFuture.allOf( futures.toArray(new CompletableFuture[0])).thenAccept( v ->
 				{
 					event.deferReply().queue(); 
-					System.out.println("all of: " + Thread.currentThread().getName()); 
 						List<Boolean> results = futures.stream().
 						map(CompletableFuture::join)
 						.toList(); 
@@ -100,7 +99,6 @@ public class OriginalCharacterCommand extends ListenerAdapter
 						// now build custom oc
 				}).thenApply( (v) -> 
 				{
-					System.out.println("applyof: " + Thread.currentThread().getName());
 					String CharacterName = event.getOption("name").getAsString(); 
 					CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,event.getOption("url").getAsString(), SETUPTYPE.LIGHT); 
 					Character temp = factory.getCharacter(); 
@@ -165,7 +163,6 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				CompletableFuture.runAsync( () -> 
 				{
 					event.deferReply().queue(); 
-					System.out.println( "in remove async: "+ Thread.currentThread().getName()); 
 					String characterName = event.getOption("customcharacter").getAsString();  // gets character name to remove 
 					CharacterSelection select = new CharacterSelection();
 					// Search for oc 
@@ -536,7 +533,6 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				}).thenApply((v) -> 
 				{
 					String targetName = event.getOption("customcharacter").getAsString(); 
-					System.out.println(targetName); 
 					// Now update a users sona using a hashmap to get fields of the current character 
 					HashMap<String, String> Oldfields = select.getOCFields(targetName, event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 					List<OptionMapping> newFields = new ArrayList<OptionMapping>(); 

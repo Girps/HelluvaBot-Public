@@ -5,6 +5,7 @@ import events.UserManager;
 import events.WaifuCommand;
 import events.WikiCommand;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -29,13 +30,14 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Bot {
 
 	private final static EventWaiter waiter = new EventWaiter(); 
 	private static ShardManager shardManager; 
-	
+	public static ConcurrentHashMap<Integer,Character> characterImages =
+			new ConcurrentHashMap<Integer,Character>(); // store both character names and url images 
 	public static void main(String[] args) throws Exception
 	{
 
@@ -59,13 +61,13 @@ public class Bot {
 				final String NAME = properties.getProperty("NAME"); 
 						
 				
-		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TOKEN);  
+		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createLight(TOKEN);  
 		
 		builder.setActivity(Activity.listening("/help for help")); 
 		builder.setStatus(OnlineStatus.ONLINE); 
 		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
-				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS);  
-		 
+				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
+		  
 		 // Add event listeners
 		builder.addEventListeners(waiter, new UserInfoCommand(), new events.CommandManger(), new WikiCommand()
 				, new SmashPassCommand(waiter), new SimpsCommand(), new KinsCommand(), new ShipsCommand(), new WaifuCommand(waiter)
@@ -81,6 +83,7 @@ public class Bot {
 			getShards.get(i).getGuilds().size(); 
 		}
 		
+
 		// Have shard manager
 		shardManager = builder.build();
 		
@@ -101,7 +104,7 @@ public class Bot {
 			{
 				public void run() 
 				{
-					System.out.println("Shutdown bot with interrupt"); 
+					 
 					if(select.getPool() != null) 
 					{
 						try 

@@ -101,7 +101,7 @@ public class GuessCommand extends ListenerAdapter{
 				}); 
 			}).exceptionally((ex) -> 
 			{
-				System.out.println(ex.getMessage());
+				
 				event.getHook().sendMessage("Error Occurred!").queue(); 
 				return null;
 			});  

@@ -85,8 +85,7 @@ public class MinorCharacter extends Character
 	@Override
 	public void setContent()
 	{
-		 
-		 // System.out.println(markUp); 
+		  
 		  
 		 String rawData = ""; 
 		  // Check names for "," or "and"

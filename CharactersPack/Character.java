@@ -7,16 +7,20 @@ import de.tudarmstadt.ukp.wikipedia.api.WikiConstants.Language;
 import de.tudarmstadt.ukp.wikipedia.parser.ParsedPage;
 import de.tudarmstadt.ukp.wikipedia.parser.mediawiki.MediaWikiParser;
 import de.tudarmstadt.ukp.wikipedia.parser.mediawiki.MediaWikiParserFactory;
+import net.dv8tion.jda.api.entities.MessageEmbed.ImageInfo;
 import net.sourceforge.jwbf.core.contentRep.Article;
 import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import java.net.MalformedURLException;
@@ -50,6 +54,7 @@ public class Character
 	/* Initialize the type with id, name and url given at construction */ 
 	public Character(Long arg_Id, String arg_Name , SETUPTYPE setArg) 
 	{
+		Instant now = Instant.now();  
 		id = arg_Id; 
 		name = arg_Name; 
 		defImage = null;
@@ -57,6 +62,7 @@ public class Character
 		rawData = null;
 		date = null; 
 		set = setArg; 
+		
 		setUpImages();	// Now connect to urls and set up the images 
 		setContent();  // Now set up the raw data to be parsed in other functions 
 	}
@@ -76,10 +82,6 @@ public class Character
 		 long millDelta =  ( date.getTime() + 86400000L ) - now.getTime() ; 
 		 
 		 
-	
-		 
-		 System.out.println(now); 
-		 System.out.println(date); 
 		 
 		 Long min = millDelta / (60000) % 60;  
 		 Long hour = millDelta / (3600000);
@@ -331,9 +333,12 @@ public class Character
 	protected void setUpImages() 
 	{
 		
+		
+		
 		Document doc = null; 
 		Document docGallery = null;
-		
+		 
+		 
 		
 		try // Check if connection is Successfull 
 		{
@@ -383,7 +388,8 @@ public class Character
 		   try 
 		   {
 			URL imageUrl = new URL(this.imageList.get(0));
-			Image image = new ImageIcon(imageUrl).getImage(); 
+			BufferedImage c = ImageIO.read(imageUrl);
+			Image image = c; 
 			int width = image.getWidth(null);
 			int height = image.getHeight(null); 
 			
@@ -398,7 +404,10 @@ public class Character
 		   {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		   }
+		   } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		   
 		   
 		   switch(this.set) 
@@ -430,6 +439,8 @@ public class Character
 				    	   imageList.add(tempUrl); 
 				      }
 			   }
+			   	// now add it to the list
+			   	
 			   break;
 		   } 
 		   default: 
@@ -438,6 +449,7 @@ public class Character
 		   }
 		   
 		   }
+		
 	}
 	
 	// Return name of the character

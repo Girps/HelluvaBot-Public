@@ -192,10 +192,7 @@ public class CommandManger extends ListenerAdapter {
 					commandList.add(Commands.slash("oc-available","Check oc is available in following gamemodes!").addOptions(customCharacterOp)); 
 					commandList.add( Commands.slash("force-gift", "Force gift from one users collection to another").addOptions(requiredUserOp,characterForceGift,receiver)); 		
 		
-					for (int i =0; i < commandList.size(); i++) 
-					{
-						System.out.println(commandList.get(i).getNameLocalizations()); 
-					}
+				
 	}
 	
 	@Override
@@ -472,7 +469,7 @@ public class CommandManger extends ListenerAdapter {
 		 
 	public List<Command.Choice> filteredCommands(CommandAutoCompleteInteractionEvent event , ArrayList<String> names)
 	{
-		System.out.println(Thread.currentThread().getName());
+		
 		 ArrayList<String> subList = new ArrayList<String>(); 
 		 for(int i =0; i < names.size(); ++i) 
 		 {
@@ -509,7 +506,7 @@ public class CommandManger extends ListenerAdapter {
 		switch(event.getNewStatus())
 		{
 		case CONNECTING_TO_WEBSOCKET : 	
-			System.out.println("Status changing"); 
+		
 			event.getJDA().updateCommands().addCommands(commandList).queue(); 
 		break; 
 			default: 

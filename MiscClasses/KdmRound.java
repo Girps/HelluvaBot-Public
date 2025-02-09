@@ -36,7 +36,7 @@ public class KdmRound {
 		{
 			ids.add(arg.get(i)); 
 		}
-		System.out.println("Inital: "+ ids); 
+		
 	}
 	
 	public ArrayList<Long> getArrayList() 
@@ -57,7 +57,7 @@ public class KdmRound {
 					name = characterName; 
 					characterNames.remove(i);
 					++count; 
-					System.out.println(count); 
+				
 					break; 
 				}
 			} 
@@ -116,7 +116,7 @@ public class KdmRound {
 		
 		Button disButton = eBtn.getButton().asDisabled(); 
 		
-		System.out.println(this.ids); 
+	
 		// Now modify the rest besides idTarget 
 		for(int i =0; i < ids.size(); ++i) 
 		{

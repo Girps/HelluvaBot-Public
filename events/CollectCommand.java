@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -32,23 +33,22 @@ public class CollectCommand extends ListenerAdapter{
 		waiter = argWaiter; 
 	}
 	
+	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{	
-		
-		
+	
 		switch (event.getName())
 		{
 			
 			// get roll time 
 			case "next-claim":
-			
+				
 				CompletableFuture.runAsync( () -> 
 				{
 					event.deferReply().queue();
 					CharacterSelection select = new CharacterSelection(); 
-					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
-					System.out.println(Thread.currentThread().getName()); 
+					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 				}).thenRun( () -> 
 				{
 					CharacterSelection select = new CharacterSelection(); 
@@ -59,7 +59,6 @@ public class CollectCommand extends ListenerAdapter{
 						Boolean flag= limitFuture.join(); 
 						String time = limitTime.join(); 
 						event.getHook().sendMessage( event.getUser().getAsMention() + " next claim reset time is " + MarkdownUtil.bold(time + "!")  +   ( (flag ) ? (" You currently have 1 claim!") : (" You currently have no claims!") )   ).queue(); 
-						System.out.println(Thread.currentThread().getName()); 
 					}); 
 
 				}).exceptionally((ex) -> 
@@ -103,6 +102,7 @@ public class CollectCommand extends ListenerAdapter{
 				  
 				event.deferReply().queue( (ev) -> { 
 				Instant now = Instant.now(); 
+				
 				CompletableFuture.runAsync(() -> 
 				{
 					
@@ -289,13 +289,8 @@ public class CollectCommand extends ListenerAdapter{
 					
 				}).exceptionally( (ex) -> 
 				{
-					ex.printStackTrace(); 
 					return null; 
 				}); 
-				
-				Instant end = Instant.now(); 
-				
-				System.out.println(Duration.between(now, end));
 				}); 
 			
 			break; 
@@ -907,7 +902,6 @@ public class CollectCommand extends ListenerAdapter{
 						}
 						).exceptionally((ex) -> 
 						{
-							System.out.println("Some error"); 
 							ex.printStackTrace(); 
 							event.reply("An error occured!").queue(); 
 							return null; 

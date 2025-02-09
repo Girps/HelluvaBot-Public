@@ -56,7 +56,6 @@ public class SonasCommand extends ListenerAdapter
 						{
 							event.getHook().sendMessage(event.getUser().getAsMention() + " does not have a sona!").queue(); 
 						}
-						System.out.println(sona);
 						EmbedBuilder build = new EmbedBuilder()
 									.setAuthor(sona.getName())
 									.setImage(sona.getDefaultImage()) 
@@ -84,8 +83,6 @@ public class SonasCommand extends ListenerAdapter
 					}
 				}).exceptionally( (ex) -> 
 				{
-					System.out.println("Thread: "+ Thread.currentThread().getName()); 
-					System.out.println(ex); 
 					return null; 
 				}); 
 				break; 
@@ -183,7 +180,6 @@ public class SonasCommand extends ListenerAdapter
 					
 				}).exceptionally( (ex) -> {
 					event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "something went wrong unable to add your sona! Make sure to fill in each option!If you have trouble inserting your OC/Sona watch the following video. Tutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ").queue();
-					ex.printStackTrace();
 					return null; 
 				});  
 				break;
@@ -192,7 +188,6 @@ public class SonasCommand extends ListenerAdapter
 				
 				CompletableFuture.runAsync( () -> 
 				{
-					System.out.println(Thread.currentThread().getName()); 
 					event.deferReply().queue();
 					if(event.getOption("user") == null) 
 					{
@@ -252,7 +247,6 @@ public class SonasCommand extends ListenerAdapter
 						event.getHook().sendMessage("<@"+ event.getUser().getId() + ">"+ " only " + MarkdownUtil.bold("Helluva Admins") + " can remove another users' sona!").queue();
 					}
 				}).exceptionally(ex -> {
-					ex.printStackTrace(); 
 					return null; 
 				});
 			
@@ -334,7 +328,7 @@ public class SonasCommand extends ListenerAdapter
 							event.getHook().sendMessage("Something went wrong!").queue(); 
 						}
 					}
-				}).exceptionally( ex -> {ex.printStackTrace(); return null;}); 
+				}).exceptionally( ex -> {return null;}); 
 			}
 			break;
 			case "update-sona":
@@ -342,7 +336,6 @@ public class SonasCommand extends ListenerAdapter
 				CompletableFuture.runAsync( () -> 
 				{
 					event.deferReply().queue(); 
-					System.out.println(Thread.currentThread().getName()); 
 					CharacterSelection select =  new CharacterSelection(); 
 					// Check if user has sona or a field has been picked or if name is picked make sure not a duplicated
 					if(!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
@@ -417,7 +410,6 @@ public class SonasCommand extends ListenerAdapter
 								
 							} ,(eSuccess) -> CompletableFuture.runAsync(  () -> 
 							{
-								System.out.println("In event"+ Thread.currentThread().getName()); 
 								if(!event.getOptionsByName("name").isEmpty() &&
 										select.isAvailable(event.getOption("name").getAsString(), event.getGuild().getIdLong())) 
 								{
@@ -435,7 +427,7 @@ public class SonasCommand extends ListenerAdapter
 								sendMessage(event.getUser().getAsMention() + " 30 seconds expired! OC/Sona was not updated to the bot! If you have trouble inserting your OC/Sona watch the following video. Tutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ").queue(); 
 							} )) ;
 					});
-				}).exceptionally( (ex) -> {ex.printStackTrace(); return null;});
+				}).exceptionally( (ex) -> { return null;});
 				break; 
 			default: 
 				break;

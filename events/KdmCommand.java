@@ -171,7 +171,7 @@ public class KdmCommand extends ListenerAdapter
 							this.waiter.waitForEvent(ButtonInteractionEvent.class, 
 									(eBtn) -> 
 								{
-									System.out.println( "Thread in waiter eBtn: "+ Thread.currentThread().getName()); 
+									
 									// Condition if valid, same author not a bot and one of the messages have been interacted with 
 									if(!eBtn.getUser().isBot() && event.getChannel().getIdLong() == eBtn.getChannel().getIdLong() && event.getUser().getId().equalsIgnoreCase(eBtn.getUser().getId()) &&
 											(eBtn.getMessage().getIdLong() == messageIds.get(0) || eBtn.getMessage().getIdLong() == messageIds.get(1)
@@ -205,7 +205,7 @@ public class KdmCommand extends ListenerAdapter
 								}
 								, (eBtn) -> CompletableFuture.runAsync( () ->  
 								{ 
-									System.out.println("Game done"); 
+								
 									KdmRound temp = currentRound; 
 									eBtn.getHook().sendMessage( "<@"+ temp.getUser() + ">" 
 									+ " would " +
@@ -232,7 +232,6 @@ public class KdmCommand extends ListenerAdapter
 				return null; 
 			}
 			); 
-			System.out.println("Main thread after:" + Thread.currentThread().getName()); 
 		}
 				
 	}

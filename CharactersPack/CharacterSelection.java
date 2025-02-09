@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.cache.AbstractCache.StatsCounter;
 import com.zaxxer.hikari.HikariConfig;
@@ -38,6 +39,8 @@ public class CharacterSelection {
 	private static String urlDbs; 
 	private static HikariConfig config = new HikariConfig(); 
 	private static HikariDataSource dataSource; 
+	//volatile public  ConcurrentHashMap<String, ArrayList<String>> imageInfo = null; 
+
 	public CharacterSelection()
 	{
 		
@@ -53,8 +56,9 @@ public class CharacterSelection {
 		config.setPassword(passwordArg);
 		config.setConnectionTimeout(6000); // will throw if connection not retireved in time
 		config.setLeakDetectionThreshold(6000); 
-		config.setMaximumPoolSize(24); 
-		dataSource = new HikariDataSource(config); 
+		config.setMaximumPoolSize( 3 * 2 + 1); // old pool size 24 new pool size is ((cores) * 2 + 1) = 
+		dataSource = new HikariDataSource(config);
+		 
 	}
 	
 	public HikariDataSource getPool() 
@@ -1868,7 +1872,7 @@ public class CharacterSelection {
 			fields.put("favorite", res.getString("inFav")); 
 			fields.put("guess", res.getString("inGuess"));
 			fields.put("collect", res.getString("inCollect")); 
-			System.out.println(fields); 
+		
 		} 
 		catch(SQLException e) 
 		{
@@ -3721,7 +3725,7 @@ public class CharacterSelection {
 			res2 = statTwo.executeQuery(); 
 			res2.next(); 
 			Timestamp timeTwo = res2.getTimestamp(1); // second character time  
-			System.out.println("Time One : " + timeOne + " and Time Two: " + timeTwo); 
+			
 			// First update
 			queryOne = " UPDATE favorites " 
 				 + " SET timeCreated =  ? " + 
@@ -4019,4 +4023,30 @@ public class CharacterSelection {
 		}
 	}
 	
+	/* Update number of members estimated of each server */ 
+	public void updateMemberCount(int memberCount) 
+	{
+		String query = "REPLACE INTO server_info VALUES (1, ?)"; 
+		Connection conn = null; 
+		PreparedStatement stat = null; 
+		try 
+		{
+			conn = dataSource.getConnection(); 
+			stat = conn.prepareStatement(query);
+			stat.setInt(1, memberCount);
+			stat.execute(); 
+			
+		}
+		catch(SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+		}
+		
+		
+	}
 }

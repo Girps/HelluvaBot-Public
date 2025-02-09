@@ -77,10 +77,10 @@ public class WaifuCommand extends ListenerAdapter{
 				.setColor(Color.RED)
 				.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(character.getDate()), false);
 				event.getHook().sendMessageEmbeds(builder.build()).queue(); 
-				System.out.println("Accept thread:" + Thread.currentThread().getName()); 
+				
 			}).exceptionally( ex -> 
 			{
-				System.out.println(ex.getMessage()); 
+				 
 				event.getHook().sendMessage(ex.getMessage()).queue(); 
 				return null; 
 			}); 
@@ -133,10 +133,8 @@ public class WaifuCommand extends ListenerAdapter{
 				.setColor(Color.RED)
 				.addField(MarkdownUtil.bold("Next waifu selection in "), MarkdownUtil.italics(character.getDate()), false);
 				event.getHook().sendMessageEmbeds(builder.build()).queue(); 
-				System.out.println("Accept thread:" + Thread.currentThread().getName()); 
 			}).exceptionally( ex -> 
 			{
-				System.out.println(ex.getMessage()); 
 				event.getHook().sendMessage(ex.getMessage()).queue(); 
 				return null; 
 			}); 
@@ -216,7 +214,6 @@ public class WaifuCommand extends ListenerAdapter{
 						 } );
 			}).exceptionally(ex -> 
 			{
-				System.out.println(ex.getMessage()); 
 				event.getHook()
 				.sendMessage("Trade unsuccessful one of the users has not acquired a waifu today! Or trade request was invalid!").queue();
 				return null; 

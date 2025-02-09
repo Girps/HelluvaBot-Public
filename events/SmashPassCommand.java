@@ -95,7 +95,7 @@ public class SmashPassCommand extends ListenerAdapter
 					}); 
 			}).exceptionally(ex -> 
 			{
-				System.out.println(ex.getMessage()); 
+			 
 				event.getHook().sendMessage(ex.getMessage()).queue(); 
 				return null; 
 			});

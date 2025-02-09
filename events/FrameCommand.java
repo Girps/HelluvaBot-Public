@@ -35,9 +35,9 @@ public class FrameCommand extends ListenerAdapter
 		if(event.getName().equals("frame")) 
 		{
 		
-			event.deferReply().queue((v) ->
+			event.deferReply().queue( (sucess) ->
 			{
-				System.out.println(Thread.currentThread().getName()); 
+				
 				Frame frame = null; 
 				BufferedImage bi = null; 
 				String files[] = {"HAZBIN HOTEL (PILOT) .mp4", "HELLUVA BOSS - C.H.E.R.U.B (S1)： Episode 4 .mp4", "HELLUVA BOSS - EXES AND OOHS (S2)： Episode 3.mp4"
@@ -93,6 +93,9 @@ public class FrameCommand extends ListenerAdapter
 					e.printStackTrace();
 					event.getHook().sendMessage("Something went wrong!").queue(); 
 				}
+			}, (error) -> 
+			{
+				
 			});
 		}
 	}
