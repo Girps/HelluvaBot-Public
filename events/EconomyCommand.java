@@ -26,7 +26,7 @@ public class EconomyCommand extends ListenerAdapter{
 	
 	private  ExecutorService executor;
 	private ScheduledExecutorService sexecutor; 
-	private volatile ConcurrentHashMap<Long, Instant > map = new ConcurrentHashMap<Long, Instant>(); 
+	private volatile ConcurrentHashMap<Pair<Long, Long>, Instant > map = new ConcurrentHashMap<Pair<Long, Long>, Instant>(); 
 	private final String souls = "<:Soul:1349948800139001981>"; 
 	public EconomyCommand(ExecutorService executor, ScheduledExecutorService sexecutor) 
 	{ 
@@ -36,7 +36,7 @@ public class EconomyCommand extends ListenerAdapter{
 		// use scheduler to clear hashmap every few minutes. 
 		this.sexecutor.scheduleAtFixedRate( () -> 
 		{
-			Map<Long, Instant> mapIt = map; 
+			Map<Pair<Long,Long>, Instant> mapIt = map; 
 			mapIt.forEach( (key, value) -> 
 			{
 				// if off duration get rid of it
@@ -101,20 +101,21 @@ public class EconomyCommand extends ListenerAdapter{
 			{
 				event.deferReply().queue(); 
 				Long userId = event.getUser().getIdLong(); 
+				Long serverId = event.getGuild().getIdLong(); 
 				// initally add user in the map  
-				if (!map.containsKey(userId)) 
+				if (!map.containsKey(Pair.of(serverId, userId))) 
 				{
 					// add it 
 					Instant start = Instant.now().minus(Duration.ofSeconds(1000)); 
-					map.put(userId, start); 
+					map.put(Pair.of(serverId, userId), start); 
 				}
 				
 				// if within duration do the job otherwise deny
-				if(Instant.now().getEpochSecond() - map.get(userId).getEpochSecond()  > 900)  
+				if(Instant.now().getEpochSecond() - map.get(Pair.of(serverId, userId)).getEpochSecond()  > 900)  
 				{
 					// do the job 
 					Instant start = Instant.now(); 
-					map.put(userId, start); 
+					map.put(Pair.of(serverId, userId), start); 
 					// method to send get job id, characters involved , and send embed with money modified by characters in collect 
 					EmbedBuilder builder = doJob(userId, event.getGuild().getIdLong());
 					builder.setAuthor(event.getUser().getName(), event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
@@ -122,7 +123,7 @@ public class EconomyCommand extends ListenerAdapter{
 				}
 				else // not done 
 				{
-					Long time =   map.get(userId).plus(Duration.ofSeconds(900)).getEpochSecond() - Instant.now().getEpochSecond(); 
+					Long time =   map.get(Pair.of(serverId, userId)).plus(Duration.ofSeconds(900)).getEpochSecond() - Instant.now().getEpochSecond(); 
 					int minutes = (int) (time / 60);
 					int seconds = (int)(time % 60); 
 					event.getHook().sendMessage( event.getUser().getAsMention() + " you have to wait " + minutes + 
