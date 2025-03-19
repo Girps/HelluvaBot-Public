@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+
 import events.Helper;
 
 import CharactersPack.CharacterSelection;
@@ -32,9 +34,10 @@ public class UserManager extends ListenerAdapter
 	
 	final int MAX = 5000;
 	static volatile int shards  = 0; 
-	public UserManager() 
+	private ExecutorService executor; 
+	public UserManager(ExecutorService executor) 
 	{
-		
+		this.executor = executor; 
 	}
 	
 	
@@ -56,7 +59,7 @@ public class UserManager extends ListenerAdapter
 		if (total == shardReady) 
 		{ 
 			/* Delete all user data that has left Guild when the bot is offline */ 
-			CompletableFuture.runAsync(() -> 
+			this.executor.submit( () -> 
 			{	
 				ShardInfo shardInfo = event.getJDA().getShardInfo(); 
 				int guildSize = event.getJDA().getShardManager().getGuilds().size(); 
@@ -95,15 +98,15 @@ public class UserManager extends ListenerAdapter
 								{
 									// Excutute queries in parallel 
 									CompletableFuture<Void> rmSonaFuture = CompletableFuture.runAsync( () 
-											-> select.removeSonaList(nonMemberIds, users.get(0).getGuild().getIdLong())); 
+											-> select.removeSonaList(nonMemberIds, users.get(0).getGuild().getIdLong()) , this.executor); 
 									CompletableFuture<Void> rmOcsFuture = CompletableFuture.runAsync(() 
-											-> select.removeAllOcsList(nonMemberIds, users.get(0).getGuild().getIdLong())) ; 
+											-> select.removeAllOcsList(nonMemberIds, users.get(0).getGuild().getIdLong()) , this.executor) ; 
 						    		CompletableFuture<Void> rmWaifuFuture = CompletableFuture.runAsync( () 
-						    				-> select.removeWaifuList(nonMemberIds, users.get(0).getGuild().getIdLong()) ); 
+						    				-> select.removeWaifuList(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor); 
 									CompletableFuture<Void> rmFavFuture = CompletableFuture.runAsync( () 
-											-> select.removeFavListArr(nonMemberIds, users.get(0).getGuild().getIdLong())); 
+											-> select.removeFavListArr(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor); 
 									CompletableFuture<Void> rmCollectFuture = CompletableFuture.runAsync(() 
-											-> select.removeCollectList(nonMemberIds, users.get(0).getGuild().getIdLong()));
+											-> select.removeCollectList(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor);
 									
 									List<CompletableFuture<Void>> futures = List.of(rmSonaFuture, rmOcsFuture
 											, rmWaifuFuture, rmFavFuture, rmCollectFuture );
@@ -127,7 +130,7 @@ public class UserManager extends ListenerAdapter
 			 * tuples corresponding to those tuples 
 			 * */ 
 			
-			CompletableFuture.runAsync( () -> 
+			this.executor.submit( () -> 
 			{
 				CharacterSelection select=  new CharacterSelection(); 
 				ShardManager shardManager = event.getJDA().getShardManager(); 
@@ -145,17 +148,17 @@ public class UserManager extends ListenerAdapter
 	
 						// Excutute queries in parallel 
 						CompletableFuture<Void> rmSonaFuture = CompletableFuture.runAsync( () 
-								-> 	select.removeAllSonas(idGuild)); 
+								-> 	select.removeAllSonas(idGuild), this.executor); 
 						CompletableFuture<Void> rmOcsFuture = CompletableFuture.runAsync(() 
-								-> 	select.removeAllOcsInGuild(idGuild)) ; 
+								-> 	select.removeAllOcsInGuild(idGuild), this.executor) ; 
 			    		CompletableFuture<Void> rmWaifuFuture = CompletableFuture.runAsync( () 
-			    				-> select.removeAllWaifus(idGuild)  ); 
+			    				-> select.removeAllWaifus(idGuild), this.executor); 
 						CompletableFuture<Void> rmFavFuture = CompletableFuture.runAsync( () 
-								-> select.removeFavListGuild(idGuild)); 
+								-> select.removeFavListGuild(idGuild), this.executor); 
 						CompletableFuture<Void> rmCollectFuture = CompletableFuture.runAsync(() 
-								-> select.removeAllPlayersCollectInGuild(idGuild));
+								-> select.removeAllPlayersCollectInGuild(idGuild), this.executor);
 						CompletableFuture<Void> rmWhiteListFuture = CompletableFuture.runAsync( () 
-								-> select.removeFromWhiteList(idGuild)); 
+								-> select.removeFromWhiteList(idGuild), this.executor); 
 						
 						List<CompletableFuture<Void>> futures = List.of(rmSonaFuture, rmOcsFuture
 								, rmWaifuFuture, rmFavFuture, rmCollectFuture, rmWhiteListFuture );
@@ -174,7 +177,7 @@ public class UserManager extends ListenerAdapter
 			// Now get total number of users in each guild 
 			
 			
-			CompletableFuture.runAsync(() -> 
+			this.executor.submit(() -> 
 			{
 				List<Guild> guilds = event.getJDA().getShardManager().getGuilds(); 
 				int memberCount = 0; 
@@ -204,7 +207,7 @@ public class UserManager extends ListenerAdapter
 	public void onGuildJoin(GuildJoinEvent event) 
 	{
 		
-		CompletableFuture.runAsync( () -> 
+		this.executor.submit( () -> 
 		{
 			int guildSize  = event.getJDA().getShardManager().getGuilds().size(); 
 			// leave server if number exceeds a const
@@ -252,7 +255,7 @@ public class UserManager extends ListenerAdapter
 	public void onGuildLeave(GuildLeaveEvent event)
 	{
 		
-		CompletableFuture.runAsync(() -> 
+		this.executor.submit(() -> 
 		{
 			int size  = event.getJDA().getShardManager().getGuilds().size(); 
 			event.getJDA().getPresence().setActivity(Activity.listening("/help | " + size + " servers")); 
@@ -262,12 +265,12 @@ public class UserManager extends ListenerAdapter
 				CharacterSelection select = new CharacterSelection();
 				
 				List<CompletableFuture<Void>> futures = List.of(
-						CompletableFuture.runAsync( () ->	select.removeAllSonas(idGuild) ),
-						CompletableFuture.runAsync( () ->	select.removeAllOcsInGuild(idGuild)) ,
-						CompletableFuture.runAsync( () ->	select.removeAllWaifus(idGuild) ) ,
-						CompletableFuture.runAsync( () ->	select.removeFavListGuild(idGuild)  ),
-						CompletableFuture.runAsync( () ->	select.removeAllPlayersCollectInGuild(idGuild)  ), 
-						CompletableFuture.runAsync( () -> 	select.removeFromWhiteList(idGuild) )
+						CompletableFuture.runAsync( () ->	select.removeAllSonas(idGuild) , this.executor ),
+						CompletableFuture.runAsync( () ->	select.removeAllOcsInGuild(idGuild) , this.executor) ,
+						CompletableFuture.runAsync( () ->	select.removeAllWaifus(idGuild), this.executor) ,
+						CompletableFuture.runAsync( () ->	select.removeFavListGuild(idGuild), this.executor ),
+						CompletableFuture.runAsync( () ->	select.removeAllPlayersCollectInGuild(idGuild) , this.executor), 
+						CompletableFuture.runAsync( () -> 	select.removeFromWhiteList(idGuild), this.executor)
 						); 
 				
 				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept( v-> 
@@ -286,7 +289,7 @@ public class UserManager extends ListenerAdapter
 	{
 		
 		
-		CompletableFuture.runAsync( () -> 
+		this.executor.submit( () -> 
 		{
 			Long serverId = event.getGuild().getIdLong(); 
 			Long userId = event.getUser().getIdLong(); 
@@ -296,11 +299,11 @@ public class UserManager extends ListenerAdapter
 				// parallel the queries 
 				
 				List<CompletableFuture<Void>> futures = List.of(
-						CompletableFuture.runAsync( () ->	select.removeSona(userId, serverId)  ),
-						CompletableFuture.runAsync( () ->	select.removeAllOcs(userId, serverId) ) ,
-						CompletableFuture.runAsync( () ->	select.removeFavList(userId, serverId) ) ,
-						CompletableFuture.runAsync( () ->	select.removeCollect(userId, serverId)  ),
-						CompletableFuture.runAsync( () ->	select.removeWaifu(userId, serverId)  )
+						CompletableFuture.runAsync( () ->	select.removeSona(userId, serverId), this.executor),
+						CompletableFuture.runAsync( () ->	select.removeAllOcs(userId, serverId) , this.executor) ,
+						CompletableFuture.runAsync( () ->	select.removeFavList(userId, serverId), this.executor) ,
+						CompletableFuture.runAsync( () ->	select.removeCollect(userId, serverId) , this.executor),
+						CompletableFuture.runAsync( () ->	select.removeWaifu(userId, serverId) , this.executor)
 						); 
 				
 				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept( v-> 
@@ -311,13 +314,7 @@ public class UserManager extends ListenerAdapter
 					return null; 
 				}); 				
 			
-		}).exceptionally( (ex) -> 
-		{
-			ex.printStackTrace(); 
-			return null; 
 		}); 
-		
-		
 	}
 	
 	/* Called when the bot is terminaed */ 
@@ -347,8 +344,9 @@ public class UserManager extends ListenerAdapter
 		switch (event.getName()) 
 		{ 
 			case "require-permission":
-				event.deferReply().queue( v -> 
+				this.executor.submit( () -> 
 				{
+					event.deferReply().queue(); 
 					if(event.getOption("permission").getAsBoolean()) 
 					{
 						
@@ -399,7 +397,6 @@ public class UserManager extends ListenerAdapter
 							select.removeFromWhiteList(event.getGuild().getIdLong()); 
 							event.getHook().sendMessage("Permissions are "+  MarkdownUtil.bold("disabled!") + " Any user can insert OCs/Sonas into the bot!").queue(); 
 						}
-						
 					}	
 				});
 				

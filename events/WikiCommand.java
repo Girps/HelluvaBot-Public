@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+import java.util.concurrent.ExecutorService;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -27,36 +27,35 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class WikiCommand extends ListenerAdapter{
 
+	private ExecutorService executor = null; 
+	// may add a hashmap
+	//public static ConcurrentHashMap<Long, Character> wikiMap = new ConcurrentHashMap<Long, Character>(); 
 	
-	public WikiCommand()
+	public WikiCommand(ExecutorService executor)
 	{
-		
+		this.executor = executor; 
 	}
 	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event)
 	{
-		// Check if called by bot 
-		if(event.getUser().isBot()) 
-		{
-			return; 
-		}
-		
 		
 		// Check valid command
 		if(event.getName().equals("wiki")) 
 		{
-			// Get character name  
-			event.deferReply().queue( (v) -> 
+			
+			
+			this.executor.submit( () -> 
 			{
+				event.deferReply().queue(); 
 				String characterName = event.getOption("character").getAsString(); 
 				OffsetDateTime time = event.getTimeCreated(); 
 				Date date = Date.from(time.toInstant());
-				// Now check in database for the character 
 				try 
 				{
 					CharacterSelection select = new CharacterSelection(); 				
@@ -74,79 +73,22 @@ public class WikiCommand extends ListenerAdapter{
 					// Now send the embed to the server
 					event.getHook().sendMessageEmbeds(builder.build()).queue();
 				}
-				catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
-				} 	
-			});
-			
-		}
-		else if(event.getName().equals("wikiall") && Helper.checkAdminRole(event.getMember().getRoles()) 
-				&& event.getUser().getIdLong() == 673992089733955646L) 
-		{
-			// Get array of every character and print them all 
-			String name = ""; 
-			try 
-			{
-				event.deferReply().queue(); 
-				CharacterSelection select = new CharacterSelection();
-				SELECTIONTYPE type = SELECTIONTYPE.ALL;
-				String str = event.getOption("type").getAsString(); 
-				switch(str ) 
+				catch(Exception ex) 
 				{
-				case("major"):
-					type = SELECTIONTYPE.MAJOR_CHARACTER; 
-					break; 
-				case("minor"):
-					type = SELECTIONTYPE.MINOR_CHARACTER; 
-					break; 
-				}
-				ArrayList<Character> list =  select.getAllCharacters(type,SETUPTYPE.HEAVY); 
-				Character charactFound = null; 
-				for(int i =0; i < list.size(); ++i) 
-				{
-					// We have the character now build an embed for the character 
-					EmbedBuilder builder = new EmbedBuilder(); 
-					
-					charactFound = list.get(i); 
-					name = charactFound.getName(); 
-					builder.setColor(Color.red); 
-					builder.setAuthor(charactFound.getName(), charactFound.getUrl());
-					builder.setImage(charactFound.getDefaultImage());
-					builder.setDescription(charactFound.getBasic()); 
-					builder.addField("Quote",  MarkdownUtil.quote(charactFound.getQuote()),false);
-					builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getGuild().getIconUrl()); 
-					
-					// Instantiate list of buttons 
-					List<Button> buttons = new ArrayList<Button>();
-					buttons.add(Button.secondary("leftwiki", "<<")); 
-					buttons.add(Button.primary("left", "<"));
-					buttons.add(Button.danger("close", "Close")); 
-					buttons.add(Button.primary("right", ">")); 
-					buttons.add(Button.secondary("rightwiki", ">>")); 
-					
-
-					// Now send the embed to the server
-					
-					event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();
+					ex.printStackTrace();
+					event.getHook().sendMessage(characterName + " not found " ).queue();
 				}
 				
-			}
-			catch(Exception e) 
-			{
-				e.printStackTrace();
-				event.reply(name + " not found " + "<:smolas_crying:1111057782473506848>").queue();
-			}
+			}); 
+			
 		}
 		else if(event.getName().equals("wiki-full") )	// wiki full pagnation implementation 
 		{
 			// Get character name  
-			
-			event.deferReply().queue( (v) -> 
+			this.executor.submit(() -> 
 			{
+				event.deferReply().queue(); 
 				String characterName = event.getOption("character").getAsString();
-				 
 				// Now check in database for the character 
 				try 
 				{
@@ -162,7 +104,7 @@ public class WikiCommand extends ListenerAdapter{
 						builder.setImage(charactFound.getDefaultImage());
 						builder.setDescription(charactFound.getBasic()); 
 						builder.addField("Quote",  MarkdownUtil.quote(charactFound.getQuote()),false);
-						builder.setFooter("Image: " + "1/" + (charactFound.getImageList().size() + "\nWiki: 1/15") , event.getMember().getEffectiveAvatarUrl()); 
+						builder.setFooter("Image: " + "1/" + (charactFound.getImageNonJSONList().size() + "\nWiki: 1/15") , event.getMember().getEffectiveAvatarUrl()); 
 						
 						// Instantiate list of buttons 
 						List<Button> buttons = new ArrayList<Button>();
@@ -171,15 +113,21 @@ public class WikiCommand extends ListenerAdapter{
 						buttons.add(Button.danger("close", "Close")); 
 						buttons.add(Button.primary("right", ">")); 
 						buttons.add(Button.secondary("rightwiki", ">>")); 
+						
+						// add to concurrent hashmap if not existing 
+						
+						
+						
 						// Now send the embed to the server
 						event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();		
 				}
 				catch(Exception e) 
 				{
 					e.printStackTrace();
-					event.reply(characterName + " not found " + "<:smolas_crying:1111057782473506848>").queue();
+					event.getHook().sendMessage(characterName + " not found ").queue();
 				}
-			});
+			}); 
+			
 		}
 		
 	}
@@ -233,7 +181,7 @@ public class WikiCommand extends ListenerAdapter{
 					
 					
 					// Size of the array  
-					int arraySize = charcTarget.getImageList().size() - 1; 
+					int arraySize = charcTarget.getImageNonJSONList().size() - 1; 
 					
 					// Get the button name called 
 					
@@ -286,8 +234,8 @@ public class WikiCommand extends ListenerAdapter{
 					
 					// We have a proper index now edit the embed
 					tweakEmbedWiki(oldBuild, charcTarget ,wikiNumber); 
-					oldBuild.setImage(charcTarget.getImageList().get(pageNumber)); 
-					oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageList().size()) + 
+					oldBuild.setImage(charcTarget.getImageNonJSONList().get(pageNumber)); // <-- gotta fix this 
+					oldBuild.setFooter("Image: " + (pageNumber + 1) + "/" + (charcTarget.getImageNonJSONList().size()) + 
 							"\nWiki: " + wikiNumber + "/15",event.getMember().getEffectiveAvatarUrl()); 
 					
 					event.getMessage().editMessageEmbeds(oldBuild.build()).queue( );

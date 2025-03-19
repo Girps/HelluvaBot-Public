@@ -5,6 +5,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -24,22 +25,21 @@ public class MinorCharacter extends Character
 	protected String showName; 
 	protected static String markUp; 
 	
-	public MinorCharacter() 
-	{
-		super(); 
-	}
 	
-	public MinorCharacter(Long arg_Id, String arg_Name, String arg_ShowName) {
-		super(); 
+	public MinorCharacter(Long arg_Id, String arg_Name, String arg_ShowName, int def , ArrayList<JSONObject> jsonList , SETUPTYPE setArg) {
+		super(arg_Id, arg_ShowName, def, jsonList, setArg); 
 		// TODO Auto-generated constructor stub
 		this.id = arg_Id; 
 		this.name = arg_Name;
 		this.showName = arg_ShowName;
-		setUpMarkUp(); 
-		setContent(); // set up unparsed data 
-		setUpImages(); // set up images 
 	}
 	
+	
+
+	
+
+
+
 	/* Get the url of the character */
 	@Override
 	public String getUrl()
@@ -47,7 +47,7 @@ public class MinorCharacter extends Character
 		return MinorCharacterURL + URLEncoder.encode(showName, StandardCharsets.UTF_8).replace("+", "_"); 
 	}
 	
-	private void setUpMarkUp() 
+	public void setUpMarkUp() 
 	{
 		 MediaWikiBot wikiBot = new MediaWikiBot("https://hazbinhotel.fandom.com/");
 		  Article article = wikiBot.getArticle("Minor Characters/" + this.showName); 
@@ -86,7 +86,7 @@ public class MinorCharacter extends Character
 	public void setContent()
 	{
 		  
-		  
+		  this.setUpMarkUp();
 		 String rawData = ""; 
 		  // Check names for "," or "and"
 		  if( ( name.contains("and") || name.contains(",") ) && (name.split(" ").length >= 3 
@@ -163,7 +163,7 @@ public class MinorCharacter extends Character
 	
 	
 	@Override
-	protected  void setUpImages() 
+	public  void setUpImages() 
 	{
 		 // First truncate 
 		  String res = rawData; 
@@ -200,7 +200,7 @@ public class MinorCharacter extends Character
 		   }
 		   catch(IOException e) 
 		   {
-			    this.imageList = null; 
+			    this.jsonImages = null; 
 		   }
 		   
 			// now get the image data urls
@@ -229,7 +229,7 @@ public class MinorCharacter extends Character
 	}
 	
 	@Override
-	protected  String getAttribute(String markUp, String startAttribute) 
+	public  String getAttribute(String markUp, String startAttribute) 
 	{
 		return "none"; 
 	}

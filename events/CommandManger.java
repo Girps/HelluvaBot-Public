@@ -3,10 +3,14 @@ package events;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
@@ -26,11 +30,13 @@ public class CommandManger extends ListenerAdapter {
 
 	private ArrayList<String> cmds; 
 	private boolean debug; 
+	private ExecutorService executor = null; 
 	List<CommandData> commandList = null; 
 	
 	// constructor 
-	public CommandManger ( )
+	public CommandManger ( ExecutorService executor)
 	{
+		this.executor = executor; 
 		
 		cmds = new ArrayList<String>(Arrays.asList("Collect command", "Frame command", "Guess command", "Kdm command", 
 				"Simps command", "Smashpass command", "Sonas command", "UserInfo command", "Favorite command", "Waifu command", 
@@ -134,10 +140,19 @@ public class CommandManger extends ListenerAdapter {
 					OptionData receiver = new OptionData(OptionType.USER, "receiver", "Enter a user to accept the gift", true, false);
 					OptionData choice = new OptionData(OptionType.BOOLEAN, "permission" , "Enter true or false",true,false);
 					
+					OptionData amount = new OptionData(OptionType.INTEGER, "amount" , "Enter a valid integer",true,false);
+					OptionData itemOptions = new OptionData(OptionType.STRING, "item", "Enter an item", true, true);  
 					//OptionData firstUserCollect= new OptionData(OptionType.USER, "gifter" , "Enter user to force gift from", true, false);
 					OptionData characterForceGift = new OptionData(OptionType.STRING, "receiver-character", "Pick character to force gift" , true, true); 
-
 					
+					ArrayList<String> items =  new ArrayList<String>(Arrays.asList("kill your waifu", "buy roll" , "buy claim" , "assinate"));
+					commandList.add(Commands.slash("prices", "Prices of items and services you can buy!")); 
+					commandList.add(Commands.slash("buy", "Buy following services").addOptions(itemOptions)); 
+					commandList.add(Commands.slash("deposit", "Add cash to the balance").addOptions(amount)); 
+					commandList.add(Commands.slash("withdraw", "Withdraw money from balance.").addOptions(amount)); 
+					commandList.add(Commands.slash("balance", "Return your current balance.")); 
+					commandList.add(Commands.slash("work", "Do a job and earn income!")); 
+					commandList.add(Commands.slash("memes", "Returns a helluva boss meme!")); 
 					commandList.add(Commands.slash("require-permission", "Require users to have the Helluva Permission role to insert OCs/Sonas into the bot!").addOptions(choice)); 
 					commandList.add(Commands.slash("wiki-full", "Display full wiki of the entered character").addOptions(characterOption));
 					commandList.add(Commands.slash("wiki", "Display general information on entered character").addOptions(characterOption)); 
@@ -210,7 +225,7 @@ public class CommandManger extends ListenerAdapter {
 					names = select.getAllCharacterNames(GAMETYPE.WIKI,0);
 					
 				 return names; 
-			 }).thenAccept((names) -> 
+			 },this.executor).thenAccept((names) -> 
 			 {
 				List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -244,7 +259,7 @@ public class CommandManger extends ListenerAdapter {
 						 .map(name -> new Command.Choice(name, name))
 						 .collect(Collectors.toList()); 
 				 event.replyChoices(options).queue(); 
-			 }).exceptionally((ex) -> 
+			 },this.executor).exceptionally((ex) -> 
 			 {
 				 ex.printStackTrace(); 
 				 return null; 
@@ -259,7 +274,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.KDM,event.getGuild().getIdLong());
 				return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue(); 
@@ -280,7 +295,7 @@ public class CommandManger extends ListenerAdapter {
 				 
 					ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.SMASHPASS,event.getGuild().getIdLong());
  				 return names; 
- 			 }).thenAccept( (names) -> 
+ 			 },this.executor).thenAccept( (names) -> 
  			 {
  			 
  				List<Command.Choice> options = filteredCommands(event, names); 
@@ -299,7 +314,7 @@ public class CommandManger extends ListenerAdapter {
  				 CharacterSelection select = new CharacterSelection(); 
 				ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.FAVORITES, event.getGuild().getIdLong());
  				 return names; 
- 			 }).thenAccept( (names) -> 
+ 			 },this.executor).thenAccept( (names) -> 
  			 {
  				List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -318,7 +333,7 @@ public class CommandManger extends ListenerAdapter {
  				 CharacterSelection select = new CharacterSelection(); 
 				ArrayList<String> names = select.getFavListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
  				 return names; 
- 			 }).thenAccept( (names) -> 
+ 			 },this.executor).thenAccept( (names) -> 
  			 {
  				List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -337,7 +352,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getUsersOCName(id, event.getGuild().getIdLong()); 
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -355,7 +370,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getUsersOCName(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -374,7 +389,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -391,7 +406,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getCollectNamesOfUser(Long.valueOf(event.getInteraction().getOptionsByName("user").get(0).getAsString()), event.getGuild().getIdLong()); 
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -420,7 +435,7 @@ public class CommandManger extends ListenerAdapter {
 					 names = select.getCollectNamesOfUser(event.getUser().getIdLong(), event.getGuild().getIdLong());
 				 }
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -438,7 +453,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getAllCharacterNames(GAMETYPE.COLLECT, event.getGuild().getIdLong());  
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -455,7 +470,7 @@ public class CommandManger extends ListenerAdapter {
 				 CharacterSelection select = new CharacterSelection(); 
 				 ArrayList<String> names = select.getWishListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());  
 				 return names; 
-			 }).thenAccept( (names) -> 
+			 },this.executor).thenAccept( (names) -> 
 			 {
 				 List<Command.Choice> options = filteredCommands(event, names); 
 				 event.replyChoices(options).queue();
@@ -464,6 +479,31 @@ public class CommandManger extends ListenerAdapter {
 				 ex.printStackTrace(); 
 				 return null;
 			 });
+		 } 
+		 else if (event.getName().equals("buy") ) 
+		 {
+			 CompletableFuture.supplyAsync( () -> 
+			 {
+				 CharacterSelection select = new CharacterSelection(); 
+				 HashMap<String, Pair<String, Integer>> map = select.getItems(); 
+				 ArrayList<String> items = new ArrayList<String>(); 
+				 map.forEach( (key, pair) -> 
+				 {
+					 items.add(key); 
+				 }); 
+				 
+				 return items; 
+				 
+			 }, this.executor).thenAccept((items) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event,items);
+				 event.replyChoices(options).queue(); 
+			 }).exceptionally((ex) -> 
+			 {
+				 ex.printStackTrace(); 
+				 return null; 
+			 });
+			 
 		 }
 	}
 		 
@@ -506,7 +546,7 @@ public class CommandManger extends ListenerAdapter {
 		switch(event.getNewStatus())
 		{
 		case CONNECTING_TO_WEBSOCKET : 	
-		
+			System.out.println("Socket connecting"); 
 			event.getJDA().updateCommands().addCommands(commandList).queue(); 
 		break; 
 			default: 

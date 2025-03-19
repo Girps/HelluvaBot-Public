@@ -21,11 +21,11 @@ import java.util.concurrent.*;
 public class SimpsCommand extends ListenerAdapter{
 
 	
-
+	private ExecutorService executor = null; 
 	
-	public SimpsCommand( ) 
+	public SimpsCommand(ExecutorService ex ) 
 	{
-		
+		executor = ex; 
 	}
 	
 	 
@@ -40,44 +40,26 @@ public class SimpsCommand extends ListenerAdapter{
 		// Check valid command 
 		if(event.getName().equals("simps")) 
 		{
-				event.deferReply().queue( (v) -> 
+			executor.submit( ()-> 
+			{
+				event.deferReply().queue(); 
+				CharacterSelection select = new CharacterSelection(); 
+				Character CharacterFound = null; 
+				try 
 				{
-					Instant start = Instant.now();  
-					
-					
-					
-					
-					CompletableFuture.supplyAsync( () ->
-						{
-							CharacterSelection select = new CharacterSelection(); 
-							Character found = null; 
-							try 
-							{
-								found = select.getRandomCharacters(GAMETYPE.SIMPS,SETUPTYPE.LIGHT, event.getGuild().getIdLong(),3)[0];
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								throw new CompletionException(e); 
-							}
-							return found; 
-						}).thenAccept( characterFound -> 
-						{
-							EmbedBuilder builder = new EmbedBuilder().
-							setTitle(characterFound.getName()).
-							setThumbnail(characterFound.getDefaultImage()).
-							setColor(Color.PINK);
-							event.getHook().sendMessageEmbeds(builder.build()).queue();
-							event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(characterFound.getName()) + "!").queue();
-						}).exceptionally(ex -> 
-						{
-						
-							event.getHook().sendMessage(ex.getMessage()).queue(); 
-							return null; 
-						}).join(); 
-					 
-					 Instant end = Instant.now(); 
-					
-				} );
+					CharacterFound = select.getRandomCharacters(GAMETYPE.SIMPS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 1)[0]; 
+				}
+				catch(Exception e) 
+				{
+					event.getHook().sendMessage("Error with character " + CharacterFound.getName()).queue(); 
+				}
+				EmbedBuilder builder = new EmbedBuilder().
+				setTitle(CharacterFound.getName()).
+				setThumbnail(CharacterFound.getDefaultImage()).
+				setColor(Color.PINK);
+				event.getHook().sendMessageEmbeds(builder.build()).queue();
+				event.getHook().sendMessage( event.getUser().getAsMention() + " simps for " + MarkdownUtil.bold(CharacterFound.getName()) + "!").queue();
+			}); 
 		}
 	}
 	

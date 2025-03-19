@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
@@ -20,61 +21,51 @@ import CharactersPack.Character;
 
 public class ShipsCommand extends ListenerAdapter{
 	
+	private ExecutorService executor = null; 
 
-	public ShipsCommand( )
+	public ShipsCommand(ExecutorService executor )
 	{
+		this.executor = executor; 
 	}
 	
 	@Override
 	public void  onSlashCommandInteraction(SlashCommandInteractionEvent event) 
 	{
-		// Check by bot
-		if(event.getUser().isBot()) {return; }
 		
 		if(event.getName().equals("ships")) 
 		{
-		
-			
-			event.deferReply().queue( (v) -> 
+			this.executor.submit( () -> 
 			{
-				 CompletableFuture.supplyAsync( () -> 
-				  {
-					  // get characters 
-					  CharacterSelection select = new CharacterSelection(); 
-					  Character[] arr = null; 
-					  // get array of two characters 
-					  try {
-						arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT,  event.getGuild().getIdLong(),2);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						throw new CompletionException(e); 
-					}
-					  return arr; 
-				  }
-				  ).thenAccept((characters) -> 
-				  {
-					  EmbedBuilder builderFirst = new EmbedBuilder()
-							  .setTitle(characters[0].getName())
+				event.deferReply().queue(); 
+				CharacterSelection select = new CharacterSelection(); 
+				Character[] arr = null; 
+				try 
+				{
+					arr = select.getRandomCharacters(GAMETYPE.SHIPS, SETUPTYPE.LIGHT, event.getGuild().getIdLong(), 2); 
+					 EmbedBuilder builderFirst = new EmbedBuilder()
+							  .setTitle(arr[0].getName())
 							  .setColor(Color.MAGENTA)
-							  .setThumbnail(characters[0].getDefaultImage());
+							  .setThumbnail(arr[0].getDefaultImage())
+							  .setFooter(arr[0].getCreditStr());
 					  
 					  EmbedBuilder builderSecond = new EmbedBuilder()
-							  .setTitle(characters[1].getName())
+							  .setTitle(arr[1].getName())
 							  .setColor(Color.MAGENTA)
-							  .setThumbnail(characters[1].getDefaultImage());
+							  .setThumbnail(arr[1].getDefaultImage())
+							  .setFooter(arr[1].getCreditStr());
 					  
 					  event.getHook().sendMessageEmbeds(builderFirst.build(),builderSecond.build()).queue( (message) -> 
 					  {
-						  message.reply( event.getUser().getAsMention() + " ships " + MarkdownUtil.bold( message.getEmbeds().get(0).getTitle()) + " x " + MarkdownUtil.bold(message.getEmbeds().get(1).getTitle()) + "!" ).queue(); 
-					  }); 
-					  
-				  }).exceptionally(ex -> 
-					{
-						event.getHook().sendMessage(ex.getMessage()).queue(); 
-						return null; 
-					});
-				
-			});
+						  message.reply( event.getUser().getAsMention() + " ships " + MarkdownUtil.bold( message.getEmbeds().get(0).getTitle()) +
+								  " x " + MarkdownUtil.bold(message.getEmbeds().get(1).getTitle()) + "!" ).queue(); 
+					  });
+				}
+				catch(Exception ex) 
+				{
+					event.getHook().sendMessage(ex.getMessage()).queue(); 
+				}
+			}); 	
 		}
+		
    }
 }

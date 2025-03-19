@@ -14,11 +14,13 @@ import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import CharactersPack.CharacterSelection;
 import events.CollectCommand;
 import events.CommandManger;
+import events.EconomyCommand;
 import events.FrameCommand;
 import events.GuessCommand;
 import events.HelpCommand;
 import events.KdmCommand;
 import events.KinsCommand;
+import events.MemesCommand;
 import events.FavoriteCommand;
 import events.OriginalCharacterCommand;
 import events.ShipsCommand;
@@ -31,13 +33,19 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class Bot {
 
-	private final static EventWaiter waiter = new EventWaiter(); 
 	private static ShardManager shardManager; 
 	public static ConcurrentHashMap<Integer,Character> characterImages =
 			new ConcurrentHashMap<Integer,Character>(); // store both character names and url images 
+	
+	public static ExecutorService executor = Executors.newFixedThreadPool( (int)( Runtime.getRuntime().availableProcessors() * (1 + (0.90/0.10))) );
+	public static ScheduledExecutorService sexecutor = Executors.newSingleThreadScheduledExecutor();
+	
 	public static void main(String[] args) throws Exception
 	{
 
@@ -59,6 +67,10 @@ public class Bot {
 				final String PASSWORD = properties.getProperty("DATABASE_PASSWORD"); 
 				final String MYURL = properties.getProperty("MYURL") ; 
 				final String NAME = properties.getProperty("NAME"); 
+				final String clientId = properties.getProperty("CLIENTID"); 
+				final String  clientSecret = properties.getProperty("CLIENTSECRET"); 
+				final String rusername = properties.getProperty("USERNAME"); 
+				final String rpassword = properties.getProperty("PASSWORD"); 
 						
 				
 		DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createLight(TOKEN);  
@@ -69,19 +81,12 @@ public class Bot {
 				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
 		  
 		 // Add event listeners
-		builder.addEventListeners(waiter, new UserInfoCommand(), new events.CommandManger(), new WikiCommand()
-				, new SmashPassCommand(waiter), new SimpsCommand(), new KinsCommand(), new ShipsCommand(), new WaifuCommand(waiter)
-				, new KdmCommand(waiter), new SonasCommand(waiter), new FavoriteCommand(), new OriginalCharacterCommand(waiter)
-				, new GuessCommand(waiter), new FrameCommand() ,new CollectCommand(waiter), new UserManager(), new HelpCommand() ); 
 		 
-
-		ShardManager shardManager = builder.build(); 
-
-		List<JDA> getShards = shardManager.getShards(); 
-		for (int i = 0; i < getShards.size(); ++i) 
-		{
-			getShards.get(i).getGuilds().size(); 
-		}
+		builder.addEventListeners( new UserInfoCommand(), new events.CommandManger(executor), new WikiCommand(executor)
+				, new SmashPassCommand(executor,sexecutor), new SimpsCommand(executor), new KinsCommand(executor), new ShipsCommand(executor), new WaifuCommand(executor,sexecutor)
+				, new KdmCommand(executor, sexecutor), new SonasCommand(executor,sexecutor), new FavoriteCommand(executor), new OriginalCharacterCommand(executor, sexecutor)
+				, new GuessCommand(executor,sexecutor), new FrameCommand(executor) ,new CollectCommand(executor, sexecutor), new UserManager(executor), new HelpCommand(), 
+				new MemesCommand( executor, sexecutor, clientId, clientSecret, rusername, rpassword ), new EconomyCommand(executor, sexecutor) ); 
 		
 
 		// Have shard manager
@@ -100,7 +105,6 @@ public class Bot {
 			CharacterSelection select = new CharacterSelection(url, name, password); 
 			
 			Runtime.getRuntime().addShutdownHook(new Thread() 
-					A
 			{
 				public void run() 
 				{

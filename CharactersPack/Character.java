@@ -1,4 +1,5 @@
 package CharactersPack;
+import org.json.JSONObject;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -38,33 +39,31 @@ public class Character
 	protected Long id; 
 	protected String name;
 	protected static String url = "https://hazbinhotel.fandom.com/wiki/";	// should be the same only one instance is needed   
-	protected String defImage;
-	protected ArrayList<String> imageList;
+	protected String  defImage;
+	protected ArrayList<JSONObject> jsonImages;
+	protected ArrayList<String> imageList; 
 	protected String rawData ;
 	protected Date date; 
+	protected int def = 0; 
 	private SETUPTYPE set; 
-	public Character() 
-	{
-		defImage = null; 
-		imageList = new ArrayList<String>(); 
-		rawData = null; 
-		date = null; 
-	} 
+
 	
 	/* Initialize the type with id, name and url given at construction */ 
-	public Character(Long arg_Id, String arg_Name , SETUPTYPE setArg) 
+	public Character(Long arg_Id, String arg_Name, int def , ArrayList<JSONObject> jsonList , SETUPTYPE setArg) 
 	{
 		Instant now = Instant.now();  
 		id = arg_Id; 
 		name = arg_Name; 
 		defImage = null;
-		imageList = new ArrayList<String>();
 		rawData = null;
 		date = null; 
 		set = setArg; 
-		
-		setUpImages();	// Now connect to urls and set up the images 
-		setContent();  // Now set up the raw data to be parsed in other functions 
+		this.jsonImages = jsonList; // intially links from db
+		this.imageList = new ArrayList<String>(); 
+		this.def = def; 
+		if( this.jsonImages != null && !this.jsonImages.isEmpty()) { 
+		defImage  = this.jsonImages.get(def).getString("url"); // intial default image from db indexed 
+		}
 	}
 	
 	/* Set date when given argument  */ 
@@ -262,9 +261,49 @@ public class Character
 		return getAttribute(rawData,"voice_actor"); 
 	}
 	
+	public String getDefJSONImage() 
+	{
+		return (!this.jsonImages.isEmpty()) ? this.jsonImages.get(def).getString("url") : ""; 
+	}
+	
+	public String ArtName() 
+	{
+		return (!this.jsonImages.isEmpty()) ? this.jsonImages.get(def).getString("art_name") : ""; 
+	}
+
+	public String getAuthorName() 
+	{
+		return (!this.jsonImages.isEmpty() ) ? this.jsonImages.get(def).getString("author_name") : ""; 
+	}
+	
+	public String getAuthorLink() 
+	{
+		return (!this.jsonImages.isEmpty()) ? this.jsonImages.get(def).getString("author_link") : ""; 
+	}
+	
+	public String getCreditStr() 
+	{
+		String credit = ""; 
+		String authorName = this.getAuthorName();  
+		if(!authorName.equals("")) 
+		{
+			credit += "\nArt by "; 
+			credit += authorName ; 
+		}
+		
+		String authorLink =  this.getAuthorLink(); 
+		
+		if(!authorLink.equals("")) 
+		{
+			credit += " | link : " + authorLink; 
+		}
+		return credit; 
+	}
+	
+	
 	/***************************************************************/
 	
-	protected  String getAttribute(String markUp, String startAttribute) 
+	public  String getAttribute(String markUp, String startAttribute) 
 	  {
 		  MediaWikiParserFactory factory = new MediaWikiParserFactory(Language.english); 
 		  MediaWikiParser parser = factory.createParser(); 
@@ -320,17 +359,41 @@ public class Character
 		return defImage; 
 	}
 	
-	/* Get the arrayList of urls stored in this instance */ 
-	public ArrayList<String> getImageList() 
+	/*Get the default json object */
+	public JSONObject getDefaultJSONObject()
 	{
-		return imageList; 
+		return this.jsonImages.get(def); 
+	}
+	
+	/* Get default author name*/
+	public String getDefaultAuthorName()
+	{
+		return this.jsonImages.get(0).getString("author_name"); 
+	}
+	
+	/* Get default author link*/
+	public String getDefaultAuthorLink()
+	{
+		return this.jsonImages.get(0).getString("author_links"); 
+	}
+	
+	/* Get the arrayList of urls stored in this instance */ 
+	public ArrayList<JSONObject> getImageList() 
+	{
+		return jsonImages; 
+	}
+	
+	/* Get the arrayList of urls stored in this instance list is of string from scrapped wiki */ 
+	public ArrayList<String> getImageNonJSONList() 
+	{
+		return this.imageList; 
 	}
 	
 	
 	/*
 	 * Private function sets up the links for images url
 	 * */
-	protected void setUpImages() 
+	public void setUpImages() 
 	{
 		
 		
@@ -377,7 +440,7 @@ public class Character
 			   // Only get image link with following string
 			   if(images.get(i).attr("src").contains("static.wikia"))
 			   {
-				   imageList.add(images.get(i).attr("src")); 
+				   this.imageList.add(images.get(i).attr("src")); 
 			   }
 		   }
 		   
@@ -393,9 +456,9 @@ public class Character
 			int width = image.getWidth(null);
 			int height = image.getHeight(null); 
 			
-			if( (width < 50 || height < 50 )  && this.imageList.size() != 1 ) 
+			if( (width < 50 || height < 50 )  && this.jsonImages.size() != 1 ) 
 			{
-				this.imageList.remove(0); 
+				this.jsonImages.remove(0); 
 				this.defImage = this.imageList.get(0); 
 			}
 			

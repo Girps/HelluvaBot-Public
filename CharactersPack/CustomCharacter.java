@@ -1,17 +1,22 @@
 package CharactersPack;
 
+import java.util.ArrayList;
+
+import org.json.JSONObject;
 
 public class CustomCharacter extends MinorCharacter{
 
-	public CustomCharacter(Long id_Arg,String name_Arg, String imgur_Url) 
+	public CustomCharacter(Long id_Arg,String name_Arg, String imgur_Url,ArrayList<JSONObject> jsonList ,  SETUPTYPE set) 
 	{
-		super();
+		super(id_Arg, imgur_Url, imgur_Url, 0, jsonList, set);
 		this.name = name_Arg; 
 		this.id = id_Arg; 
-		this.defImage = imgur_Url; 
 	}
 	
 	
+	
+
+
 	/* Get the url of the character */
 	@Override
 	public String getUrl()
@@ -35,7 +40,7 @@ public class CustomCharacter extends MinorCharacter{
 	
 	
 	@Override
-	protected  String getAttribute(String markUp, String startAttribute) 
+	public  String getAttribute(String markUp, String startAttribute) 
 	{
 		return "none"; 
 	}
