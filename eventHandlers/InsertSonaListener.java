@@ -50,11 +50,7 @@ public class InsertSonaListener extends ListenerParent {
 					}
 					else 
 					{ 
-						select.insertSona(map.get("name"), event.getUser().getIdLong(), map.get("url"),
-								event.getGuild().getIdLong(), map.get("kdm"), map.get("smashpass"), map.get("simps")
-									, map.get("ships"), map.get("kins"), 
-									map.get("waifu"), map.get("favorite"), 
-									map.get("guess"), map.get("collect"));
+						select.insertSona(map, event.getUserIdLong(), event.getGuild().getIdLong());
 						event.getChannel().sendMessage(event.getUser().getAsMention() + " your Sona " + MarkdownUtil.bold(map.get("name")) + 
 								" has been successfully inserted!" ).queue(); 
 					}

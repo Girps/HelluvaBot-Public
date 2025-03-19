@@ -13,8 +13,8 @@ public class UpdateOCListener extends ListenerParent {
 
 	private HashMap<String, String> map; 
 	private String oldName; 
-    public UpdateOCListener(ExecutorService executor, ScheduledExecutorService sexecutor, Long messageId, Long playerId,
-			HashMap<String, String> map, String oldName, SlashCommandInteractionEvent event) {
+    public UpdateOCListener(ExecutorService executor, ScheduledExecutorService sexecutor, Long messageId, Long playerId
+			, HashMap<String, String> map, String oldName, SlashCommandInteractionEvent event) {
 		super(executor, sexecutor, messageId, playerId);
 		this.map = map; 
 		this.oldName = oldName; 
@@ -44,7 +44,7 @@ public class UpdateOCListener extends ListenerParent {
     				this.pressed.set(true); 
 	    			CharacterSelection select=  new CharacterSelection(); 
 	    			// now update the oc
-	    			if(!map.containsKey("name") &&
+	    			if(!map.containsKey("name") && !map.get("name").equals(oldName)  &&
 							select.isAvailable(map.get("name"), event.getGuild().getIdLong())) 
 					{
 						event.getChannel().sendMessage(event.getUser().getAsMention() + " OC name selected not avaliable pick another name! Update cancelled!").queue(); 

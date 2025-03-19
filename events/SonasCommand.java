@@ -392,6 +392,7 @@ public class SonasCommand extends ListenerAdapter
 						
 						JSONObject obj = new JSONObject ( Oldfields.get("url") ); 
 						JSONArray  jArry = obj.getJSONArray("links");  
+						
 						for(int i =0; i < jArry.length(); ++i) 
 						{
 							arrObject.add(jArry.getJSONObject(i)); 

@@ -1,26 +1,16 @@
 package events;
 
 import java.awt.Color;
-import events.Helper;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
+import org.json.JSONArray;
 import org.json.JSONObject;
-
-import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
-
 import CharactersPack.CharacterSelection;
 import CharactersPack.SETUPTYPE;
 import eventHandlers.InsertOCListener;
@@ -28,9 +18,7 @@ import eventHandlers.UpdateOCListener;
 import CharactersPack.Character;
 import CharactersPack.CharacterFactory;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -110,7 +98,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 							JSONObject obj = new JSONObject("{\"links\": [{\"url\": " + "\"" + event.getOption("url").getAsString() + "\"" + ", \"art_name\": \"\", \"author_link\": \"\", \"author_name\": \"\"}]}"); 
 							ArrayList<JSONObject> arryJs = new ArrayList<JSONObject>(); 
 							arryJs.add(obj.getJSONArray("links").getJSONObject(0)); 
-							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,event.getOption("url").getAsString(), 0, null, SETUPTYPE.LIGHT); 
+							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,event.getOption("url").getAsString(), 0, arryJs, SETUPTYPE.LIGHT); 
 							Character temp = factory.getCharacter(); 
 							EmbedBuilder builder = new EmbedBuilder(); 
 							builder.setTitle(CharacterName)
@@ -522,13 +510,30 @@ public class OriginalCharacterCommand extends ListenerAdapter
 								newFields.add(event.getOptions().get(i)); 
 							}
 							newFields.remove(event.getOption("customcharacter")); 
+							String oldName = Oldfields.get("name"); 
 							for(int i = 0; i < newFields.size(); ++i) 
 							{
+								if(newFields.get(i).getName().equals("url"))
+								{
+									Oldfields.put("url", "{\"links\": [{\"url\": " + "\"" + newFields.get(i).getAsString() + "\"" + ", \"art_name\": \"\", \"author_link\": \"\", \"author_name\": \"\"}]}" ); 
+								}
+								else
+								{ 
 								Oldfields.put(newFields.get(i).getName(), newFields.get(i).getAsString());  
+								}
+							}
+							
+							ArrayList<JSONObject> arrObject = new ArrayList<JSONObject>(); 
+							
+							JSONObject obj = new JSONObject ( Oldfields.get("url") ); 
+							JSONArray  jArry = obj.getJSONArray("links");  
+							for(int i =0; i < jArry.length(); ++i) 
+							{
+								arrObject.add(jArry.getJSONObject(i)); 
 							}
 							
 							String CharacterName = Oldfields.get("name"); 
-							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,Oldfields.get("url"), 0, null, SETUPTYPE.LIGHT); 
+							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,Oldfields.get("url"), 0, arrObject , SETUPTYPE.LIGHT); 
 							Character temp = factory.getCharacter(); 
 							EmbedBuilder builder = new EmbedBuilder(); 
 							builder.setTitle(CharacterName); 

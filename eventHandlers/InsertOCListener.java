@@ -43,7 +43,7 @@ public class InsertOCListener extends ListenerParent{
 	    			Long serverId = event.getGuild().getIdLong(); 
 	    			// make sure 
 	    			CharacterSelection select = new CharacterSelection(); 
-	    			if(!map.containsKey("name") ||
+	    			if(!map.containsKey("name") || 
 							select.isAvailable(map.get("name"), event.getGuild().getIdLong())) 
 					{
 						event.getChannel().sendMessage(event.getUser().getAsMention() + 
@@ -51,10 +51,7 @@ public class InsertOCListener extends ListenerParent{
 					}
 	    			else 
 	    			{
-	    				select.insertOrginalCharacter(map.get("name") , event.getUser().getIdLong(), map.get("url"),
-								serverId, map.get("kdm"), map.get("smashpass"), map.get("simps")
-									, map.get("ships"), map.get("kins"), map.get("waifu"),map.get("favorite")
-									, map.get("guess"), map.get("collect"));
+	    				select.insertOrginalCharacter(map, event.getUserIdLong(), event.getGuild().getIdLong());
 	    				event.getChannel().sendMessage(event.getUser().getAsMention() + " your OC " + MarkdownUtil.bold(map.get("name")) + " has been successfully inserted!" ).queue(); 
 	    			}
     			} 

@@ -590,7 +590,7 @@ public class CharacterSelection {
 					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0 , url FROM sonas"
 					+ " WHERE sonas.inSP = \"T\" " + " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , url FROM customCharacters " + 
 					 " WHERE inSP = \"T\" " + " AND server_Id = ?"+     
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -756,7 +756,7 @@ public class CharacterSelection {
 							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas"
 							+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inSP = \"T\"" +  " AND server_Id = ?" 
 							+ " UNION "
-							+ " SELECT cusChar_Id, name, user_Id, url , 0, null FROM customCharacters"
+							+ " SELECT cusChar_Id, name, user_Id, url , 0, url  FROM customCharacters"
 							+ " WHERE  LOWER(name) = LOWER(?) AND inSP = \"T\"" +  " AND server_Id = ?"
 							+ "  LIMIT 1"; 
 					
@@ -1194,13 +1194,12 @@ public class CharacterSelection {
 	
 	
 	/* Method will insert a character to the database on the sona table */ 
-	public void insertSona(String name, Long userId, String url , Long serverId, String inKDM, String inSP, String inSimps,String inShips, String
-			inKins, String inWaifu, String inFav, String inGuess, String inCollect)  
+	public void insertSona(HashMap<String,String> map, Long userId, Long serverId)  
 	{
 		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
 		
 		String queryTwo =  " INSERT INTO sonas (sona_Id, name, user_Id, url, server_Id, inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, inGuess, inCollect) " +  
-				 " VALUES (last_insert_id(),?, ? ,  '{ \"links\" : [ {\"url\": " + "\""  + url+ "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}' "
+				 " VALUES (last_insert_id(),?, ? ,  '{ \"links\" : [ {\"url\": " + "\""  + map.get("url") + "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}' "
 				 + ", ? , ? , ? , ? , ? , ? , ? , ? , ? , ?  )";  
 		
 		PreparedStatement statInsertId = null;
@@ -1217,19 +1216,18 @@ public class CharacterSelection {
 			statInsertId.execute(); 
 			// Insert character 
 			statInsertSona = conn.prepareStatement(queryTwo); 
-			statInsertSona.setString(1, name);
+			statInsertSona.setString(1, map.get("name"));
 			statInsertSona.setLong(2, userId);
-			//statInsertSona.setString(3, url);
 			statInsertSona.setLong(3, serverId);
-			statInsertSona.setString(4, inKDM);
-			statInsertSona.setString(5, inSP);
-			statInsertSona.setString(6, inSimps);
-			statInsertSona.setString(7, inShips);
-			statInsertSona.setString(8, inKins);
-			statInsertSona.setString(9, inWaifu);
-			statInsertSona.setString(10, inFav);
-			statInsertSona.setString(11, inGuess);
-			statInsertSona.setString(12, inCollect);
+			statInsertSona.setString(4, map.get("kdm"));
+			statInsertSona.setString(5, map.get("smashpass"));
+			statInsertSona.setString(6, map.get("simps"));
+			statInsertSona.setString(7, map.get("ships"));
+			statInsertSona.setString(8, map.get("kins"));
+			statInsertSona.setString(9, map.get("waifu"));
+			statInsertSona.setString(10, map.get("favorite"));
+			statInsertSona.setString(11, map.get("guess"));
+			statInsertSona.setString(12, map.get("collect"));
 			statInsertSona.execute(); 
 			// Commit insertions 
 			conn.commit(); 
@@ -1884,12 +1882,11 @@ public class CharacterSelection {
 
 
 	/* Insert orginal character into the custom character table */ 
-	public void insertOrginalCharacter(String name, Long userId, String url , Long serverId, String inKDM, String inSP, String inSimps,String inShips, String
-			inKins, String inWaifu, String inFav, String inGuess, String inCollect)  
+	public void insertOrginalCharacter(HashMap<String, String> map , Long userId, Long serverId )  
 	{
 		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
 		String queryTwo =  " INSERT INTO customCharacters (cusChar_Id, name, user_Id, url, server_Id, inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, inGuess, inCollect) " +  
-				 " VALUES (last_insert_id(),? , ? , " +"'{ \"links\" : [ {\"url\": " + "\""  + url + "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}'" + 
+				 " VALUES (last_insert_id(),? , ? , " +"'{ \"links\" : [ {\"url\": " + "\""  + map.get("url") + "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}'" + 
 				", ? , ? , ? ,?  , ? , ? , ? , ? , ? , ? )";  
 		
 		
@@ -1910,19 +1907,18 @@ public class CharacterSelection {
 			statInsertId.execute(); 
 			// Insert Character next 
 			statInsertCharacter = conn.prepareStatement(queryTwo); 
-			statInsertCharacter.setString(1, name);
+			statInsertCharacter.setString(1, map.get("name"));
 			statInsertCharacter.setLong(2, userId);
-			statInsertCharacter.setString(3, url);
-			statInsertCharacter.setLong(4, serverId);
-			statInsertCharacter.setString(5, inKDM);
-			statInsertCharacter.setString(6, inSP);
-			statInsertCharacter.setString(7, inSimps);
-			statInsertCharacter.setString(8, inShips);
-			statInsertCharacter.setString(9, inKins);
-			statInsertCharacter.setString(10, inWaifu);
-			statInsertCharacter.setString(11, inFav);
-			statInsertCharacter.setString(12, inGuess);
-			statInsertCharacter.setString(13, inCollect);
+			statInsertCharacter.setLong(3, serverId);
+			statInsertCharacter.setString(4, map.get("kdm"));
+			statInsertCharacter.setString(5, map.get("smashpass"));
+			statInsertCharacter.setString(6, map.get("simps"));
+			statInsertCharacter.setString(7, map.get("ships"));
+			statInsertCharacter.setString(8, map.get("kins"));
+			statInsertCharacter.setString(9, map.get("waifu"));
+			statInsertCharacter.setString(10, map.get("favorite"));
+			statInsertCharacter.setString(11, map.get("guess"));
+			statInsertCharacter.setString(12, map.get("collect"));
 			statInsertCharacter.execute(); 
 			// Commit insertions 
 			conn.commit();
@@ -2216,7 +2212,21 @@ public class CharacterSelection {
 			res = stat.executeQuery(); 
 			if(res.next()) 
 			{
-				CharacterFactory factory = new CharacterFactory(Long.valueOf( res.getString(1)), res.getString(2), "OC" ,res.getString(3), 0, null, SETUPTYPE.LIGHT); 
+				
+				ArrayList<JSONObject> imgLinks = new ArrayList<JSONObject>(); 
+				// now check if field is not null
+				if (res.getString("url") != null) 
+				{
+					// convert to json
+					JSONObject jsonObj = new JSONObject(res.getString("url")); 
+					JSONArray jsonArr = jsonObj.getJSONArray("links"); 
+					// get the links 
+					for(int i =0; i < jsonArr.length(); i++) 
+					{
+						imgLinks.add( jsonArr.getJSONObject(i)); 
+					}
+				} 
+				CharacterFactory factory = new CharacterFactory(Long.valueOf( res.getString(1)), res.getString(2), "OC" ,res.getString(3), 0, imgLinks, SETUPTYPE.LIGHT); 
 				result =  factory.getCharacter(); 
 			}
 			
