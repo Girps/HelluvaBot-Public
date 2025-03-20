@@ -156,7 +156,8 @@ public class SonasCommand extends ListenerAdapter
 						JSONObject obj = new JSONObject("{\"links\": [{\"url\": " + "\"" + event.getOption("url").getAsString() + "\"" + ", \"art_name\": \"\", \"author_link\": \"\", \"author_name\": \"\"}]}"); 
 						ArrayList<JSONObject> arryJs = new ArrayList<JSONObject>(); 
 						arryJs.add(obj.getJSONArray("links").getJSONObject(0)); 
-						CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "Sona" ,event.getOption("url").getAsString(), 0, arryJs, SETUPTYPE.LIGHT); 
+						CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "Sona"
+								,event.getOption("url").getAsString(), 0, arryJs,null, "",SETUPTYPE.LIGHT); 
 						Character temp = factory.getCharacter(); 
 						EmbedBuilder builder = new EmbedBuilder()
 								.setTitle(CharacterName)
@@ -401,7 +402,8 @@ public class SonasCommand extends ListenerAdapter
 						// First return the sona then ask confirmation to update the sona 
 						// Get character inserted 
 						String CharacterName = Oldfields.get("name"); 
-						CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "Sona" ,Oldfields.get("url"), 0, arrObject, SETUPTYPE.LIGHT); 
+						CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "Sona" ,Oldfields.get("url"),
+								0, arrObject, null,"", SETUPTYPE.LIGHT); 
 						Character temp = factory.getCharacter(); 
 						EmbedBuilder builder = new EmbedBuilder()
 								.setTitle(CharacterName)

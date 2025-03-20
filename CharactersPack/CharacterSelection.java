@@ -224,73 +224,7 @@ public class CharacterSelection {
 		return names; 
 	}
 	
-	/* Method only used for testing purposes */
-	public ArrayList<Character> getAllCharacters(SELECTIONTYPE type ,SETUPTYPE set) 
-	{
-		Statement stat = null;
-		ResultSet res = null;
-		Connection conn = null; 
-		ArrayList<Character> list = null;  
-
-		try 
-		{
-			conn = dataSource.getConnection(); 
-			stat = conn.createStatement();
-			String query = ""; 
-		switch(type) 
-		{
-		case ALL: 
-			 query = "SELECT * FROM characters"; 
-				break ; 
-		case MAJOR_CHARACTER:
-			 query = "SELECT * FROM characters" + " WHERE is_Major_Character = \"T\""; 
-				break; 
-		case MINOR_CHARACTER: 
-			 query = "SELECT * FROM characters" + " WHERE is_Major_Character = \"F\""; 
-				break; 
-		}
-		
-		 res = stat.executeQuery(query); 
-		
-		 list = new ArrayList<Character>();  
-		
-		res.next(); 
-		
-		int col = res.getMetaData().getColumnCount(); 
-		
-		String[] columnData = new String[col+1]; 
-		
-		do {
-			
-			for(int i =1; i <= col; ++i) 
-			{
-				columnData[i] = res.getString(i); 
-			}
-			CharacterFactory factor = new CharacterFactory(Long.valueOf(columnData[1]), columnData[2], columnData[3],columnData[5],col, null, set);
-			
-			Character chtr = factor.getCharacter(); 
-			// Done get data now instantiate character 
-			list.add(chtr ); 
-			
-		}
-		while(res.next()); 
-		
-		} 
-		catch (SQLException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		finally
-		{
-			try {  if(res != null) { res.close(); } } catch(Exception e){} 
-			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
-			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
-		}
-				return list; 
-
-	}
+	
 	
 	/* Method seraches if user has a waifu in a specifed guild */ 
 	public boolean searchUserInWaifu(Long userID, Long serverID)  
@@ -488,18 +422,18 @@ public class CharacterSelection {
 		{
 		case KDM: 
 			query =  "SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls, perks, rarity FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? " +  
 					 " WHERE characters.is_Adult = \"T\"" + 
 					 " UNION " + 
-					 " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null FROM gameCharacters " +
+					 " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, null FROM gameCharacters " +
 					 " WHERE gameCharacters.is_Adult = \"T\"" + 
 					 " UNION " + 
-					 " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas " + 
+					 " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , null , rarity  FROM sonas " + 
 					 " WHERE sonas.inKDM = \"T\" " + " AND server_Id = ?" +    
 					 " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , null, null, rarity FROM customCharacters " + 
 					 " WHERE inKDM = \"T\" " + " AND server_Id = ?" +     
 					 " ORDER BY RAND() LIMIT ?"; 
 			
@@ -512,18 +446,18 @@ public class CharacterSelection {
 			break; 
 		case SIMPS:
 			query = "SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls, perks ,rarity FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\" "
 					+ " UNION\r\n"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null  FROM gameCharacters "
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null, null, rarity FROM gameCharacters "
 					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas "
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas "
 					+ " WHERE sonas.inSimps = \"T\" " + " AND server_Id = ?"
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , null , null , rarity FROM customCharacters " + 
 					 " WHERE inSimps = \"T\" " + " AND server_Id = ?"+   
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query);
@@ -535,18 +469,18 @@ public class CharacterSelection {
 			break; 
 		case SHIPS:
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-					+ " COALESCE(server_def_chtrs.def, image_def ) as image_def , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def, image_def ) as image_def , image_urls, perks , rarity FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null FROM gameCharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null , null , rarity FROM gameCharacters"
 					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0, url FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0, url, null, rarity FROM sonas"
 					+ " WHERE sonas.inShips = \"T\""  +  " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0, null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0, null , null , rarity FROM customCharacters " + 
 					 " WHERE inShips = \"T\" " + " AND server_Id = ?" +   
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -558,16 +492,16 @@ public class CharacterSelection {
 			break; 
 		case KINS:
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls, perks, rarity  FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null FROM gameCharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, rarity FROM gameCharacters"
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 ,url FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 ,url, null, rarity FROM sonas"
 					+ " WHERE sonas.inKins = \"T\" " + " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url, 0 , null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url, 0 , null, null, rarity FROM customCharacters " + 
 					 " WHERE inKins = \"T\" " + " AND server_Id = ?"  +    
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query);
@@ -579,18 +513,18 @@ public class CharacterSelection {
 			break; 
 		case SMASHPASS: 
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE( server_def_chtrs.def , characters.image_def ) , image_urls FROM characters "
+					+ " COALESCE( server_def_chtrs.def , characters.image_def ) , image_urls , perks , rarity FROM characters "
 					+ "LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null FROM gameCharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, rarity FROM gameCharacters"
 					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0 , url FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0 , url , null ,rarity FROM sonas"
 					+ " WHERE sonas.inSP = \"T\" " + " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , url FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , url , null , rarity FROM customCharacters " + 
 					 " WHERE inSP = \"T\" " + " AND server_Id = ?"+     
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -602,18 +536,18 @@ public class CharacterSelection {
 			break; 
 		case WAIFU:
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE(server_def_chtrs.def, characters.image_def) , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def, characters.image_def) , image_urls, null , rarity  FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
 					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0,null FROM gameCharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0 , null , null, null FROM gameCharacters"
 					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url,0,url FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url,0,url , null, rarity  FROM sonas"
 					+ " WHERE sonas.inWaifu = \"T\"" +   " AND server_Id = ?"  
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url,0,null FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url,0,null, null, rarity FROM customCharacters " + 
 					 " WHERE inWaifu = \"T\" " + " AND server_Id = ?" +    
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -625,16 +559,16 @@ public class CharacterSelection {
 			break; 
 		case GUESS: 
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-					+ " COALESCE(server_def_chtrs.def , characters.image_def ) , image_urls FROM characters "
+					+ " COALESCE(server_def_chtrs.def , characters.image_def ) , image_urls, perks , rarity FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0 , null FROM gameCharacters"
+					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0 , null, null, null FROM gameCharacters"
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0, url FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0, url, null, rarity FROM sonas"
 					+ " WHERE sonas.inGuess = \"T\" " + " AND server_Id = ?" 
 					+ " UNION "  
-					+ " SELECT cusChar_Id, name, user_Id, url, 0, null FROM customCharacters "  
+					+ " SELECT cusChar_Id, name, user_Id, url, 0, null, null, rarity  FROM customCharacters "  
 					+ " WHERE inGuess = \"T\" " +   " AND server_Id = ?"       
 					+ " ORDER BY RAND() LIMIT ?" ; 
 			stat = conn.prepareStatement(query); 
@@ -654,18 +588,18 @@ public class CharacterSelection {
 					+ ") "
 					+ " "
 					+ " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-					+ "					COALESCE(server_def_chtrs.def, characters.image_def ) , image_urls FROM characters "
+					+ "					COALESCE(server_def_chtrs.def, characters.image_def ) , image_urls , perks, rarity  FROM characters "
 					+ "					LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id  "
 					+ "					 AND server_def_chtrs.server_id = ? "
 					+ "                     WHERE rarity = (SELECT name FROM chosen_rarity) "
 					+ "					UNION "
-					+ "					 SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null FROM gameCharacters "
+					+ "					 SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, null FROM gameCharacters "
 					+ "                     WHERE rarity = (SELECT name FROM chosen_rarity) "
 					+ "					UNION "
-					+ "					SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas "
+					+ "					SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas "
 					+ "					 WHERE sonas.inCollect = \"T\"  AND server_Id = ? AND rarity = (SELECT name FROM chosen_rarity) "
 					+ "					UNION  "
-					+ "					SELECT cusChar_Id, name, user_Id, url , 0, null FROM customCharacters "
+					+ "					SELECT cusChar_Id, name, user_Id, url , 0, null , null, rarity FROM customCharacters "
 					+ "					 WHERE inCollect = \"T\"  AND server_Id = ? AND rarity = (SELECT name FROM chosen_rarity) "
 					+ "                    ORDER BY RAND() LIMIT ? " ; 
 			stat = conn.prepareStatement(query); 
@@ -715,18 +649,18 @@ public class CharacterSelection {
 				
 					query  = 
 							 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-							 + " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls FROM characters"
+							 + " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls, perks, rarity FROM characters"
 							 + " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 							 + " AND server_def_chtrs.server_id = ? "
 							+ " WHERE LOWER(characters.name) = LOWER(?) AND characters.is_Adult = \"T\" "
 							+ " UNION"
-							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null FROM gameCharacters"
+							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null, null, rarity FROM gameCharacters"
 							+ " WHERE LOWER(gameCharacters.name) = LOWER(?) AND gameCharacters.is_Adult = \"T\""
 							+ " UNION"
-							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas"
+							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , null, rarity FROM sonas"
 							+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inKDM = \"T\"" + " AND server_Id = ?" 
 							+ " UNION "
-							+ " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters"
+							+ " SELECT cusChar_Id, name, user_Id, url , 0 , null, null, rarity FROM customCharacters"
 							+ " WHERE  LOWER(name) = LOWER(?) AND inKDM = \"T\"" + " AND server_Id = ?"
 							+ "  LIMIT 1"; 
 				
@@ -745,18 +679,18 @@ public class CharacterSelection {
 					
 					query  = 
 							 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-							 + "COALESCE( server_def_chtrs.def , image_def) as image_def , image_urls FROM characters"
+							 + "COALESCE( server_def_chtrs.def , image_def) as image_def , image_urls, perks , rarity  FROM characters"
 							 + " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id " 
 							 + " AND server_def_chtrs.server_id = ? "
 							+ " WHERE LOWER(characters.name) = LOWER(?) AND characters.is_Adult = \"T\" "
 							+ " UNION"
-							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null  FROM gameCharacters"
+							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null , null , null  FROM gameCharacters"
 							+ " WHERE LOWER(gameCharacters.name) = LOWER(?) AND gameCharacters.is_Adult = \"T\""
 							+ " UNION"
-							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas"
+							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , perks, rarity FROM sonas"
 							+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inSP = \"T\"" +  " AND server_Id = ?" 
 							+ " UNION "
-							+ " SELECT cusChar_Id, name, user_Id, url , 0, url  FROM customCharacters"
+							+ " SELECT cusChar_Id, name, user_Id, url , 0, url , perks, rarity  FROM customCharacters"
 							+ " WHERE  LOWER(name) = LOWER(?) AND inSP = \"T\"" +  " AND server_Id = ?"
 							+ "  LIMIT 1"; 
 					
@@ -771,7 +705,7 @@ public class CharacterSelection {
 					found = processQueryGetCharacters(stat,set)[0]; 
 					break; 
 				case WIKI: 
-					query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, 0, null FROM characters"
+					query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, 0, null, perks , rarity FROM characters"
 							+ " WHERE LOWER(characters.name) = LOWER(?) "; 
 				
 					stat = conn.prepareStatement(query); 
@@ -784,18 +718,18 @@ public class CharacterSelection {
 					break;
 				case FAVORITES: 
 						query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-								+ " COALESCE( server_def_chtrs.def , image_def ) as image_def, image_urls FROM characters "
+								+ " COALESCE( server_def_chtrs.def , image_def ) as image_def, image_urls, perks , rarity FROM characters "
 								+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 								+ " AND server_def_chtrs.server_id = ? "
 								+ " WHERE LOWER(characters.name) = LOWER(?) "
 								+ " UNION"
-								+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null FROM gameCharacters"
+								+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null, null, null FROM gameCharacters"
 								+ " WHERE LOWER(gameCharacters.name) = LOWER(?) "
 								+ "UNION"
-								+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas"
+								+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas"
 								+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inFav = \"T\"" +  " AND server_Id = ?" 
 								+ " UNION "
-								+ " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters"
+								+ " SELECT cusChar_Id, name, user_Id, url , 0 , null, null,rarity  FROM customCharacters"
 								+ " WHERE  LOWER(name) = LOWER(?) AND inFav = \"T\"" +  " AND server_Id = ?" 
 								+ "  LIMIT 1"; 
 					
@@ -813,18 +747,18 @@ public class CharacterSelection {
 					{
 						
 							query  = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, "
-									+ " COALESCE(server_def_chtrs.def, image_def ) as image_def, image_urls FROM characters "
+									+ " COALESCE(server_def_chtrs.def, image_def ) as image_def, image_urls , perks , rarity FROM characters "
 									+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 									+ " AND server_def_chtrs.server_id = ? "
 									+ " WHERE LOWER(characters.name) = LOWER(?) "
 									+ " UNION"
-									+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null FROM gameCharacters"
+									+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null, null ,rarity  FROM gameCharacters"
 									+ " WHERE LOWER(gameCharacters.name) = LOWER(?) "
 									+ "UNION"
-									+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url FROM sonas"
+									+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, perks, rarity  FROM sonas"
 									+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inCollect = \"T\"" +  " AND server_Id = ?"
 									+ " UNION "
-									+ " SELECT cusChar_Id, name, user_Id, url , 0, null FROM customCharacters"
+									+ " SELECT cusChar_Id, name, user_Id, url , 0, null , perks ,rarity  FROM customCharacters"
 									+ " WHERE  LOWER(name) = LOWER(?) AND inCollect = \"T\"" +  " AND server_Id = ?"  
 									+ "  LIMIT 1"; 
 						
@@ -899,10 +833,13 @@ public class CharacterSelection {
 			ArrayList<JSONObject> imgLinks = new ArrayList<JSONObject>(); 
 			
 			// now check if field is not null
+			JSONObject perks = null; 
 			if (res.getString(6) != null) 
 			{
 				// convert to json
 				JSONObject jsonObj = new JSONObject(res.getString(6)); 
+				perks = new JSONObject(res.getString("perks")); 
+				
 				JSONArray jsonArr = jsonObj.getJSONArray("links"); 
 				// get the links 
 				for(int i =0; i < jsonArr.length(); i++) 
@@ -911,7 +848,8 @@ public class CharacterSelection {
 				}
 			}
 			// now instantiate type of character
-			factory = new CharacterFactory(Long.valueOf(res.getString(1)), res.getString(2), res.getString(3), res.getString(4), Integer.valueOf(res.getString(5)), imgLinks ,type); 
+			factory = new CharacterFactory(Long.valueOf(res.getString(1)), res.getString(2), res.getString(3)
+					, res.getString(4), Integer.valueOf(res.getString(5)), imgLinks, perks , res.getString("rarity"),type); 
 			
 			Character chtr = factory.getCharacter(); 
 			chtr.setDate(date);
@@ -1007,6 +945,7 @@ public class CharacterSelection {
 			res = stat.executeQuery(); 
 			res.next(); 
 			ArrayList<JSONObject> imgLinks = new ArrayList<JSONObject>(); 
+			JSONObject perks = new JSONObject ( res.getString("perks")); 
 			// now check if field is not null
 			if (res.getString("url") != null) 
 			{
@@ -1018,10 +957,12 @@ public class CharacterSelection {
 				{
 					imgLinks.add( jsonArr.getJSONObject(i)); 
 				}
+				
 			} 
 			
 		// We have the character now return it 
-			CharacterFactory factory = new CharacterFactory(Long.valueOf(res.getString(1)), res.getString(2), res.getString(3), res.getString(4), 0, imgLinks, SETUPTYPE.LIGHT); 
+			CharacterFactory factory = new CharacterFactory(Long.valueOf(res.getString(1)), 
+					res.getString(2), res.getString(3), res.getString(4), 0, imgLinks, perks, res.getString("rarity"), SETUPTYPE.LIGHT); 
 			found = factory.getCharacter(); 
 		
 		} catch (SQLException e) {
@@ -1576,16 +1517,17 @@ public class CharacterSelection {
 	public Character getCharacterById(Long id)  
 	{
 		String query  = 
-				 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character, characters.image_def , characters.image_urls FROM characters"
+				 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character,"
+				 + " characters.image_def , characters.image_urls, perks, rarity FROM characters"
 				+ " WHERE char_id = " + id
 				+ " UNION"
-				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null FROM gameCharacters"
+				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null , null , null FROM gameCharacters"
 				+ " WHERE gameCharacter_Id = " + id
 				+ " UNION"
-				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , null FROM sonas"
+				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , null , null, rarity FROM sonas"
 				+ " WHERE  sona_Id = " + id
 				+ " UNION"
-				+ " SELECT cusChar_Id, name, user_Id, url , 0 , null FROM customCharacters"
+				+ " SELECT cusChar_Id, name, user_Id, url , 0 , null , null , rarity FROM customCharacters"
 				+ " WHERE  cusChar_Id = " + id 
 				+ "  LIMIT 1"; 
 		
@@ -1600,6 +1542,7 @@ public class CharacterSelection {
 			res = stat.executeQuery(query); 
 			res.next(); 
 			ArrayList<JSONObject> imgList = new ArrayList<JSONObject> (); 
+			JSONObject perks = new JSONObject(res.getString("perks"));
 			if (res.getString(6) != null) 
 			{
 				JSONObject jsonObj = new JSONObject(res.getString(6));
@@ -1610,7 +1553,8 @@ public class CharacterSelection {
 				}
 			}
 			
-			factory = new CharacterFactory(Long.valueOf(res.getString(1)),res.getString(2), res.getString(3), res.getString(4), Integer.valueOf(res.getString(5)), imgList, SETUPTYPE.LIGHT); 
+			factory = new CharacterFactory(Long.valueOf(res.getString(1)),res.getString(2), 
+					res.getString(3), res.getString(4), Integer.valueOf(res.getString(5)), imgList, perks, res.getString("rarity"), SETUPTYPE.LIGHT); 
 		}
 		catch (SQLException e) 
 		{
@@ -2171,7 +2115,8 @@ public class CharacterSelection {
 			CharacterFactory factory = null; 
 			do 
 			{
-				factory = new CharacterFactory(Long.valueOf( res.getString(1)), res.getString(2), "OC" ,res.getString(3), 0, null, SETUPTYPE.LIGHT); 
+				factory = new CharacterFactory(Long.valueOf( res.getString(1)),
+						res.getString(2), "OC" ,res.getString(3), 0, null, null, "", SETUPTYPE.LIGHT); 
 				list.add(factory.getCharacter()); 
 			}
 			while(res.next()); 
@@ -2213,7 +2158,7 @@ public class CharacterSelection {
 			if(res.next()) 
 			{
 				
-				ArrayList<JSONObject> imgLinks = new ArrayList<JSONObject>(); 
+				ArrayList<JSONObject> imgLinks = new ArrayList<JSONObject>();  
 				// now check if field is not null
 				if (res.getString("url") != null) 
 				{
@@ -2226,7 +2171,8 @@ public class CharacterSelection {
 						imgLinks.add( jsonArr.getJSONObject(i)); 
 					}
 				} 
-				CharacterFactory factory = new CharacterFactory(Long.valueOf( res.getString(1)), res.getString(2), "OC" ,res.getString(3), 0, imgLinks, SETUPTYPE.LIGHT); 
+				CharacterFactory factory = new CharacterFactory(Long.valueOf( res.getString(1)), res.getString(2), 
+						"OC" ,res.getString(3), 0, imgLinks, null , "", SETUPTYPE.LIGHT); 
 				result =  factory.getCharacter(); 
 			}
 			
@@ -4670,5 +4616,178 @@ public class CharacterSelection {
 				
 			}
 		}
+		
+		
+		public Long searchPlayerIdCollect (Long chtrId, Long serverId) 
+		{
+			
 
+			String query = "SELECT user_Id FROM playerscollection "
+					+ "WHERE col_Id = ? AND server_Id = ? ";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			Long playerId = null; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setLong(1, chtrId);
+				stat.setLong(2, serverId);
+				res = stat.executeQuery(); 
+				if ( res.next() ) 
+				{
+					playerId = res.getLong(1); 
+				}  
+				
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return playerId; 
+		}
+		
+		public int getTotalClaims(Long serverId)
+		{
+
+			String query = "SELECT COUNT(*) FROM playerscollection "
+					+ "WHERE server_Id = ? ";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			int total = 0; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setLong(1, serverId);
+				res = stat.executeQuery(); 
+				if ( res.next() ) 
+				{
+					total = res.getInt(1); 
+				}  
+				
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return total; 
+		}
+		
+		
+		public int getTotalCharacterCount(Long serverId)
+		{
+
+			String query = "SELECT SUM( allcount ) as total_count \r\n"
+					+ "FROM \r\n"
+					+ "(\r\n"
+					+ "	(SELECT count(*) AS allcount FROM characters)  \r\n"
+					+ "    UNION \r\n"
+					+ "	(SELECT count(*) AS allcount FROM sonas WHERE server_Id = ? )\r\n"
+					+ "    UNION \r\n"
+					+ "     (SELECT count(*) AS allcount FROM customcharacters WHERE server_Id = ? )\r\n"
+					+ ")t; ";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			int total = 0; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setLong(1, serverId);
+				stat.setLong(2, serverId);
+				res = stat.executeQuery(); 
+				if ( res.next() ) 
+				{
+					total = res.getInt(1); 
+				}  
+				
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return total; 
+		}
+		
+		public HashMap<String, Float >  getRarity() 
+		{
+			String query = "SELECT * FROM rarity";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			HashMap<String, Float > rarity = new HashMap<String, Float>(); ; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				res = stat.executeQuery(); 
+				while( res.next() ) 
+				{
+					rarity.put(res.getString("name"), res.getFloat("weight")); 
+				}  
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return rarity;
+		}
+
+		public boolean setDefCharacterImage(Long serverId, String characterName, Integer index) 
+		{
+			String queryTransaction = "INSERT INTO server_def_chtrs (server_id, char_id , def) "
+					+ "VALUES (?, (SELECT char_id FROM characters WHERE name = ? ) , ? ) ON DUPLICATE KEY "
+					+ "UPDATE def = ? "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;
+			int rows = 0 ; 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryTransaction);
+				statTrans.setLong(1, serverId);
+				statTrans.setString(2, characterName);
+				statTrans.setInt(3, index);
+				rows = statTrans.executeUpdate() ;
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+			}
+			finally 
+			{
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return (rows > 0); 
+		}
+		
 }

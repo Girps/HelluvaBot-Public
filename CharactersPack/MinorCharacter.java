@@ -26,8 +26,9 @@ public class MinorCharacter extends Character
 	protected static String markUp; 
 	
 	
-	public MinorCharacter(Long arg_Id, String arg_Name, String arg_ShowName, int def , ArrayList<JSONObject> jsonList , SETUPTYPE setArg) {
-		super(arg_Id, arg_ShowName, def, jsonList, setArg); 
+	public MinorCharacter(Long arg_Id, String arg_Name, String arg_ShowName, int def , ArrayList<JSONObject> jsonList, 
+			JSONObject perks, String rarity , SETUPTYPE setArg) {
+		super(arg_Id, arg_ShowName, def, jsonList, perks, rarity,  setArg); 
 		// TODO Auto-generated constructor stub
 		this.id = arg_Id; 
 		this.name = arg_Name;

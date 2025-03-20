@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed.ImageInfo;
 import net.sourceforge.jwbf.core.contentRep.Article;
 import net.sourceforge.jwbf.mediawiki.bots.MediaWikiBot;
 
+import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -40,8 +41,10 @@ public class Character
 	protected String name;
 	protected static String url = "https://hazbinhotel.fandom.com/wiki/";	// should be the same only one instance is needed   
 	protected String  defImage;
+	String rarity = null; 
 	protected ArrayList<JSONObject> jsonImages;
 	protected ArrayList<String> imageList; 
+	protected JSONObject perks; 
 	protected String rawData ;
 	protected Date date; 
 	protected int def = 0; 
@@ -49,7 +52,7 @@ public class Character
 
 	
 	/* Initialize the type with id, name and url given at construction */ 
-	public Character(Long arg_Id, String arg_Name, int def , ArrayList<JSONObject> jsonList , SETUPTYPE setArg) 
+	public Character(Long arg_Id, String arg_Name, int def , ArrayList<JSONObject> jsonList, JSONObject perks , String rarity , SETUPTYPE setArg) 
 	{
 		Instant now = Instant.now();  
 		id = arg_Id; 
@@ -60,12 +63,16 @@ public class Character
 		set = setArg; 
 		this.jsonImages = jsonList; // intially links from db
 		this.imageList = new ArrayList<String>(); 
+		this.perks = perks; 
 		this.def = def; 
+		this.rarity = rarity; 
 		if( this.jsonImages != null && !this.jsonImages.isEmpty()) { 
 		defImage  = this.jsonImages.get(def).getString("url"); // intial default image from db indexed 
 		}
 	}
 	
+	
+
 	/* Set date when given argument  */ 
 	public void setDate(Date arg)
 	{
@@ -298,6 +305,46 @@ public class Character
 			credit += " | link : " + authorLink; 
 		}
 		return credit; 
+	}
+	
+	
+	public String getRarity() 
+	{
+		return rarity; 
+	}
+	
+	public JSONObject getPerks() 
+	{
+		return this.perks; 
+	}
+	
+	public Color getColor() 
+	{
+		Color c = Color.GRAY; 
+		switch(this.rarity) { 
+			case "Common": 
+			{
+				c = Color.GRAY; 
+			}
+			break; 
+			case "Uncommon": 
+			{
+				c = Color.GREEN; 
+			}
+			break; 
+			case "Rare":
+			{
+				c = Color.BLUE; 
+			} 
+			break ;
+			case "Ultra Rare":
+			{
+				c = Color.MAGENTA;
+			}
+			break; 
+			
+		} 
+		return c; 
 	}
 	
 	

@@ -6,9 +6,9 @@ import org.json.JSONObject;
 
 public class CustomCharacter extends MinorCharacter{
 
-	public CustomCharacter(Long id_Arg,String name_Arg, String imgur_Url,ArrayList<JSONObject> jsonList ,  SETUPTYPE set) 
+	public CustomCharacter(Long id_Arg,String name_Arg, String imgur_Url,ArrayList<JSONObject> jsonList, JSONObject perks,String rarity  ,  SETUPTYPE set) 
 	{
-		super(id_Arg, imgur_Url, imgur_Url, 0, jsonList, set);
+		super(id_Arg, imgur_Url, imgur_Url, 0, jsonList,perks ,rarity , set);
 		this.name = name_Arg; 
 		this.id = id_Arg; 
 	}

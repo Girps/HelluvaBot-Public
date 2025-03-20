@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import CharactersPack.CharacterSelection;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -27,7 +28,7 @@ public class EconomyCommand extends ListenerAdapter{
 	private  ExecutorService executor;
 	private ScheduledExecutorService sexecutor; 
 	private volatile ConcurrentHashMap<Pair<Long, Long>, Instant > map = new ConcurrentHashMap<Pair<Long, Long>, Instant>(); 
-	private final String souls = "<:Soul:1349948800139001981>"; 
+	private final String souls = "<:souls:1352010110997762103>";
 	public EconomyCommand(ExecutorService executor, ScheduledExecutorService sexecutor) 
 	{ 
 		this.executor = executor; 

@@ -98,7 +98,8 @@ public class OriginalCharacterCommand extends ListenerAdapter
 							JSONObject obj = new JSONObject("{\"links\": [{\"url\": " + "\"" + event.getOption("url").getAsString() + "\"" + ", \"art_name\": \"\", \"author_link\": \"\", \"author_name\": \"\"}]}"); 
 							ArrayList<JSONObject> arryJs = new ArrayList<JSONObject>(); 
 							arryJs.add(obj.getJSONArray("links").getJSONObject(0)); 
-							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,event.getOption("url").getAsString(), 0, arryJs, SETUPTYPE.LIGHT); 
+							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,
+									event.getOption("url").getAsString(), 0, arryJs,null, "", SETUPTYPE.LIGHT); 
 							Character temp = factory.getCharacter(); 
 							EmbedBuilder builder = new EmbedBuilder(); 
 							builder.setTitle(CharacterName)
@@ -279,7 +280,8 @@ public class OriginalCharacterCommand extends ListenerAdapter
 						ArrayList<String> chars = null; 
 						chars = select.getUsersOCName(userId, serverId);
 						EmbedBuilder builder = new EmbedBuilder(); 
-						builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", event.getMember().getEffectiveAvatarUrl(),event.getMember().getEffectiveAvatarUrl()); 
+						builder.setAuthor( event.getMember().getEffectiveName() + "'s OC list ", 
+								event.getMember().getEffectiveAvatarUrl(),event.getMember().getEffectiveAvatarUrl()); 
 						builder.setColor(Color.WHITE);
 						String result = ""; 
 						// Now print them in a list 
@@ -533,7 +535,8 @@ public class OriginalCharacterCommand extends ListenerAdapter
 							}
 							
 							String CharacterName = Oldfields.get("name"); 
-							CharacterFactory factory = new CharacterFactory(-1L, CharacterName, "OC" ,Oldfields.get("url"), 0, arrObject , SETUPTYPE.LIGHT); 
+							CharacterFactory factory = new CharacterFactory(-1L, CharacterName,
+									"OC" ,Oldfields.get("url"), 0, arrObject, null, "" , SETUPTYPE.LIGHT); 
 							Character temp = factory.getCharacter(); 
 							EmbedBuilder builder = new EmbedBuilder(); 
 							builder.setTitle(CharacterName); 

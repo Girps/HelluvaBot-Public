@@ -123,7 +123,7 @@ public class CommandManger extends ListenerAdapter {
 					OptionData removeCollectChar = new OptionData(OptionType.STRING, "character", "collect character to remove" , true, true); 
 					OptionData CollectChar = new OptionData(OptionType.STRING, "character", "to set as default image" , true, true); 
 					OptionData WishChar = new OptionData(OptionType.STRING, "character", "add character to wishlist" , true, true); 
-
+					
 					OptionData UserOneCollectChar = new OptionData(OptionType.STRING, "trader-character", "your character to trade" , true, true); 
 					OptionData UserTwoCollectChar = new OptionData(OptionType.STRING, "tradee-character", "user's character to trade with" , true, true); 
 					
@@ -145,7 +145,8 @@ public class CommandManger extends ListenerAdapter {
 					//OptionData firstUserCollect= new OptionData(OptionType.USER, "gifter" , "Enter user to force gift from", true, false);
 					OptionData characterForceGift = new OptionData(OptionType.STRING, "receiver-character", "Pick character to force gift" , true, true); 
 					
-					ArrayList<String> items =  new ArrayList<String>(Arrays.asList("kill your waifu", "buy roll" , "buy claim" , "assinate"));
+					commandList.add(Commands.slash("stats", "Get statistics on amount of characters collected")); 
+					commandList.add(Commands.slash("search", "Search characters").addOptions(characterOption)); 
 					commandList.add(Commands.slash("prices", "Prices of items and services you can buy!")); 
 					commandList.add(Commands.slash("buy", "Buy following services").addOptions(itemOptions)); 
 					commandList.add(Commands.slash("deposit", "Add cash to the balance").addOptions(amount)); 
@@ -362,7 +363,8 @@ public class CommandManger extends ListenerAdapter {
 				 return null;
 			 });  
 		 }
-		 else if ( event.getName().equals("search-oc") || event.getName().equals("remove-user-oc")  &&   event.getFocusedOption().getName().equals("customcharacter") ) 
+		 else if ( event.getName().equals("search-oc") || event.getName().equals("remove-user-oc")  &&
+				 event.getFocusedOption().getName().equals("customcharacter") ) 
 		 {
  					 
 			 CompletableFuture.supplyAsync( () -> 
@@ -446,7 +448,8 @@ public class CommandManger extends ListenerAdapter {
 			 });
 
 		 }
-		 else if ( event.getName().equals("add-wish") &&   event.getFocusedOption().getName().equals("character")  ) 
+		 else if (  ( event.getName().equals("add-wish") || event.getName().equals("search") )
+				 &&   event.getFocusedOption().getName().equals("character")  ) 
 		 {
 			 CompletableFuture.supplyAsync( () -> 
 			 {			 
@@ -503,7 +506,6 @@ public class CommandManger extends ListenerAdapter {
 				 ex.printStackTrace(); 
 				 return null; 
 			 });
-			 
 		 }
 	}
 		 

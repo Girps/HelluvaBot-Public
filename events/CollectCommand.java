@@ -1,10 +1,15 @@
 package events; 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.json.JSONObject;
+
 import java.awt.Color;
 
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
@@ -169,7 +174,7 @@ public class CollectCommand extends ListenerAdapter{
 											.setImage(chtr.getDefaultImage())
 											.setFooter(event.getMember().getEffectiveName() 
 													+ " rolled!" + chtr.getCreditStr(), event.getMember().getEffectiveAvatarUrl())
-											.setColor(Color.YELLOW); 
+											.setColor(chtr.getColor()); 
 									ArrayList<String> usersName = wishesFuture.join();
 									String list = ""; 
 									for(String names : usersName) 
@@ -718,6 +723,7 @@ public class CollectCommand extends ListenerAdapter{
 			{
 				this.executor.submit(() -> 
 				{
+					try { 
 					event.deferReply().queue(); 
 					User gifter = event.getOption("user").getAsUser(); 
 					User receiver = event.getOption("receiver").getAsUser();
@@ -777,10 +783,149 @@ public class CollectCommand extends ListenerAdapter{
 							}
 						});  
 					}
+					}
+					catch(Exception ex) 
+					{
+						ex.printStackTrace(); 
+					event.getHook().sendMessage("Something went wrong").queue(); 
+					}
 				}); 
 			}
 			break; 
-			
+			case "search": 
+				
+				this.executor.submit( () -> 
+				{
+					try 
+					{
+						event.deferReply().queue(); 
+						String characterName = event.getOption("character").getAsString(); 
+						// searhc character states
+						Long serverId = event.getGuild().getIdLong(); 
+						CharacterSelection select = new CharacterSelection(); 
+						Character chtr = select.requestSingleCharacter(characterName, serverId, GAMETYPE.COLLECT, SETUPTYPE.NEITHER);
+						Long playerId = select.searchPlayerIdCollect(chtr.getId(), serverId); 
+						
+						EmbedBuilder builder = new EmbedBuilder(); 
+						builder.setTitle(chtr.getName()); 
+						builder.setImage(chtr.getDefaultImage());
+						builder.setFooter(chtr.getCreditStr()); 
+						// player has the character get their name 
+						if(playerId != null) 
+						{
+							event.getGuild().retrieveMemberById(playerId).queue( (mem) ->
+							{
+								// rarity 
+								// perks 
+								builder.setDescription("Owned by: " + mem.getAsMention()); 
+								builder.addField("Rarity", chtr.getRarity(), true); 
+								JSONObject perks = chtr.getPerks(); 
+								Iterator<String> key = perks.keys();  
+								while (key.hasNext()) 
+								{
+									String strKey = key.next(); 
+									builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
+								}
+								builder.setColor(mem.getColor()); 
+								event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+							});  
+						}
+						else 
+						{
+							
+							builder.setDescription("Still available to collect"); 
+							builder.addField("Rarity", chtr.getRarity(), true); 
+							JSONObject perks = chtr.getPerks(); 
+							Iterator<String> key = perks.keys();  
+							while (key.hasNext()) 
+							{
+								String strKey = key.next(); 
+								builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
+							}
+							builder.setColor(chtr.getColor()); 
+							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+						}
+
+					} 
+					catch(Exception ex) 
+					{
+						ex.printStackTrace() ; 
+					}
+				}); 
+				
+				break; 
+				
+			case "stats":
+			{
+				this.executor.submit(() ->
+				{
+					try 
+					{
+						event.deferReply().queue();
+						Long serverId = event.getGuild().getIdLong(); 
+						CharacterSelection select = new CharacterSelection(); 
+						Integer claimAmount = select.getTotalClaims(serverId);
+						Integer characterAmount = select.getTotalCharacterCount(serverId);
+						Float claimPercent =  (float) ( (float)claimAmount ) / ((float)characterAmount) ; 
+						Float availableAmount = (float) ( 1.0 - claimPercent) ; 
+						Integer diff = characterAmount - claimAmount; 
+						// get rarity 
+						HashMap<String, Float> rarityMap = select.getRarity();
+						EmbedBuilder builder = new EmbedBuilder(); 
+						builder.setTitle("Collect Statistics");
+						builder.addField("Claimed:", claimAmount.toString() + "/" + characterAmount.toString(), true);  
+						builder.addField("Avaliable:", (diff).toString()  , true);  
+						builder.addBlankField(true); 
+						builder.addField("Claimed Percentage:", String.format("%.2f%%",  claimPercent) , true);
+						builder.addField("Available Percentage:", String.format("%.2f%%", availableAmount) , true);
+						
+						builder.setDescription("Chance of rolling character.\n"); 
+						builder.appendDescription(MarkdownUtil.bold("Common") + ": " + String.format("%.2f%%", rarityMap.get("Common")) + "\n");
+						builder.appendDescription(MarkdownUtil.bold("Uncommon") + ": " + String.format("%.2f%%", rarityMap.get("Uncommon")) + "\n");
+						builder.appendDescription(MarkdownUtil.bold("Rare") + ": " + String.format("%.2f%%", rarityMap.get("Rare")) + "\n");
+						builder.appendDescription(MarkdownUtil.bold("Ultra Rare") + ": " + String.format("%.2f%%", rarityMap.get("Ultra Rare")) + "\n");
+						builder.setAuthor(event.getUser().getName(),event.getUser().getEffectiveAvatarUrl(),event.getUser().getEffectiveAvatarUrl());
+						builder.setColor(Color.RED); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+						
+					}
+					catch(Exception ex) 
+					{
+						ex.printStackTrace(); 
+						event.getHook().sendMessage("Something went wrong!").queue(); 
+					}
+				}); 
+			}
+			break; 
+			case "set-default-image": 
+			{
+				this.executor.submit(() -> 
+				{
+					try 
+					{
+						Long serverId = event.getGuild().getIdLong();
+						String titleUrl = event.getOption("title").getAsString();
+						Integer index = Integer.valueOf(titleUrl.split(":")[0]); 
+						String characterName = event.getOption("character").getAsString();
+						event.getHook().sendMessage("Default image of character " + characterName + " has been set to " + titleUrl).queue(); 
+						CharacterSelection select = new CharacterSelection(); 
+						if(select.setDefCharacterImage(serverId, characterName, index )) 
+						{
+							event.getHook().sendMessage("Default image of character " + characterName + " has been set to " + titleUrl).queue(); 
+						}
+						else 
+						{
+							event.getHook().sendMessage("Failed to set default image").queue(); 	
+						}
+					}
+					catch(Exception ex) 
+					{
+						ex.printStackTrace(); 
+						event.getHook().sendMessage("Something went wrong!").queue(); 
+					}
+				}); 
+			}
+				break; 
 		}
 	}
 }
