@@ -2,6 +2,7 @@ package eventHandlers;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import CharactersPack.CharacterSelection;
@@ -22,7 +23,7 @@ public class CollectTradeListener extends ListenerParent{
 		this.tradeeCharacter = tradeeCharacter; 
 		this.traderCharacter = traderCharacter; 
 		
-		this.sexecutor.schedule(() -> 
+		ScheduledFuture<?> future = this.sexecutor.schedule(() -> 
 		{
 			if (!this.pressed.get()) 
 			{
@@ -30,6 +31,8 @@ public class CollectTradeListener extends ListenerParent{
 				ev.getJDA().removeEventListener(this);
 			}
 		}, 30, TimeUnit.SECONDS); 
+		
+		
 	}
 	
 	public void onMessageReactionAdd(MessageReactionAddEvent event) 

@@ -2,8 +2,9 @@ package events;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,21 +22,32 @@ import CharactersPack.SETUPTYPE;
 import eventHandlers.CollectTradeListener;
 import eventHandlers.GiftCollectableListener;
 import eventHandlers.RollClaimListener;
+import eventHandlers.UpdateDefaultImageListener;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class CollectCommand extends ListenerAdapter{
 	
 	private  ExecutorService executor;
 	private ScheduledExecutorService sexecutor; 
+	private volatile ConcurrentHashMap<String, Character> chtrMap = new ConcurrentHashMap<String, Character>(); 
 	public CollectCommand(ExecutorService executor, ScheduledExecutorService sexecutor) 
 	{ 
 		this.executor = executor; 
-		this.sexecutor = sexecutor; 
+		this.sexecutor = sexecutor;
+		
+		
+		this.sexecutor.scheduleAtFixedRate(() ->
+		{
+			chtrMap.clear(); 
+		}, 0, 30, TimeUnit.MINUTES); 
 	}
 	
 	
@@ -805,11 +817,25 @@ public class CollectCommand extends ListenerAdapter{
 						CharacterSelection select = new CharacterSelection(); 
 						Character chtr = select.requestSingleCharacter(characterName, serverId, GAMETYPE.COLLECT, SETUPTYPE.NEITHER);
 						Long playerId = select.searchPlayerIdCollect(chtr.getId(), serverId); 
-						
+						this.chtrMap.put(chtr.getName(), chtr); 
 						EmbedBuilder builder = new EmbedBuilder(); 
 						builder.setTitle(chtr.getName()); 
 						builder.setImage(chtr.getDefaultImage());
-						builder.setFooter(chtr.getCreditStr()); 
+						Integer defaultIndex = chtr.getDefaultNumber() + 1;
+						Integer max = chtr.getJSONImages().size(); 
+						if(chtr.getCreditStr().equalsIgnoreCase("")) 
+						{
+							builder.setFooter( "Art by N/A | link : N/A" + "\nImage:" + defaultIndex + "/" + max);
+						} 
+						else 
+						{ 
+							builder.setFooter(chtr.getCreditStr() + "\nImage:" + defaultIndex + "/" + max);
+						} 
+						// Instantiate list of buttons 
+						List<Button> buttons = new ArrayList<Button>();
+						buttons.add(Button.primary("leftSearch", "<")); 
+						buttons.add(Button.danger("closeSearch", "Close")); 
+						buttons.add(Button.primary("rightSearch", ">")); 
 						// player has the character get their name 
 						if(playerId != null) 
 						{
@@ -827,7 +853,7 @@ public class CollectCommand extends ListenerAdapter{
 									builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
 								}
 								builder.setColor(mem.getColor()); 
-								event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue(); 
 							});  
 						}
 						else 
@@ -843,7 +869,7 @@ public class CollectCommand extends ListenerAdapter{
 								builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
 							}
 							builder.setColor(chtr.getColor()); 
-							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+							event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue(); 
 						}
 
 					} 
@@ -903,21 +929,43 @@ public class CollectCommand extends ListenerAdapter{
 				{
 					try 
 					{
-						Long serverId = event.getGuild().getIdLong();
-						String titleUrl = event.getOption("title").getAsString();
-						Integer index = Integer.valueOf(titleUrl.split(":")[0]); 
-						String characterName = event.getOption("character").getAsString();
-						event.getHook().sendMessage("Default image of character " + characterName + " has been set to " + titleUrl).queue(); 
-						CharacterSelection select = new CharacterSelection(); 
-						if(select.setDefCharacterImage(serverId, characterName, index )) 
-						{
-							event.getHook().sendMessage("Default image of character " + characterName + " has been set to " + titleUrl).queue(); 
-						}
-						else 
-						{
-							event.getHook().sendMessage("Failed to set default image").queue(); 	
-						}
-					}
+						event.deferReply().queue(); 
+						 if ( Helper.checkAdminRole(event.getMember().getRoles()) ) 
+						 {
+							
+							Long playerId = event.getUser().getIdLong(); 
+							String indexStr = event.getOption("title").getAsString();
+							String[] strArr = indexStr.split("\\|"); 
+							Integer  index = Integer.valueOf(strArr[0]) - 1; 
+							String arthor = strArr[2]; 
+							String characterName = event.getOption("character").getAsString();
+							EmbedBuilder builder = new EmbedBuilder();
+							String image = strArr[3]; 
+							builder.setFooter("Art by: " + arthor); 
+							builder.setTitle(characterName); 
+							builder.setImage(image); 
+							builder.setColor(Color.WHITE); 
+							builder.setDescription(" you have 30 seconds to react to "
+									+ "confirm setting the default image for " + characterName + " in this server!"); 
+							event.getHook().sendMessageEmbeds(builder.build()).queue( (messageEmbed) -> 
+							{
+								event.getJDA().addEventListener( new UpdateDefaultImageListener(executor, sexecutor, messageEmbed.getIdLong(),
+										playerId, characterName, index, event) ); 
+							}) ;
+							 
+						 }
+						 else 
+						 {
+							 // not a helluva admin 
+							EmbedBuilder builder = new EmbedBuilder(); 
+							builder.setImage("https://i.imgur.com/gPWckoI.jpg"); 
+							builder.setDescription("Make sure this role (same name no special permissons required) is created and Assigned to admins of this server in order to use this command!"); 
+							builder.setColor(Color.RED); 
+							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+							event.getHook().sendMessage( event.getUser().getAsMention() + " only " + MarkdownUtil.bold("Helluva Admins") + " can reset the collect game!").queue();				
+						 }
+						
+					} 
 					catch(Exception ex) 
 					{
 						ex.printStackTrace(); 
@@ -926,6 +974,81 @@ public class CollectCommand extends ListenerAdapter{
 				}); 
 			}
 				break; 
+		}	
+	}
+	
+	/* Deal with buttons clicked on the search embed message */ 
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent event) 
+	{
+		// now  get the character 
+		String buttons = event.getButton().getId(); 
+		if (buttons.equalsIgnoreCase("leftSearch") ||
+				buttons.equalsIgnoreCase("rightSearch")) 
+		{
+			this.executor.submit( () -> 
+			{
+				try { 
+				event.deferEdit().queue(); 
+				MessageEmbed oldBuild = event.getMessage().getEmbeds().get(0); 
+				EmbedBuilder newBuild = new EmbedBuilder(oldBuild);
+				String characterName = oldBuild.getTitle(); 
+				String[]  footerStr = oldBuild.getFooter().getText().split("\n"); 
+				String[] numbers =  footerStr[1].split(":")[1].split("/"); 
+				Integer index = (Integer.valueOf(numbers[0]) - 1 ); 
+				
+				ArrayList<JSONObject> arrList = new ArrayList<JSONObject>() ; 
+				Integer size= 0; 
+				// now get it from the map 
+				
+				if(!this.chtrMap.containsKey(characterName))
+				{
+					// add them 
+					CharacterSelection select = new CharacterSelection(); 
+					Character newChtr = select.requestSingleCharacter(characterName, event.getGuild().getIdLong() , GAMETYPE.COLLECT, SETUPTYPE.NEITHER); 
+					this.chtrMap.put(newChtr.getName(), newChtr); 
+				}
+				
+				
+				if(this.chtrMap.containsKey(characterName)) 
+				{
+					// now get the character
+					arrList = this.chtrMap.get(characterName).getJSONImages(); 
+					size = arrList.size(); 
+					// now change the index 
+					if(buttons.equalsIgnoreCase("leftSearch")) 
+					{
+						index--;
+						index = (index < 0 ) ?  ( arrList.size() - 1 ) : index;
+					}
+					else if (buttons.equalsIgnoreCase("rightSearch")) 
+					{
+						index++;
+						index = (index >= arrList.size() ) ? 0 : index; 
+					}
+					
+					// now  embed the message
+					JSONObject Jobj = arrList.get(index) ; 
+					
+					String img = Jobj.getString("url") ;
+					String author =  ( Jobj.getString("author_name").equalsIgnoreCase("") ) ? "N/A" : Jobj.getString("author_name") ;
+					String author_link = ( Jobj.getString("author_link").equalsIgnoreCase("") ) ? "N/A" : Jobj.getString("author_link") ;
+					String newFootStr = "Art by " + author + " | " + "link : " + author_link + "\nImage:" + (index + 1 ) + "/" + size; 
+					newBuild.setImage(img);
+					newBuild.setFooter(newFootStr);	
+					event.getMessage().editMessageEmbeds(newBuild.build()).queue(); 
+				}
+				} 
+				catch(Exception ex) 
+				{
+					ex.printStackTrace(); 
+					event.getHook().sendMessage("Something went wrong!").queue(); 
+				}
+			}); 
+		}
+		else if (buttons.equalsIgnoreCase("closeSearch")) 
+		{
+			event.getMessage().delete().queue(); 
 		}
 	}
 }

@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
@@ -142,9 +144,10 @@ public class CommandManger extends ListenerAdapter {
 					
 					OptionData amount = new OptionData(OptionType.INTEGER, "amount" , "Enter a valid integer",true,false);
 					OptionData itemOptions = new OptionData(OptionType.STRING, "item", "Enter an item", true, true);  
+					OptionData titleOptions = new OptionData(OptionType.STRING, "title", "image name to select",true,true); 
 					//OptionData firstUserCollect= new OptionData(OptionType.USER, "gifter" , "Enter user to force gift from", true, false);
 					OptionData characterForceGift = new OptionData(OptionType.STRING, "receiver-character", "Pick character to force gift" , true, true); 
-					
+					commandList.add(Commands.slash("set-default-image", "Get statistics on amount of characters collected").addOptions(characterOption,titleOptions) ); 
 					commandList.add(Commands.slash("stats", "Get statistics on amount of characters collected")); 
 					commandList.add(Commands.slash("search", "Search characters").addOptions(characterOption)); 
 					commandList.add(Commands.slash("prices", "Prices of items and services you can buy!")); 
@@ -448,7 +451,7 @@ public class CommandManger extends ListenerAdapter {
 			 });
 
 		 }
-		 else if (  ( event.getName().equals("add-wish") || event.getName().equals("search") )
+		 else if (  ( event.getName().equals("add-wish") || event.getName().equals("search") || event.getName().equals("set-default-image"))
 				 &&   event.getFocusedOption().getName().equals("character")  ) 
 		 {
 			 CompletableFuture.supplyAsync( () -> 
@@ -496,6 +499,44 @@ public class CommandManger extends ListenerAdapter {
 				 }); 
 				 
 				 return items; 
+				 
+			 }, this.executor).thenAccept((items) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event,items);
+				 event.replyChoices(options).queue(); 
+			 }).exceptionally((ex) -> 
+			 {
+				 ex.printStackTrace(); 
+				 return null; 
+			 });
+		 }
+		 if ( event.getName().equals("set-default-image") && 
+				  event.getFocusedOption().getName().equals("title") ) 
+		 {
+			 // if character is not empty and theres a title option
+			 CompletableFuture.supplyAsync( () -> 
+			 {
+				 
+				 // get fields of the chosen character 
+				 CharacterSelection select = new CharacterSelection(); 
+				 String name = event.getInteraction().getOption("character").getAsString(); 
+				 JSONArray jsonArray = select.getCharacterJsonImages(name); 
+				 ArrayList<String> imageList =  new ArrayList<String>(); 
+				 for(int i =0 ; i <  jsonArray.length(); i++) 
+				 {
+					 JSONObject elem = jsonArray.getJSONObject(i);  
+					 String res  = Integer.valueOf(i+1).toString(); 
+					 res += "|"; 
+					 res += ( !elem.get("art_name").equals("") ) ? elem.get("art_name") : "Default" ;  
+					 res += "|"; 
+					 res += ( !elem.get("author_name").equals("")) ? elem.get("author_name") : "N/A";
+					 res+= "|"; 
+					 res += ( !elem.get("url").equals("")) ? elem.get("url") : "N/A";
+
+					 imageList.add(res); 
+				 }
+				 
+				 return imageList; 
 				 
 			 }, this.executor).thenAccept((items) -> 
 			 {

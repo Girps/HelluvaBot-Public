@@ -4776,6 +4776,7 @@ public class CharacterSelection {
 				statTrans.setLong(1, serverId);
 				statTrans.setString(2, characterName);
 				statTrans.setInt(3, index);
+				statTrans.setInt(4, index);
 				rows = statTrans.executeUpdate() ;
 			}
 			catch(SQLException e) 
@@ -4788,6 +4789,41 @@ public class CharacterSelection {
 				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 			}
 			return (rows > 0); 
+		}
+		
+		
+		/* Get character images based on name */ 
+		public JSONArray getCharacterJsonImages(String name) {
+			
+			String query = "SELECT JSON_EXTRACT( image_urls, '$.links' ) FROM characters "
+					+ " WHERE name = ? ";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			JSONArray images = new JSONArray(); ; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setString(1, name);
+				res = stat.executeQuery(); 
+				 
+				while(res.next()) 
+				{
+					images = new JSONArray(res.getString(1)); 
+				}
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return images;
 		}
 		
 }

@@ -347,6 +347,15 @@ public class Character
 		return c; 
 	}
 	
+	public Integer getDefaultNumber() 
+	{
+		return this.def; 
+	}
+	
+	public ArrayList<JSONObject> getJSONImages() 
+	{
+		return this.jsonImages; 
+	}
 	
 	/***************************************************************/
 	
