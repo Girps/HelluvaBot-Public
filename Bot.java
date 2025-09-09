@@ -32,6 +32,9 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -79,7 +82,6 @@ public class Bot {
 		builder.setStatus(OnlineStatus.ONLINE); 
 		 builder = builder.enableIntents( GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_EMOJIS_AND_STICKERS
 				,GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGE_REACTIONS); 
-		  
 		 // Add event listeners
 		 
 		builder.addEventListeners( new UserInfoCommand(), new events.CommandManger(executor), new WikiCommand(executor)
