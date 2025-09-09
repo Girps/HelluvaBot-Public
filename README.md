@@ -16,12 +16,6 @@ Demonstration of /kdm command
 
 https://github.com/user-attachments/assets/bebd34bd-9f82-4b5c-bfe4-94bdf57c0d50
 
-
-
 Demonstration of /wiki command
 
 https://github.com/user-attachments/assets/859ef52e-2c9a-4ea9-a656-52bf4a6ddbc5
-
-
-
-
