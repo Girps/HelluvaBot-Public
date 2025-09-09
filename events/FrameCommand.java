@@ -86,7 +86,7 @@ public class FrameCommand extends ListenerAdapter
 				}
 				catch(IOException ex) 
 				{
-					event.getHook().sendMessage(ex.getMessage()); 
+					event.getHook().sendMessage(ex.getMessage()).queue(); 
 				}
 			} ); 
 		}

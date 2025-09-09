@@ -86,13 +86,14 @@ public class MemesCommand extends ListenerAdapter{
 					String time = "week";
 					// Build request
 			        HttpRequest request = HttpRequest.newBuilder()
-			            .uri(URI.create("https://oauth.reddit.com/r/Helluvabossmemes/"+ category + ".json?t=" + time +"?"))
+			            .uri(URI.create("https://oauth.reddit.com/r/Helluvabossmemes/"+ category + ".json?t=" + time +""))
 		                .header("User-Agent", "HelluvaBot2.0/1.0")  // Custom User-Agent
 		                .header("Authorization", this.token.get()) // Oath
 			            .build(); 
 			        // Send the request and get the response
 			        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			        // Print the JSON response
+			        System.out.println(response.body()); 
 			        JSONObject obj = new JSONObject(response.body());
 			        JSONArray posts = obj.getJSONObject("data").getJSONArray("children");
 

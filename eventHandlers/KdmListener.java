@@ -56,7 +56,7 @@ public class KdmListener extends ListenerAdapter{
     public void onButtonInteraction(ButtonInteractionEvent event) 
 	{
 		// check if same game instnace s
-		if(messageIds.contains(event.getMessageIdLong()) ||
+		if(messageIds.contains(event.getMessageIdLong()) &&
 				playerId == event.getInteraction().getUser().getIdLong()) 
 		{
 			this.executor.submit(  () ->

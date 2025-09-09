@@ -18,6 +18,7 @@ import eventHandlers.UpdateOCListener;
 import CharactersPack.Character;
 import CharactersPack.CharacterFactory;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -48,13 +49,22 @@ public class OriginalCharacterCommand extends ListenerAdapter
 						event.deferReply().queue(); 
 						Long userId = event.getUser().getIdLong(); 
 						Long serverId = event.getGuild().getIdLong(); 
-						CharacterSelection select = new CharacterSelection();
+						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> members = new ArrayList<Member>(); 
+						members.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 						List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
 						tasks.add( ()-> {return !select.checkOCLimit(event.getUser().getIdLong(),event.getGuild().getIdLong());}); 
 						tasks.add(()-> {return select.isAvailable(event.getOption("name").getAsString() , event.getGuild().getIdLong() );});
 						tasks.add(()->{
 							return select.serverWhiteList(serverId) &&  ( !Helper.checkAdminRole(event.getMember().getRoles()) &&
 									!Helper.checkOcSonaPrivellegeRole(event.getMember().getRoles()) );}); 
+						tasks.add( () -> 
+						{
+							ArrayList<String> jobs = select.getJobs(); 
+							return jobs.contains(event.getOption("jobs").getAsString()); 
+							
+						}); 
 						List<Boolean> results = this.executor.invokeAll(tasks).stream().map( future -> 
 						{
 							try 
@@ -91,6 +101,12 @@ public class OriginalCharacterCommand extends ListenerAdapter
 							+ " or "+ MarkdownUtil.bold("Helluva Admin") 
 							+ " in order to insert OCs/Sonas!" ).queue(); 
 						}
+						else if(!results.get(3)) 
+						{
+							event.getHook().sendMessage( event.getUser().getAsMention() + 
+									" job choosen " + MarkdownUtil.bold( event.getOption("jobs").getAsString())  + 
+									" is unavailable! Make sure to type the available jobs from the list!" ).queue(); 
+						}
 						else 
 						{
 							// passed conditions
@@ -119,6 +135,7 @@ public class OriginalCharacterCommand extends ListenerAdapter
 							characterData.put("favorite",event.getOption("favorite").getAsString());
 							characterData.put("guess",event.getOption("guess").getAsString());
 							characterData.put("collect",event.getOption("collect").getAsString());
+							characterData.put("job",event.getOption("jobs").getAsString());
 
 							// Now return a the custom character and ask user to confirm this character is what they wanted
 							event.getHook().sendMessageEmbeds(builder.build()).queue( (messageEmbed) ->
@@ -146,7 +163,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 						Long userId = event.getUser().getIdLong(); 
 						Long serverId = event.getGuild().getIdLong(); 
 						String characterName = event.getOption("customcharacter").getAsString();  // gets character name to remove 
-						CharacterSelection select = new CharacterSelection();
+						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> members = new ArrayList<Member>(); 
+						members.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 						// Search for oc 
 						if (!select.searchOC(characterName, event.getUser().getIdLong(),  serverId))
 						{
@@ -174,7 +194,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				{
 					event.deferReply().queue(); 
 					Long serverId = event.getGuild().getIdLong(); 
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					if(!Helper.checkAdminRole(event.getMember().getRoles())) 
 					{
 						EmbedBuilder builder = new EmbedBuilder(); 
@@ -221,7 +244,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				Long serverId = event.getGuild().getIdLong(); 
 				if(event.getOptions().isEmpty()) { 
 						
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					if(!select.searchAllUserOcs(userId, serverId)) 
 					{
 						event.getHook().sendMessage("<@" + userId +">" + " you do not have any OCs!").queue(); 
@@ -235,7 +261,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				else if(Helper.checkAdminRole(event.getMember().getRoles())) // Not empty
 				{
 					userId = event.getOption("user").getAsUser().getIdLong(); 
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getOption("user").getAsMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					// Check that user has ocs 
 					if(!select.searchAllUserOcs(userId, serverId)) 
 					{
@@ -273,7 +302,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				{	
 					Long userId = event.getUser().getIdLong(); 
 					Long serverId = event.getGuild().getIdLong(); 
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					// print all ocs 
 					if(event.getOptions().isEmpty()) 
 					{	
@@ -322,7 +354,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				Long userId = event.getUser().getIdLong(); 
 				Long serverId = event.getGuild().getIdLong(); 
 				userId = event.getOption("user").getAsUser().getIdLong(); 
-				CharacterSelection select = new CharacterSelection();
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> members = new ArrayList<Member>(); 
+				members.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 			try 
 			{ 
 					if(event.getOptions().size() == 2)
@@ -392,7 +427,10 @@ public class OriginalCharacterCommand extends ListenerAdapter
 				{
 					String name = event.getOption("customcharacter").getAsString(); 
 					event.deferReply().queue(); 
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					select.setDefOcCharacter(name, event.getUser().getIdLong(), event.getGuild().getIdLong());
 					event.getHook().sendMessage(MarkdownUtil.bold(name) + " has been set as default image for your oc list!").queue();
 				}
@@ -414,8 +452,11 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					Long userId = event.getUser().getIdLong(); 
 					Long serverId = event.getGuild().getIdLong(); 
 					String charName = event.getOption("customcharacter").getAsString(); 
-					CharacterSelection select = new CharacterSelection(); 
 					
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					if (!select.searchOC(charName,event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 					{
 						event.getHook().sendMessage( "<@" + userId + "> " + "does not this oc!").queue(); 
@@ -456,14 +497,30 @@ public class OriginalCharacterCommand extends ListenerAdapter
 					try 
 					{ 
 						event.deferReply().queue();
-						CharacterSelection select =  new CharacterSelection();  
+						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> members = new ArrayList<Member>(); 
+						members.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 						List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(); 
 						tasks.add( ()-> {return !select.searchOC(
 								event.getOptionsByName("customcharacter").get(0).getAsString(),event.getUser().getIdLong(), event.getGuild().getIdLong());});
 						tasks.add(() -> {return  ( !event.getOptionsByName("name").isEmpty() ) &&
 								select.isAvailable(event.getOption("name").getAsString(), event.getGuild().getIdLong());});
 						tasks.add(()-> {		return select.serverWhiteList(event.getGuild().getIdLong()) &&  ( !Helper.checkAdminRole(event.getMember().getRoles()) && 
-								!Helper.checkOcSonaPrivellegeRole(event.getMember().getRoles()) ) ;}); 
+								!Helper.checkOcSonaPrivellegeRole(event.getMember().getRoles()) ) ;});
+						tasks.add( () -> 
+						{
+							if (event.getOption("jobs") != null)
+							{ 
+								ArrayList<String> jobs = select.getJobs(); 
+								return jobs.contains(event.getOption("jobs").getAsString()); 
+							} 
+							else 
+							{
+								return true; 
+							}
+							
+						}); 
 						
 						List<Boolean> results = this.executor.invokeAll( tasks).stream().map( future -> {try {
 							return future.get();
@@ -494,6 +551,12 @@ public class OriginalCharacterCommand extends ListenerAdapter
 									"! This server requires you to obtain the role " + 
 									MarkdownUtil.bold("Helluva Permission") + 
 									" or "+ MarkdownUtil.bold("Helluva Admin") + " in order to update OCs/Sonas!" ).queue(); 
+						}
+						else if(!results.get(3)) 
+						{
+							event.getHook().sendMessage( event.getUser().getAsMention() + 
+									" job choosen " + MarkdownUtil.bold( event.getOption("jobs").getAsString())  + 
+									" is unavailable! Make sure to type the available jobs from the list!" ).queue(); 
 						}
 						else if (event.getOptions().size() <= 1) 
 						{

@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -21,16 +22,20 @@ import CharactersPack.Character;
 import CharactersPack.SETUPTYPE;
 import eventHandlers.CollectTradeListener;
 import eventHandlers.GiftCollectableListener;
+import eventHandlers.ResetListener;
 import eventHandlers.RollClaimListener;
 import eventHandlers.UpdateDefaultImageListener;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class CollectCommand extends ListenerAdapter{
@@ -64,7 +69,10 @@ public class CollectCommand extends ListenerAdapter{
 				{
 					event.deferReply().queue();
 					CharacterSelection select = new CharacterSelection(); 
-					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+					
 				}, this.executor).thenRun( () -> 
 				{
 					CharacterSelection select = new CharacterSelection(); 
@@ -93,7 +101,9 @@ public class CollectCommand extends ListenerAdapter{
 				{
 					event.deferReply().queue();
 					CharacterSelection select = new CharacterSelection(); 
-					select.insertUserIntoCollect(event.getUser().getIdLong(), event.getGuild().getIdLong());
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				}, this.executor).thenRun( () -> 
 				{
 					CharacterSelection select = new CharacterSelection(); 
@@ -127,7 +137,9 @@ public class CollectCommand extends ListenerAdapter{
 					CharacterSelection select = new CharacterSelection();
 					Character temp = null; 
 					// insert player into the game 
-					
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					// if player has no turn
 					// if player has no turn return 
 					if ( select.getPlayerRollsLimit(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
@@ -236,6 +248,9 @@ public class CollectCommand extends ListenerAdapter{
 				{
 					event.deferReply().queue();
 					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					if(event.getOptions().isEmpty())
 					{
 						ArrayList<String> list = select.getCollectionListNames(event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -348,6 +363,11 @@ public class CollectCommand extends ListenerAdapter{
 					try 
 					{ 
 						event.deferReply().queue(); 
+						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						memebers.add(event.getOption("user").getAsMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						String traderCharacter = event.getOption("trader-character").getAsString(); 
 						String tradeeCharacter = event.getOption("tradee-character").getAsString(); 
 						long trader = event.getUser().getIdLong(); 
@@ -377,7 +397,7 @@ public class CollectCommand extends ListenerAdapter{
 					}
 				}); 
 				break; 
-			case "reset-collect" : // Can only be decided by Helluva Admin
+			case "reset" : // Can only be decided by Helluva Admin
 				
 				this.executor.submit( () -> 
 				{
@@ -387,9 +407,32 @@ public class CollectCommand extends ListenerAdapter{
 						// Reset the game for the server 
 						try 
 						{					
-							CharacterSelection select = new CharacterSelection();
-							select.removeAllPlayersCollectInGuild(event.getGuild().getIdLong());
-							event.getHook().sendMessage( "Helluva Admin " + event.getUser().getAsMention() + " has reset the collect game!").queue();
+							
+							HashMap<String, Boolean> optionMap = new HashMap<String, Boolean>(); 
+							
+							List<OptionMapping> ops = event.getOptions();
+							for(int i =0; i < ops.size(); ++i) 
+							{
+								optionMap.put(ops.get(i).getName(), ops.get(i).getAsBoolean()); 
+							}
+							
+							EmbedBuilder builder = new EmbedBuilder();
+							builder.setColor(Color.white);
+							builder.setTitle("Reset options"); 
+							builder.setThumbnail(event.getUser().getEffectiveAvatarUrl()); 
+							builder.setDescription("React to this message to apply changes. You have 30 seconds to react!");  
+							for(Map.Entry<String, Boolean> ent: optionMap.entrySet() ) 
+							{
+								builder.addField(ent.getKey(),  ( ent.getValue() ) ? ":white_check_mark:" : ":x:", false); 
+							}
+							
+							event.getHook().sendMessageEmbeds(builder.build()).queue( (messageEmbed) ->
+							{
+								Long messageId = messageEmbed.getIdLong();
+								event.getJDA().addEventListener(new ResetListener( executor, sexecutor, optionMap , messageId, 
+										event.getUser().getIdLong() ,  event)); 
+								
+							}); 
 							
 						}
 						catch (Exception e)
@@ -421,6 +464,9 @@ public class CollectCommand extends ListenerAdapter{
 					long charId;
 					
 					CharacterSelection select = new CharacterSelection();
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					charId = select.getCharacterIdFromPlayersCollect(targetCharacter, event.getUser().getIdLong(),event.getGuild().getIdLong() ); 
 					
 					return charId; 
@@ -451,6 +497,9 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.deferReply().queue(); 
 						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						if (event.getOptions().isEmpty())
 						{ 
 							ArrayList<Character>list = select.getWishList(event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -549,7 +598,10 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						event.deferReply().queue(); 
 						CharacterSelection select = new CharacterSelection();
-						boolean flag = select.wishListLimit(event.getUser().getIdLong(), event.getGuild().getIdLong()); 		 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+						boolean flag = select.wishlistLimit(event.getUser().getIdLong(), event.getGuild().getIdLong()); 		 
 						return flag; 
 					}, this.executor).thenAccept( (wish) -> 
 					{
@@ -581,6 +633,9 @@ public class CollectCommand extends ListenerAdapter{
 					{ 
 						event.deferReply().queue(); 
 						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						select.clearWishList(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 						event.getHook().sendMessage(event.getUser().getAsMention() + " wishlist cleared!").queue();
 					} 
@@ -601,6 +656,9 @@ public class CollectCommand extends ListenerAdapter{
 						event.deferReply().queue(); 
 						String targetCharacter = event.getOption("character").getAsString(); 
 						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						select.removeWish(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong());
 						event.getHook().sendMessage(event.getUser().getAsMention() + " has removed wish " + MarkdownUtil.bold(targetCharacter) + "!").queue();
 					}
@@ -621,6 +679,9 @@ public class CollectCommand extends ListenerAdapter{
 					event.deferReply().queue();
 					String targetCharacter = event.getOption("character").getAsString(); 
 					CharacterSelection select = new CharacterSelection();
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					if(select.searchCharacterCollectList(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong()) )
 					{
 						select.removeCollectCharacter(targetCharacter,event.getUser().getIdLong(), event.getGuild().getIdLong());
@@ -638,6 +699,7 @@ public class CollectCommand extends ListenerAdapter{
 				
 					this.executor.submit(() -> 
 					{
+						event.deferReply().queue(); 
 						long targetUser = event.getOption("user").getAsUser().getIdLong(); 		
 						String targetCharacter = event.getOption("character").getAsString(); 
 						try 
@@ -684,6 +746,10 @@ public class CollectCommand extends ListenerAdapter{
 				this.executor.submit(() ->
 				{
 					event.deferReply().queue(); 
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					if (event.getOption("receiver").getAsUser().isBot() 
 							|| event.getOption("receiver").getAsUser().getIdLong() == event.getUser().getIdLong()) 
 					{
@@ -693,7 +759,6 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						String giftCharacterName = event.getOption("gift").getAsString(); 
 						long recieverId =  event.getOption("receiver").getAsUser().getIdLong(); 
-						CharacterSelection select = new CharacterSelection(); 
 						CompletableFuture<Boolean> limitFuture = CompletableFuture.supplyAsync( () -> select.checkCollectLimit(recieverId, event.getGuild().getIdLong()), this.executor ); 
 						CompletableFuture<Boolean> avaFuture = CompletableFuture.supplyAsync(() -> select.getCollectNamesOfUser(event.getUser().getIdLong(),
 								event.getGuild().getIdLong()).contains(giftCharacterName) == false , this.executor); 
@@ -739,7 +804,13 @@ public class CollectCommand extends ListenerAdapter{
 					event.deferReply().queue(); 
 					User gifter = event.getOption("user").getAsUser(); 
 					User receiver = event.getOption("receiver").getAsUser();
-					String giftCharacterName = event.getOption("receiver-character").getAsString(); 
+					String giftCharacterName = event.getOption("receiver-character").getAsString();
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					memebers.add(event.getOption("user").getAsMember()); 
+					memebers.add(event.getOption("receiver").getAsMember() ); 
+					CharacterSelection select = new CharacterSelection(); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					if( gifter.isBot() || receiver.isBot() ) 
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " the reciever or gifter cannot be a bot!").queue(); 
@@ -761,7 +832,6 @@ public class CollectCommand extends ListenerAdapter{
 					{
 						// Run async 
 						
-						CharacterSelection select = new CharacterSelection(); 
 						// get the receiver characters 
 						CompletableFuture<Boolean> limitFuture = CompletableFuture.supplyAsync( () -> select.checkCollectLimit(receiver.getIdLong(), 
 								event.getGuild().getIdLong()), this.executor); 
@@ -815,14 +885,19 @@ public class CollectCommand extends ListenerAdapter{
 						// searhc character states
 						Long serverId = event.getGuild().getIdLong(); 
 						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						Character chtr = select.requestSingleCharacter(characterName, serverId, GAMETYPE.COLLECT, SETUPTYPE.NEITHER);
 						Long playerId = select.searchPlayerIdCollect(chtr.getId(), serverId); 
+						ArrayList<String> occupation = select.getOccupation(chtr.getId()); 
 						this.chtrMap.put(chtr.getName(), chtr); 
 						EmbedBuilder builder = new EmbedBuilder(); 
 						builder.setTitle(chtr.getName()); 
 						builder.setImage(chtr.getDefaultImage());
 						Integer defaultIndex = chtr.getDefaultNumber() + 1;
 						Integer max = chtr.getJSONImages().size(); 
+						// check if no credits available 
 						if(chtr.getCreditStr().equalsIgnoreCase("")) 
 						{
 							builder.setFooter( "Art by N/A | link : N/A" + "\nImage:" + defaultIndex + "/" + max);
@@ -839,7 +914,7 @@ public class CollectCommand extends ListenerAdapter{
 						// player has the character get their name 
 						if(playerId != null) 
 						{
-							event.getGuild().retrieveMemberById(playerId).queue( (mem) ->
+							event.getGuild().retrieveMemberById(playerId).queue( (mem) -> 
 							{
 								// rarity 
 								// perks 
@@ -852,9 +927,30 @@ public class CollectCommand extends ListenerAdapter{
 									String strKey = key.next(); 
 									builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
 								}
+								builder.addField("Occupation", (  
+										!occupation.isEmpty() ? occupation.toString().replace("[", "").replace("]", "")  : "N/A") , true); 
 								builder.setColor(mem.getColor()); 
-								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue(); 
-							});  
+								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();
+							}, error ->
+							{
+								// member does not exist must clean it 
+								// rarity 
+								// perks 
+								builder.setDescription("Owned by: " + playerId + " this player has left the server use /clean to remove non-existing members."); 
+								builder.addField("Rarity", chtr.getRarity(), true); 
+								JSONObject perks = chtr.getPerks(); 
+								Iterator<String> key = perks.keys();  
+								while (key.hasNext()) 
+								{
+									String strKey = key.next(); 
+									builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
+								}
+								builder.addField("Occupation", (  
+										!occupation.isEmpty() ? occupation.toString().replace("[", "").replace("]", "")  : "N/A") , true); 
+								builder.setColor(Color.WHITE); 
+								event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue();
+							}); 
+						
 						}
 						else 
 						{
@@ -868,6 +964,8 @@ public class CollectCommand extends ListenerAdapter{
 								String strKey = key.next(); 
 								builder.addField(strKey, perks.get(strKey).toString() + "%", true);  
 							}
+							builder.addField("Occupation", (  
+									!occupation.isEmpty() ? occupation.toString().replace("[", "").replace("]", "")  : "N/A") , true);
 							builder.setColor(chtr.getColor()); 
 							event.getHook().sendMessageEmbeds(builder.build()).addActionRow(buttons).queue(); 
 						}
@@ -876,6 +974,7 @@ public class CollectCommand extends ListenerAdapter{
 					catch(Exception ex) 
 					{
 						ex.printStackTrace() ; 
+						event.getHook().sendMessage("Somthing went wrong searching for" + event.getOption("character").getAsString()).queue(); 
 					}
 				}); 
 				
@@ -890,10 +989,13 @@ public class CollectCommand extends ListenerAdapter{
 						event.deferReply().queue();
 						Long serverId = event.getGuild().getIdLong(); 
 						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						Integer claimAmount = select.getTotalClaims(serverId);
 						Integer characterAmount = select.getTotalCharacterCount(serverId);
-						Float claimPercent =  (float) ( (float)claimAmount ) / ((float)characterAmount) ; 
-						Float availableAmount = (float) ( 1.0 - claimPercent) ; 
+						Float claimPercent =  ((float) ( (float)claimAmount ) / ((float)characterAmount) ) * 100f ; 
+						Float availableAmount = ((float) ( 100f - claimPercent) )  ; 
 						Integer diff = characterAmount - claimAmount; 
 						// get rarity 
 						HashMap<String, Float> rarityMap = select.getRarity();
@@ -930,6 +1032,10 @@ public class CollectCommand extends ListenerAdapter{
 					try 
 					{
 						event.deferReply().queue(); 
+						CharacterSelection select = new CharacterSelection(); 
+						ArrayList<Member> memebers = new ArrayList<Member>(); 
+						memebers.add(event.getMember()); 
+						select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 						 if ( Helper.checkAdminRole(event.getMember().getRoles()) ) 
 						 {
 							

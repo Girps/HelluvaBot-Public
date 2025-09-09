@@ -64,6 +64,9 @@ public class SonasCommand extends ListenerAdapter
 						if (event.getOption("user") == null)  
 						{
 							CharacterSelection select = new CharacterSelection(); 
+							ArrayList<Member> members = new ArrayList<Member>(); 
+							members.add(event.getMember()); 
+							select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 							// Now get the sona and display it 
 							Character sona = select.getUserSona(event.getUser().getIdLong(), event.getGuild().getIdLong()); 
 							if(sona ==null) 
@@ -84,7 +87,10 @@ public class SonasCommand extends ListenerAdapter
 						{
 							Long targetId = event.getOption("user").getAsUser().getIdLong();
 							Member target = event.getOption("user").getAsMember();
-							CharacterSelection select = new CharacterSelection(); 	
+							CharacterSelection select = new CharacterSelection(); 
+							ArrayList<Member> members = new ArrayList<Member>(); 
+							members.add(target); 
+							select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 								// Now get the sona and display it 
 								Character sona = select.getUserSona(targetId, event.getGuild().getIdLong()); 
 								if (sona == null) 
@@ -117,6 +123,9 @@ public class SonasCommand extends ListenerAdapter
 					try { 
 					event.deferReply().queue(); 
 					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					String ex  =  event.getOption("url").getAsString().substring( event.getOption("url").getAsString().length() - 4,  event.getOption("url").getAsString().length());
 					// check max sonas
 					if (select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
@@ -137,6 +146,12 @@ public class SonasCommand extends ListenerAdapter
 					" Character name " +  event.getOption("name").getAsString() +  
 					" is unavailable! Make sure to give your sona a distinct name for this server! If you have trouble inserting your OC/Sona watch the following video. Tutorial to insert ocs and sona https://www.youtube.com/watch?v=iHQl8KG_ZAQ").queue(); 	
 					} // check permission to insert sona is on
+					else if ( event.getOption("jobs") != null && !select.getJobs().contains(event.getOption("jobs").getAsString())) 
+					{
+						event.getHook().sendMessage( event.getUser().getAsMention() + 
+								" job choosen " + MarkdownUtil.bold( event.getOption("jobs").getAsString())  + 
+								" is unavailable! Make sure to type the available jobs from the list!" ).queue(); 
+					}
 					else if (select.serverWhiteList(event.getGuild().getIdLong()) &&  ( !Helper.checkAdminRole(event.getMember().getRoles()) && 
 							!Helper.checkOcSonaPrivellegeRole(event.getMember().getRoles()) )) 
 					{
@@ -177,7 +192,8 @@ public class SonasCommand extends ListenerAdapter
 						characterData.put("favorite",event.getOption("favorite").getAsString());
 						characterData.put("guess",event.getOption("guess").getAsString());
 						characterData.put("collect",event.getOption("collect").getAsString());
-						
+						characterData.put("job",event.getOption("jobs").getAsString());
+
 
 						
 						// Now return a the custom character and ask user to confirm this character is what they wanted
@@ -204,9 +220,13 @@ public class SonasCommand extends ListenerAdapter
 					try 
 					{ 
 						event.deferReply().queue();
+						
 						if(event.getOption("user") == null) 
 						{
-								CharacterSelection select = new CharacterSelection(); 
+							CharacterSelection select = new CharacterSelection(); 
+							ArrayList<Member> members = new ArrayList<Member>(); 
+							members.add(event.getMember()); 
+							select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 								if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 								{
 									event.getHook().sendMessage( "<@" + event.getUser().getId() + "> " + "does not have a sona!").queue(); 
@@ -230,6 +250,11 @@ public class SonasCommand extends ListenerAdapter
 							try 
 							{
 								CharacterSelection select = new CharacterSelection(); 
+								ArrayList<Member> members = new ArrayList<Member>(); 
+								members.add(event.getMember()); 
+								members.add(event.getOption("user").getAsMember()); 
+								select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
+								
 								if (!select.searchUserInSona(event.getOption("user").getAsUser().getIdLong(), event.getGuild().getIdLong())) 
 								{
 									event.getHook().sendMessage( "<@" +   event.getOption("user").getAsUser().getId() + "> " + "does not have a sona!").queue(); 
@@ -279,6 +304,9 @@ public class SonasCommand extends ListenerAdapter
 							long userId = event.getUser().getIdLong(); 
 							long serverId = event.getGuild().getIdLong(); 
 							CharacterSelection select = new CharacterSelection(); 
+							ArrayList<Member> members = new ArrayList<Member>(); 
+							members.add(event.getMember()); 
+							select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 							if (!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 							{
 								event.getHook().sendMessage( "<@" + userId + "> " + "does not have a sona!").queue(); 
@@ -307,6 +335,10 @@ public class SonasCommand extends ListenerAdapter
 							long userId = event.getOption("user").getAsUser().getIdLong(); 
 							long serverId =event.getGuild().getIdLong(); 
 							CharacterSelection select = new CharacterSelection(); 
+							ArrayList<Member> members = new ArrayList<Member>();
+							members.add(event.getMember()); 
+							members.add(event.getOption("user").getAsMember()); 
+							select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 							if (!select.searchUserInSona(userId, serverId)) 
 							{
 								event.getHook().sendMessage( "<@" + event.getOption("user").getAsUser().getId() + "> " + "does not have a sona!").queue();  
@@ -345,6 +377,9 @@ public class SonasCommand extends ListenerAdapter
 					try { 
 					event.deferReply().queue(); 
 					CharacterSelection select =  new CharacterSelection(); 
+					ArrayList<Member> members = new ArrayList<Member>(); 
+					members.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), members ); // add users to the db
 					// Check if user has sona or a field has been picked or if name is picked make sure not a duplicated
 					if(!select.searchUserInSona(event.getUser().getIdLong(), event.getGuild().getIdLong())) 
 					{
@@ -359,7 +394,13 @@ public class SonasCommand extends ListenerAdapter
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " Sona name " + MarkdownUtil.bold(event.getOption("name").getAsString()) + 
 								" selected not avaliable pick another name!").queue();
-					} // Check if they have permisson to update
+					}
+					else if ( event.getOption("jobs") != null && !select.getJobs().contains(event.getOption("jobs").getAsString())) 
+					{
+						event.getHook().sendMessage( event.getUser().getAsMention() + 
+								" job choosen " + MarkdownUtil.bold( event.getOption("jobs").getAsString())  + 
+								" is unavailable! Make sure to type the available jobs from the list!" ).queue(); 
+					}// Check if they have permisson to update
 					else if(select.serverWhiteList(event.getGuild().getIdLong()) &&  ( !Helper.checkAdminRole(event.getMember().getRoles()) && 
 							!Helper.checkOcSonaPrivellegeRole(event.getMember().getRoles()) ) ) 
 					{

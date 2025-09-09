@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +52,10 @@ public class WaifuCommand extends ListenerAdapter {
 			this.executor.submit(() -> 
 			{
 				event.deferReply().queue(); 
-				CharacterSelection select = new CharacterSelection();
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				Long userID = event.getUser().getIdLong(); 	// get user id 
 				Long serverID = event.getGuild().getIdLong(); // get guild id 
 				Character chtr = null; 
@@ -102,7 +106,11 @@ public class WaifuCommand extends ListenerAdapter {
 			{
 				try { 
 				event.deferReply().queue();
-				CharacterSelection select = new CharacterSelection();
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				memebers.add(event.getOption("user").getAsMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				Long targetId = event.getOption("user").getAsUser().getIdLong();
 				Long serverId =  event.getGuild().getIdLong(); 
 				String name = ""; 
@@ -148,7 +156,10 @@ public class WaifuCommand extends ListenerAdapter {
 				Long tradee = event.getOption("tradee").getAsUser().getIdLong(); 
 				Long serverId =  event.getGuild().getIdLong();
 				CharacterSelection select = new CharacterSelection();
-								
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				memebers.add(event.getOption("tradee").getAsMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db				
 				if (trader.equals(tradee) || event.getOption("tradee").getAsUser().isBot()) 
 				{
 					return null; 

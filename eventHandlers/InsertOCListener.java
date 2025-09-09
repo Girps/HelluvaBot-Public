@@ -50,8 +50,10 @@ public class InsertOCListener extends ListenerParent{
 								" OC name selected not avaliable pick another name! Insert cancelled!").queue(); 
 					}
 	    			else 
-	    			{
+	    			{ 
+	    				// insert character
 	    				select.insertOrginalCharacter(map, event.getUserIdLong(), event.getGuild().getIdLong());
+	    				// insert character into job assuming it is stored 
 	    				event.getChannel().sendMessage(event.getUser().getAsMention() + " your OC " + MarkdownUtil.bold(map.get("name")) + " has been successfully inserted!" ).queue(); 
 	    			}
     			} 

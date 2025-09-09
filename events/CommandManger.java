@@ -88,6 +88,9 @@ public class CommandManger extends ListenerAdapter {
 							.addChoice("True", "T")
 							.addChoice("False", "F"); 
 					
+					
+					
+					
 					// Optional fields 
 					OptionData nameOp = new OptionData(OptionType.STRING, "name", "Enter your characters new name!", false, false);
 					OptionData urlOp = new OptionData(OptionType.STRING, "url", "Enter the new imgur url which display's your sona's picture!", false, false);
@@ -119,6 +122,18 @@ public class CommandManger extends ListenerAdapter {
 							.addChoice("True", "T")
 							.addChoice("False", "F"); 
 					
+					OptionData resetCollect = new OptionData(OptionType.BOOLEAN, "reset-collect", 
+							"Releases all characters back into the game. Everyones' collection will be empty.",true, false); 
+
+					OptionData resetMoney = new OptionData(OptionType.BOOLEAN, "reset-money", "Everyones' money is set to 0.",true,false);
+
+					OptionData resetClaims = new OptionData(OptionType.BOOLEAN, "reset-consumable-claims", 
+							"Everyones' consumable claims is set to 0.",true, false);
+
+					OptionData resetRolls = new OptionData(OptionType.BOOLEAN, "reset-consumable-rolls", 
+							"Everyones' consumable rolls is set to 0",true, false);
+					
+					
 					
 					
 					OptionData removeCharacter = new OptionData(OptionType.STRING, "character", "character to remove" , true, true); 
@@ -147,9 +162,20 @@ public class CommandManger extends ListenerAdapter {
 					OptionData titleOptions = new OptionData(OptionType.STRING, "title", "image name to select",true,true); 
 					//OptionData firstUserCollect= new OptionData(OptionType.USER, "gifter" , "Enter user to force gift from", true, false);
 					OptionData characterForceGift = new OptionData(OptionType.STRING, "receiver-character", "Pick character to force gift" , true, true); 
-					commandList.add(Commands.slash("set-default-image", "Get statistics on amount of characters collected").addOptions(characterOption,titleOptions) ); 
-					commandList.add(Commands.slash("stats", "Get statistics on amount of characters collected")); 
-					commandList.add(Commands.slash("search", "Search characters").addOptions(characterOption)); 
+					OptionData customCharacters = new OptionData(OptionType.STRING, "character", "Oc or sonas to select" , true, true); 
+					OptionData perksOptions = new OptionData(OptionType.STRING, "perk", "perks to select", true, false)
+							.addChoice("Bonus upgrade", "bonus").addChoice("Crime upgrade", "crime").addChoice("Interest upgrade", "interest");
+					
+					OptionData jobs = new OptionData(OptionType.STRING, "jobs", "jobs to select" , true, true); 
+					OptionData jobsOpt = new OptionData(OptionType.STRING, "jobs", "jobs to select" , false, true);
+					
+					commandList.add(Commands.slash("crime", "Commit a crime") ); 
+					commandList.add(Commands.slash("collect-interest", "Collect bank interest.") ); 
+					commandList.add(Commands.slash("upgrade-oc", "Upgrade perks of sonas and ocs!").addOptions(customCharacters, perksOptions) ); 
+					commandList.add(Commands.slash("reset", "Helluva Admin command to reset certain settings.").addOptions(resetCollect,resetMoney, resetClaims, resetRolls) ); 
+					commandList.add(Commands.slash("set-default-image", "Get statistics on amount of characters collected.").addOptions(characterOption,titleOptions) ); 
+					commandList.add(Commands.slash("stats", "Get statistics on amount of characters collected.")); 
+					commandList.add(Commands.slash("search", "Search characters.").addOptions(characterOption)); 
 					commandList.add(Commands.slash("prices", "Prices of items and services you can buy!")); 
 					commandList.add(Commands.slash("buy", "Buy following services").addOptions(itemOptions)); 
 					commandList.add(Commands.slash("deposit", "Add cash to the balance").addOptions(amount)); 
@@ -163,18 +189,17 @@ public class CommandManger extends ListenerAdapter {
 					commandList.add(Commands.slash("simps", "Return random character the caller simps for"));
 					commandList.add(Commands.slash("next-claim", "Return next claim time and number of claims left!"));
 					commandList.add(Commands.slash("next-roll", "Return next roll time and number of rolls left!"));
-					commandList.add(Commands.slash("update-oc", "Update fields of your oc of your choice!").addOptions(customCharacterOp2,nameOp,urlOp,kdmOp,smashpassOp,simpsOp,shipsOp,kinsOp,waifuOp, favOp,guessOp,collectOp));
-					commandList.add(Commands.slash("update-sona", "Update fields of your sona you must pick at least one field for this command to work!").addOptions(nameOp,urlOp,kdmOp,smashpassOp,simpsOp,shipsOp,kinsOp,waifuOp, favOp,guessOp,collectOp)); 
+					commandList.add(Commands.slash("update-oc", "Update fields of your oc of your choice!").addOptions(customCharacterOp2,nameOp,urlOp,kdmOp,smashpassOp,simpsOp,shipsOp,kinsOp,waifuOp, favOp,guessOp,collectOp,jobsOpt));
+					commandList.add(Commands.slash("update-sona", "Update fields of your sona you must pick at least one field for this command to work!").addOptions(nameOp,urlOp,kdmOp,smashpassOp,simpsOp,shipsOp,kinsOp,waifuOp, favOp,guessOp,collectOp,jobsOpt)); 
 					commandList.add(Commands.slash("smashpass", "Return character the user would smash or pass for").addOptions(characterOptionSMP)); 
 					commandList.add(Commands.slash("kins", "Return random character the user kins for")); 
 					commandList.add(Commands.slash("waifu", "Return your waifu or return another user's waifu").addOptions(UserOption));
 					commandList.add(Commands.slash("waifu-trade", "Offer to trade your waifu to another user").addOptions(UserOptionTrade)); 
 					commandList.add(Commands.slash("user-info", "Get general information on specified used").addOptions(UserOption)); 
 					commandList.add(Commands.slash("kdm", "Game were you choose 3 characters to kill, date or marry").addOptions(characterOptionOne,characterOptionTwo, characterOptionThree));
-					//commandList.add(Commands.slash("wikiall", "Display all full wikis of the character on the database only HBAdmins can do this procedure").addOptions(optionSelection.addChoice("all", "all characters").addChoice("major", "major").addChoice("minor", "minor"))); 
 					commandList.add(Commands.slash("ships", "Generates 2 random characters in a ship")); 
 					commandList.add(Commands.slash("sona", "Return your or other user's sona").addOptions(UserOption)); 
-					commandList.add(Commands.slash("insert-sona", "Insert your sona add name, imgur url and games it can be part of!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav,guess,collect)); 
+					commandList.add(Commands.slash("insert-sona", "Insert your sona add name, imgur url and games it can be part of!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav,guess,collect,jobs)); 
 					commandList.add(Commands.slash("remove-sona", "Remove sona from the server").addOptions(UserOption)); 
 					
 					commandList.add(Commands.slash("add-favorite", "Insert your top 10 favorite characters!").addOptions(characterOption));  
@@ -183,7 +208,7 @@ public class CommandManger extends ListenerAdapter {
 					commandList.add(Commands.slash("change-favorites-title", "Select a number to update a character with").addOptions(title)); 
 					commandList.add(Commands.slash("clear-favorites", "Clears your list of favorite characters")); 
 					
-					commandList.add(Commands.slash("insert-oc", "Insert an original character to current server you can only have 10 ocs per server!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav, guess, collect)); 
+					commandList.add(Commands.slash("insert-oc", "Insert an original character to current server you can only have 10 ocs per server!").addOptions(name,url,kdm,smashpass,simps,ships,kins,waifu, fav, guess, collect, jobs)); 
 					commandList.add(Commands.slash("remove-all-ocs","Remove all your ocs in this server" ).addOptions(UserOption)); 
 					commandList.add(Commands.slash("my-oc", "Enter name of your original character").addOptions(customCharacterOp)); 
 					commandList.add(Commands.slash("search-oc", "Enter name of original character").addOptions(requiredUserOp, customCharacterOp));
@@ -194,7 +219,6 @@ public class CommandManger extends ListenerAdapter {
 					
 					commandList.add(Commands.slash("roll","Roll and a random character to claim!")); 
 					commandList.add(Commands.slash("collection","Return your collection from collect game" ).addOptions(UserOption)); 
-					commandList.add(Commands.slash("reset-collect","Admin command to reset the collect game" )); 
 					commandList.add(Commands.slash("release","Release a character from their collect list " ).addOptions(removeCollectChar)); 
 					commandList.add(Commands.slash("force-release","Admin command to remova another user's collect character").addOptions(requiredUserOp,removeCollectChar)); 
 					commandList.add(Commands.slash("collect-trade","Trade collectible with another user!").addOptions(UserOneCollectChar,requiredUserOp,UserTwoCollectChar)); 
@@ -348,7 +372,8 @@ public class CommandManger extends ListenerAdapter {
  			 }); 
 			 
 		 }
-		 else if (  ( event.getName().equals("update-oc") || event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") || event.getName().equals("oc-available") ) &&   ( event.getFocusedOption().getName().equals("customcharacter")) ) 
+		 else if (  ( event.getName().equals("update-oc") || event.getName().equals("my-oc") || event.getName().equals("remove-my-oc") || event.getName().equals("set-default-oc") || event.getName().equals("oc-available") )
+				 &&   ( event.getFocusedOption().getName().equals("customcharacter")) ) 
 		 {		 
 			 CompletableFuture.supplyAsync( () -> 
 			 {			 
@@ -495,7 +520,10 @@ public class CommandManger extends ListenerAdapter {
 				 ArrayList<String> items = new ArrayList<String>(); 
 				 map.forEach( (key, pair) -> 
 				 {
-					 items.add(key); 
+					 if(!key.equalsIgnoreCase("bonus") && !key.equalsIgnoreCase("interest") 
+							 && !key.equalsIgnoreCase("crime")) {
+					 items.add(key);  
+					 }
 				 }); 
 				 
 				 return items; 
@@ -510,6 +538,45 @@ public class CommandManger extends ListenerAdapter {
 				 return null; 
 			 });
 		 }
+		 else if(event.getName().equals("upgrade-oc") &&  event.getFocusedOption().getName().equals("character") ) 
+		 {
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> ocNames = select.getUsersCustomNames(event.getUser().getIdLong(), event.getGuild().getIdLong());  
+				 return ocNames; 
+			 },this.executor).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });  
+		 }
+		  
+		 if( ( event.getName().equalsIgnoreCase("insert-oc") || event.getName().equalsIgnoreCase("insert-sona") ||
+				 event.getName().equalsIgnoreCase("update-oc")  || event.getName().equalsIgnoreCase("update-sona")  ) && 
+				 event.getFocusedOption().getName().equalsIgnoreCase("jobs") ) 
+		 {
+			 CompletableFuture.supplyAsync( () -> 
+			 {			 
+				 CharacterSelection select = new CharacterSelection(); 
+				 ArrayList<String> jobs = select.getJobs();  
+				 return jobs; 
+			 },this.executor).thenAccept( (names) -> 
+			 {
+				 List<Command.Choice> options = filteredCommands(event, names); 
+				 event.replyChoices(options).queue();
+			 }).exceptionally( (ex) ->
+			 {
+				 ex.printStackTrace(); 
+				 return null;
+			 });
+		 }
+		 
+		 
 		 if ( event.getName().equals("set-default-image") && 
 				  event.getFocusedOption().getName().equals("title") ) 
 		 {
@@ -548,6 +615,7 @@ public class CommandManger extends ListenerAdapter {
 				 return null; 
 			 });
 		 }
+		 
 	}
 		 
 	public List<Command.Choice> filteredCommands(CommandAutoCompleteInteractionEvent event , ArrayList<String> names)
@@ -589,7 +657,6 @@ public class CommandManger extends ListenerAdapter {
 		switch(event.getNewStatus())
 		{
 		case CONNECTING_TO_WEBSOCKET : 	
-			System.out.println("Socket connecting"); 
 			event.getJDA().updateCommands().addCommands(commandList).queue(); 
 		break; 
 			default: 

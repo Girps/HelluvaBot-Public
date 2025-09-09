@@ -14,6 +14,7 @@ import CharactersPack.CharacterSelection;
 import CharactersPack.GAMETYPE;
 import CharactersPack.SETUPTYPE;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -48,7 +49,9 @@ public class FavoriteCommand extends ListenerAdapter{
 					Long userId = event.getUser().getIdLong(); 
 					Long serverId = event.getGuild().getIdLong(); 
 					CharacterSelection select = new CharacterSelection(); 
-					// check if list already exists
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db					// check if list already exists
 					if(!select.checkFavLimit(userId, serverId)) 
 					{
 						event.getHook().sendMessage(event.getUser().getAsMention() + " you reached the 10 character limit!").queue(); 
@@ -70,7 +73,10 @@ public class FavoriteCommand extends ListenerAdapter{
 			{
 				event.deferReply().queue(); 
 				// delete list from the database
-				CharacterSelection select = new CharacterSelection();
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				Long  userId = event.getUser().getIdLong(); 
 				Long serverId = event.getGuild().getIdLong(); 
 				try 
@@ -104,7 +110,10 @@ public class FavoriteCommand extends ListenerAdapter{
 				{
 					event.deferReply().queue(); 
 					String characterName = event.getOptions().get(0).getAsString(); 
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					select.removeFavCharacter(characterName, event.getUser().getIdLong(), event.getGuild().getIdLong());
 					event.getHook().sendMessage( event.getUser().getAsMention() + " " + MarkdownUtil.bold(characterName) + " has been removed from your list!" ).queue(); 
 				}
@@ -125,7 +134,10 @@ public class FavoriteCommand extends ListenerAdapter{
 					event.deferReply().queue(); 
 					// Get the list from the table 
 					String title = null;
-					CharacterSelection select = new CharacterSelection();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					Long userId = event.getUser().getIdLong(); 
 					Long serverId = event.getGuild().getIdLong(); 
 					ArrayList<String> list = null; 
@@ -210,7 +222,10 @@ public class FavoriteCommand extends ListenerAdapter{
 			{ 
 				event.deferReply().queue(); 
 				String title = event.getOption("title").getAsString();
-				CharacterSelection select = new CharacterSelection();
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				try 
 				{
 					if ( !select.checkFavList(event.getUser().getIdLong(), event.getGuild().getIdLong()) ) 
@@ -236,6 +251,9 @@ public class FavoriteCommand extends ListenerAdapter{
 					String characterOne = event.getOption("first-character").getAsString(); 
 					String characterTwo = event.getOption("second-character").getAsString();
 					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					try 
 					{
 						select.favSwapCharacter(characterOne, characterTwo, event.getUser().getIdLong(),event.getGuild().getIdLong());

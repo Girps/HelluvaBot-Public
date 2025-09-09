@@ -10,8 +10,10 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -25,6 +27,8 @@ import org.json.JSONObject;
 import com.google.common.cache.AbstractCache.StatsCounter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+import net.dv8tion.jda.api.entities.Member;
 
 
 
@@ -95,13 +99,13 @@ public class CharacterSelection {
 			query = "SELECT name FROM characters \r\n"
 					+ "WHERE characters.is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
-					+ "SELECT name FROM gameCharacters\r\n"
+					+ "SELECT name FROM gamecharacters\r\n"
 					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inKDM = \"T\" " + " AND " + "server_Id = ? "   
 					+ " UNION "
-					+ "SELECT name FROM customCharacters\r\n"
+					+ "SELECT name FROM customcharacters\r\n"
 					+ "WHERE inKDM = \"T\"" + " AND " + "server_Id = ? " ; 
 			stat = conn.prepareStatement(query);
 			stat.setLong(1, serverId);
@@ -111,13 +115,13 @@ public class CharacterSelection {
 			query = "SELECT name FROM characters \r\n"
 					+ "WHERE characters.is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
-					+ "SELECT name FROM gameCharacters\r\n"
+					+ "SELECT name FROM gamecharacters\r\n"
 					+ "WHERE is_Adult = \"T\"\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inSP = \"T\" " + " AND " + "server_Id = ? "
 					+ " UNION "
-					+ " SELECT name FROM customCharacters\r\n"
+					+ " SELECT name FROM customcharacters\r\n"
 					+ " WHERE inSP = \"T\""  + " AND " + "server_Id = ? ";  
 			stat = conn.prepareStatement(query);
 			stat.setLong(1, serverId);
@@ -126,12 +130,12 @@ public class CharacterSelection {
 		case FAVORITES :
 			query = "SELECT name FROM characters \r\n"
 					+ "UNION \r\n"
-					+ "SELECT name FROM gameCharacters\r\n"
+					+ "SELECT name FROM gamecharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inFav = \"T\" " + " AND " + "server_Id = ? "   
 					+ " UNION "
-					+ " SELECT name FROM customCharacters\r\n"
+					+ " SELECT name FROM customcharacters\r\n"
 					+ " WHERE inFav = \"T\"" + " AND " + "server_Id = ? " ;  
 			stat = conn.prepareStatement(query);
 			stat.setLong(1, serverId);
@@ -141,12 +145,12 @@ public class CharacterSelection {
 		case COLLECT : 
 			query = "SELECT name FROM characters \r\n"
 					+ "UNION \r\n"
-					+ "SELECT name FROM gameCharacters\r\n"
+					+ "SELECT name FROM gamecharacters\r\n"
 					+ "UNION\r\n"
 					+ "SELECT name FROM sonas\r\n"
 					+ "WHERE sonas.inCollect = \"T\" " + " AND " + "server_Id = ? "
 					+ " UNION "
-					+ " SELECT name FROM customCharacters\r\n"
+					+ " SELECT name FROM customcharacters\r\n"
 					+ " WHERE inCollect = \"T\"" + " AND " + "server_Id = ?";  
 			
 			stat = conn.prepareStatement(query);
@@ -187,7 +191,7 @@ public class CharacterSelection {
 	{
 		ArrayList<String> names = new ArrayList<String>();
 		
-		String query = "SELECT name FROM customCharacters " 
+		String query = "SELECT name FROM customcharacters " 
 		+ "WHERE user_Id = ? AND server_Id = ? " + 
 		 " ORDER BY timeCreated DESC ";
 
@@ -202,12 +206,11 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery(); 
-			res.next(); 
-			do 
+
+			while(res.next())
 			{
 				names.add(res.getString(1));
 			}
-			while(res.next()); 
 		} 
 		catch (SQLException e)
 		{
@@ -427,13 +430,10 @@ public class CharacterSelection {
 					+ " AND server_def_chtrs.server_id = ? " +  
 					 " WHERE characters.is_Adult = \"T\"" + 
 					 " UNION " + 
-					 " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, null FROM gameCharacters " +
-					 " WHERE gameCharacters.is_Adult = \"T\"" + 
-					 " UNION " + 
-					 " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , null , rarity  FROM sonas " + 
+					 " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , perks , rarity  FROM sonas " + 
 					 " WHERE sonas.inKDM = \"T\" " + " AND server_Id = ?" +    
 					 " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , null, null, rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , url , perks , rarity FROM customcharacters " + 
 					 " WHERE inKDM = \"T\" " + " AND server_Id = ?" +     
 					 " ORDER BY RAND() LIMIT ?"; 
 			
@@ -451,13 +451,10 @@ public class CharacterSelection {
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\" "
 					+ " UNION\r\n"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null, null, rarity FROM gameCharacters "
-					+ " WHERE gameCharacters.is_Adult = \"T\" "
-					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas "
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, perks , rarity FROM sonas "
 					+ " WHERE sonas.inSimps = \"T\" " + " AND server_Id = ?"
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , null , null , rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , url , perks , rarity FROM customcharacters " + 
 					 " WHERE inSimps = \"T\" " + " AND server_Id = ?"+   
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query);
@@ -473,14 +470,11 @@ public class CharacterSelection {
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
-					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null , null , rarity FROM gameCharacters"
-					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0, url, null, rarity FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0, url, perks , rarity FROM sonas"
 					+ " WHERE sonas.inShips = \"T\""  +  " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0, null , null , rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0, url , perks , rarity FROM customcharacters " + 
 					 " WHERE inShips = \"T\" " + " AND server_Id = ?" +   
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -495,13 +489,11 @@ public class CharacterSelection {
 					+ " COALESCE(server_def_chtrs.def , image_def ) as image_def , image_urls, perks, rarity  FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
-					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, rarity FROM gameCharacters"
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 ,url, null, rarity FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 ,url , perks , rarity FROM sonas"
 					+ " WHERE sonas.inKins = \"T\" " + " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url, 0 , null, null, rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url, 0 , url , perks , rarity FROM customcharacters " + 
 					 " WHERE inKins = \"T\" " + " AND server_Id = ?"  +    
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query);
@@ -517,14 +509,11 @@ public class CharacterSelection {
 					+ "LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
-					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, rarity FROM gameCharacters"
-					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0 , url , null ,rarity FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0 , url , perks ,rarity FROM sonas"
 					+ " WHERE sonas.inSP = \"T\" " + " AND server_Id = ?" 
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url , 0 , url , null , rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url , 0 , url , perks , rarity FROM customcharacters " + 
 					 " WHERE inSP = \"T\" " + " AND server_Id = ?"+     
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -536,18 +525,15 @@ public class CharacterSelection {
 			break; 
 		case WAIFU:
 			query = " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character , "
-					+ " COALESCE(server_def_chtrs.def, characters.image_def) , image_urls, null , rarity  FROM characters "
+					+ " COALESCE(server_def_chtrs.def, characters.image_def) , image_urls, perks , rarity  FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
 					+ " WHERE characters.is_Adult = \"T\""
-					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0 , null , null, null FROM gameCharacters"
-					+ " WHERE gameCharacters.is_Adult = \"T\" "
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url,0,url , null, rarity  FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url,0,url , perks , rarity  FROM sonas"
 					+ " WHERE sonas.inWaifu = \"T\"" +   " AND server_Id = ?"  
 					+ " UNION " + 
-					 " SELECT cusChar_Id, name, user_Id, url,0,null, null, rarity FROM customCharacters " + 
+					 " SELECT cusChar_Id, name, user_Id, url,0, url , perks , rarity FROM customcharacters " + 
 					 " WHERE inWaifu = \"T\" " + " AND server_Id = ?" +    
 					 " ORDER BY RAND() LIMIT ?"; 
 			stat = conn.prepareStatement(query); 
@@ -562,13 +548,11 @@ public class CharacterSelection {
 					+ " COALESCE(server_def_chtrs.def , characters.image_def ) , image_urls, perks , rarity FROM characters "
 					+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 					+ " AND server_def_chtrs.server_id = ? "
-					+ " UNION"
-					+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url,0 , null, null, null FROM gameCharacters"
 					+ " UNION "
-					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0, url, null, rarity FROM sonas"
+					+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url, 0, url, perks , rarity FROM sonas"
 					+ " WHERE sonas.inGuess = \"T\" " + " AND server_Id = ?" 
 					+ " UNION "  
-					+ " SELECT cusChar_Id, name, user_Id, url, 0, null, null, rarity  FROM customCharacters "  
+					+ " SELECT cusChar_Id, name, user_Id, url, 0, url , perks , rarity  FROM customcharacters "  
 					+ " WHERE inGuess = \"T\" " +   " AND server_Id = ?"       
 					+ " ORDER BY RAND() LIMIT ?" ; 
 			stat = conn.prepareStatement(query); 
@@ -593,13 +577,10 @@ public class CharacterSelection {
 					+ "					 AND server_def_chtrs.server_id = ? "
 					+ "                     WHERE rarity = (SELECT name FROM chosen_rarity) "
 					+ "					UNION "
-					+ "					 SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null, null, null FROM gameCharacters "
-					+ "                     WHERE rarity = (SELECT name FROM chosen_rarity) "
-					+ "					UNION "
-					+ "					SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas "
+					+ "					SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, perks , rarity FROM sonas "
 					+ "					 WHERE sonas.inCollect = \"T\"  AND server_Id = ? AND rarity = (SELECT name FROM chosen_rarity) "
 					+ "					UNION  "
-					+ "					SELECT cusChar_Id, name, user_Id, url , 0, null , null, rarity FROM customCharacters "
+					+ "					SELECT cusChar_Id, name, user_Id, url , 0, url , perks , rarity FROM customcharacters "
 					+ "					 WHERE inCollect = \"T\"  AND server_Id = ? AND rarity = (SELECT name FROM chosen_rarity) "
 					+ "                    ORDER BY RAND() LIMIT ? " ; 
 			stat = conn.prepareStatement(query); 
@@ -653,14 +634,11 @@ public class CharacterSelection {
 							 + " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 							 + " AND server_def_chtrs.server_id = ? "
 							+ " WHERE LOWER(characters.name) = LOWER(?) AND characters.is_Adult = \"T\" "
-							+ " UNION"
-							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url , 0 , null, null, rarity FROM gameCharacters"
-							+ " WHERE LOWER(gameCharacters.name) = LOWER(?) AND gameCharacters.is_Adult = \"T\""
-							+ " UNION"
-							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , null, rarity FROM sonas"
+							+ " UNION "
+							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , perks , rarity FROM sonas"
 							+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inKDM = \"T\"" + " AND server_Id = ?" 
 							+ " UNION "
-							+ " SELECT cusChar_Id, name, user_Id, url , 0 , null, null, rarity FROM customCharacters"
+							+ " SELECT cusChar_Id, name, user_Id, url , 0 , url , perks , rarity FROM customcharacters"
 							+ " WHERE  LOWER(name) = LOWER(?) AND inKDM = \"T\"" + " AND server_Id = ?"
 							+ "  LIMIT 1"; 
 				
@@ -668,10 +646,9 @@ public class CharacterSelection {
 				stat.setLong(1, serverId);
 				stat.setString(2, name);
 				stat.setString(3, name);
-				stat.setString(4, name);
-				stat.setLong(5,serverId);
-				stat.setString(6, name);
-				stat.setLong(7, serverId);
+				stat.setLong(4,serverId);
+				stat.setString(5, name);
+				stat.setLong(6, serverId);
 				found = processQueryGetCharacters(stat,set)[0]; 
 				break; 
 				
@@ -683,14 +660,11 @@ public class CharacterSelection {
 							 + " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id " 
 							 + " AND server_def_chtrs.server_id = ? "
 							+ " WHERE LOWER(characters.name) = LOWER(?) AND characters.is_Adult = \"T\" "
-							+ " UNION"
-							+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null , null , null  FROM gameCharacters"
-							+ " WHERE LOWER(gameCharacters.name) = LOWER(?) AND gameCharacters.is_Adult = \"T\""
-							+ " UNION"
+							+ " UNION "
 							+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , perks, rarity FROM sonas"
 							+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inSP = \"T\"" +  " AND server_Id = ?" 
 							+ " UNION "
-							+ " SELECT cusChar_Id, name, user_Id, url , 0, url , perks, rarity  FROM customCharacters"
+							+ " SELECT cusChar_Id, name, user_Id, url , 0, url , perks, rarity  FROM customcharacters"
 							+ " WHERE  LOWER(name) = LOWER(?) AND inSP = \"T\"" +  " AND server_Id = ?"
 							+ "  LIMIT 1"; 
 					
@@ -698,10 +672,9 @@ public class CharacterSelection {
 					stat.setLong(1, serverId);
 					stat.setString(2, name);
 					stat.setString(3, name);
-					stat.setString(4, name);
-					stat.setLong(5, serverId);
-					stat.setString(6, name);
-					stat.setLong(7, serverId);
+					stat.setLong(4, serverId);
+					stat.setString(5, name);
+					stat.setLong(6, serverId);
 					found = processQueryGetCharacters(stat,set)[0]; 
 					break; 
 				case WIKI: 
@@ -723,13 +696,10 @@ public class CharacterSelection {
 								+ " AND server_def_chtrs.server_id = ? "
 								+ " WHERE LOWER(characters.name) = LOWER(?) "
 								+ " UNION"
-								+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null, null, null FROM gameCharacters"
-								+ " WHERE LOWER(gameCharacters.name) = LOWER(?) "
-								+ "UNION"
-								+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, null, rarity FROM sonas"
+								+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, perks , rarity FROM sonas"
 								+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inFav = \"T\"" +  " AND server_Id = ?" 
 								+ " UNION "
-								+ " SELECT cusChar_Id, name, user_Id, url , 0 , null, null,rarity  FROM customCharacters"
+								+ " SELECT cusChar_Id, name, user_Id, url , 0 , url , perks ,rarity  FROM customcharacters"
 								+ " WHERE  LOWER(name) = LOWER(?) AND inFav = \"T\"" +  " AND server_Id = ?" 
 								+ "  LIMIT 1"; 
 					
@@ -737,10 +707,9 @@ public class CharacterSelection {
 						stat.setLong(1, serverId);
 						stat.setString(2, name);
 						stat.setString(3, name);
-						stat.setString(4, name);
-						stat.setLong(5, serverId);
-						stat.setString(6, name);
-						stat.setLong(7, serverId);
+						stat.setLong(4, serverId);
+						stat.setString(5, name);
+						stat.setLong(6, serverId);
 						found = processQueryGetCharacters(stat,set)[0]; 
 					break;
 				case COLLECT:
@@ -751,14 +720,11 @@ public class CharacterSelection {
 									+ " LEFT JOIN server_def_chtrs ON characters.char_id = server_def_chtrs.char_id "
 									+ " AND server_def_chtrs.server_id = ? "
 									+ " WHERE LOWER(characters.name) = LOWER(?) "
-									+ " UNION"
-									+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0 , null, null ,rarity  FROM gameCharacters"
-									+ " WHERE LOWER(gameCharacters.name) = LOWER(?) "
-									+ "UNION"
+									+ " UNION "
 									+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url, perks, rarity  FROM sonas"
 									+ " WHERE  LOWER(sonas.name) = LOWER(?) AND sonas.inCollect = \"T\"" +  " AND server_Id = ?"
 									+ " UNION "
-									+ " SELECT cusChar_Id, name, user_Id, url , 0, null , perks ,rarity  FROM customCharacters"
+									+ " SELECT cusChar_Id, name, user_Id, url , 0, url , perks , rarity  FROM customcharacters"
 									+ " WHERE  LOWER(name) = LOWER(?) AND inCollect = \"T\"" +  " AND server_Id = ?"  
 									+ "  LIMIT 1"; 
 						
@@ -766,10 +732,9 @@ public class CharacterSelection {
 							stat.setLong(1, serverId);
 							stat.setString(2, name);
 							stat.setString(3, name);
-							stat.setString(4, name);
-							stat.setLong(5, serverId);
-							stat.setString(6, name);
-							stat.setLong(7, serverId);
+							stat.setLong(4, serverId);
+							stat.setString(5, name);
+							stat.setLong(6, serverId);
 							found = processQueryGetCharacters(stat,set)[0]; 
 					}	
 					
@@ -1033,8 +998,8 @@ public class CharacterSelection {
 			conn = dataSource.getConnection(); 
 			String listStr =  userIds.toString().replace("[", "(");
 			listStr = listStr.replace("]", ")"); 
-			String query = " DELETE character_Ids FROM character_Ids "
-					+ " INNER JOIN sonas ON sonas.sona_Id = character_Ids.id  "
+			String query = " DELETE character_ids FROM character_ids "
+					+ " INNER JOIN sonas ON sonas.sona_Id = character_ids.id  "
 					+ "	WHERE sonas.user_Id IN " + listStr  
 					+ "	AND sonas.server_Id = " + serverId + " ";  
 			stat = conn.prepareStatement(query); 
@@ -1061,8 +1026,8 @@ public class CharacterSelection {
 		{
 			conn = dataSource.getConnection(); 
 			
-			String query = "DELETE character_Ids FROM character_Ids \r\n"
-				+ "INNER JOIN sonas ON sonas.sona_Id = character_Ids.id \r\n"
+			String query = "DELETE character_ids FROM character_ids \r\n"
+				+ "INNER JOIN sonas ON sonas.sona_Id = character_ids.id \r\n"
 				+ "WHERE sonas.user_Id = ? AND sonas.server_Id = ?"; 
 			stat = conn.prepareStatement(query);
 			stat.setLong(1,userId);
@@ -1137,14 +1102,16 @@ public class CharacterSelection {
 	/* Method will insert a character to the database on the sona table */ 
 	public void insertSona(HashMap<String,String> map, Long userId, Long serverId)  
 	{
-		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
+		String queryOne = " INSERT INTO character_ids(id) VALUES(NULL)"; 
 		
 		String queryTwo =  " INSERT INTO sonas (sona_Id, name, user_Id, url, server_Id, inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, inGuess, inCollect) " +  
 				 " VALUES (last_insert_id(),?, ? ,  '{ \"links\" : [ {\"url\": " + "\""  + map.get("url") + "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}' "
 				 + ", ? , ? , ? , ? , ? , ? , ? , ? , ? , ?  )";  
-		
+		String queryThree = "INSERT INTO chtr_jobs (occupation, char_Id) "
+				+ " VALUES(? , last_insert_id() ) "; 
 		PreparedStatement statInsertId = null;
 		PreparedStatement statInsertSona = null; 
+		PreparedStatement statInsertSonaJob = null; 
 		Connection conn =null; 
 		try 
 		{
@@ -1154,9 +1121,10 @@ public class CharacterSelection {
 			conn.setAutoCommit(false);
 			// Insert id first
 			statInsertId = conn.prepareStatement(queryOne);
-			statInsertId.execute(); 
+			
 			// Insert character 
 			statInsertSona = conn.prepareStatement(queryTwo); 
+			statInsertSonaJob = conn.prepareStatement(queryThree); 
 			statInsertSona.setString(1, map.get("name"));
 			statInsertSona.setLong(2, userId);
 			statInsertSona.setLong(3, serverId);
@@ -1169,7 +1137,10 @@ public class CharacterSelection {
 			statInsertSona.setString(10, map.get("favorite"));
 			statInsertSona.setString(11, map.get("guess"));
 			statInsertSona.setString(12, map.get("collect"));
-			statInsertSona.execute(); 
+			statInsertSonaJob.setString(1, map.get("job"));
+			statInsertId.execute(); 
+			statInsertSona.execute();
+			statInsertSonaJob.execute(); 			
 			// Commit insertions 
 			conn.commit(); 
 
@@ -1190,6 +1161,8 @@ public class CharacterSelection {
 		{
 			try {  if(statInsertId != null) { statInsertId.close(); } } catch(Exception e){} 
 			try {  if(statInsertSona != null) { statInsertSona.close(); } } catch(Exception e){} 
+			try {  if(statInsertSonaJob != null) { statInsertSonaJob.close(); } } catch(Exception e){} 
+
 			try {  if(conn != null) { conn.setAutoCommit(true); conn.close(); } } catch(Exception e){} 
 		}
 		
@@ -1199,8 +1172,11 @@ public class CharacterSelection {
 	public void updateSona(long userId,long serverId, HashMap<String, String> newFields)
 	{
 		PreparedStatement stat = null; 
+		PreparedStatement statTwo = null; 
+
 		Connection conn = null; 		
 		String query=  null; 
+		String queryTwo = null; 
 		try 
 		{
 			query = "UPDATE sonas "
@@ -1218,8 +1194,14 @@ public class CharacterSelection {
 					+ ", inCollect = ? "
 					+ " WHERE user_Id = ? AND server_Id = ? "; 
 			
+			queryTwo = "UPDATE chtr_jobs "
+					+ " JOIN sonas ON chtr_jobs.char_Id = sonas.sona_Id AND sonas.name = ?  "
+					+ " JOIN chtr_jobs as cj ON cj.occupation = ? "
+					+ " SET chtr_jobs.occupation = ?"; 
+			
 			conn = dataSource.getConnection(); 
 			stat = conn.prepareStatement(query); 
+			statTwo = conn.prepareStatement(queryTwo); 
 			stat.setString(1, newFields.get("name"));
 			stat.setString(2, newFields.get("url"));
 			stat.setString(3, newFields.get("kdm"));
@@ -1233,7 +1215,12 @@ public class CharacterSelection {
 			stat.setString(11, newFields.get("collect"));
 			stat.setLong(12, userId);
 			stat.setLong(13, serverId); 
+			statTwo.setString(1, newFields.get("name"));
+			statTwo.setString(2, newFields.get("jobs"));
+			statTwo.setString(3, newFields.get("jobs"));
 			stat.execute(); 
+			statTwo.execute(); 
+
 		}
 		catch(Exception e) 
 		{
@@ -1241,7 +1228,8 @@ public class CharacterSelection {
 		}
 		finally 
 		{
-			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(stat != null) { stat.close(); } } catch(Exception e){}
+			try {  if(statTwo != null) { statTwo.close(); } } catch(Exception e){} 
 			try {  if(conn != null) {  conn.close(); } } catch(Exception e){} 
 		}
 	}
@@ -1250,8 +1238,8 @@ public class CharacterSelection {
 	public void removeAllSonas(Long  guildId)  
 	{
 		// rid of sonas
-		String query = "DELETE character_Ids FROM character_Ids \r\n"
-				+ "INNER JOIN sonas ON sonas.sona_Id = character_Ids.id\r\n"
+		String query = "DELETE character_ids FROM character_ids \r\n"
+				+ "INNER JOIN sonas ON sonas.sona_Id = character_ids.id\r\n"
 				+ "WHERE sonas.server_Id = " + guildId ; 
 		Statement stat = null; 
 		Connection conn =null; 
@@ -1303,13 +1291,13 @@ public class CharacterSelection {
 		String queryCharacterId = "SELECT characters.char_Id FROM characters \r\n"
 				+ "WHERE characters.name = ? \r\n"
 				+ "UNION\r\n"
-				+ "SELECT gameCharacter_Id FROM gameCharacters\r\n"
+				+ "SELECT gameCharacter_Id FROM gamecharacters\r\n"
 				+ "WHERE name = ? \r\n"
 				+ "UNION\r\n"
 				+ "SELECT sonas.sona_Id FROM sonas\r\n"
 				+ "WHERE sonas.name =  ? AND server_Id = ? "  
 				+ " UNION "
-				+ "SELECT cusChar_Id FROM customCharacters " 
+				+ "SELECT cusChar_Id FROM customcharacters " 
 				+ "WHERE name = ? AND server_Id = ?"
 				+ " LIMIT 1";
 		
@@ -1347,19 +1335,19 @@ public class CharacterSelection {
 	}
 	
 	
-	/* Get character ids of a from a playersCollection from the data base*/ 
+	/* Get character ids of a from a playerscollection from the data base*/ 
 	public int getCharacterIdFromPlayersCollect(String characterName, long userId ,long serverId )  
 	{
-		String queryCharacterId = "SELECT col_Id FROM playersCollection as chid \r\n"
+		String queryCharacterId = "SELECT col_Id FROM playerscollection as chid \r\n"
 				+ "INNER JOIN characters as ch ON ch.char_Id = chid.col_Id AND ch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playersCollection as chid \r\n"
-				+ "INNER JOIN customCharacters as csh ON csh.cusChar_Id = chid.col_Id AND csh.name  = ? AND chid.server_Id =  csh.server_Id AND csh.server_Id = ? AND chid.user_Id = ? \r\n"
+				+ "SELECT col_Id FROM playerscollection as chid \r\n"
+				+ "INNER JOIN customcharacters as csh ON csh.cusChar_Id = chid.col_Id AND csh.name  = ? AND chid.server_Id =  csh.server_Id AND csh.server_Id = ? AND chid.user_Id = ? \r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playersCollection as chid \r\n"
-				+ "INNER JOIN gameCharacters as gch ON gch.gameCharacter_Id = chid.col_Id AND gch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
+				+ "SELECT col_Id FROM playerscollection as chid \r\n"
+				+ "INNER JOIN gamecharacters as gch ON gch.gameCharacter_Id = chid.col_Id AND gch.name = ? AND chid.user_Id = ? AND chid.server_Id = ?\r\n"
 				+ "UNION \r\n"
-				+ "SELECT col_Id FROM playersCollection as chid \r\n"
+				+ "SELECT col_Id FROM playerscollection as chid \r\n"
 				+ "INNER JOIN sonas as s ON s.sona_Id = chid.col_Id AND s.name = ? AND chid.server_Id = s.server_Id AND s.server_Id = ? AND chid.user_Id = ?";   
 		
 
@@ -1520,14 +1508,11 @@ public class CharacterSelection {
 				 " SELECT characters.char_Id, characters.name, characters.show_Name, characters.is_Major_Character,"
 				 + " characters.image_def , characters.image_urls, perks, rarity FROM characters"
 				+ " WHERE char_id = " + id
-				+ " UNION"
-				+ " SELECT gameCharacter_Id, name, show_Name, imgur_Url, 0, null , null , null FROM gameCharacters"
-				+ " WHERE gameCharacter_Id = " + id
-				+ " UNION"
-				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , null , null, rarity FROM sonas"
+				+ " UNION "
+				+ " SELECT sonas.sona_Id, sonas.name, sonas.user_Id, sonas.url , 0 , url , perks, rarity FROM sonas"
 				+ " WHERE  sona_Id = " + id
 				+ " UNION"
-				+ " SELECT cusChar_Id, name, user_Id, url , 0 , null , null , rarity FROM customCharacters"
+				+ " SELECT cusChar_Id, name, user_Id, url , 0 , url, perks, rarity FROM customcharacters"
 				+ " WHERE  cusChar_Id = " + id 
 				+ "  LIMIT 1"; 
 		
@@ -1585,13 +1570,13 @@ public class CharacterSelection {
 				 " SELECT  characters.name FROM characters"
 				+ " WHERE char_id = ?"
 				+ " UNION"
-				+ " SELECT name  FROM gameCharacters "
+				+ " SELECT name  FROM gamecharacters "
 				+ " WHERE gameCharacter_Id = ?" 
 				+ " UNION"
 				+ " SELECT  sonas.name FROM sonas "
 				+ " WHERE  sona_Id = ?"
 				+ " UNION"
-				+ " SELECT  name FROM customCharacters "
+				+ " SELECT  name FROM customcharacters "
 				+ " WHERE  cusChar_Id = ?"
 				+ "  LIMIT 1"; 
 		
@@ -1785,14 +1770,14 @@ public class CharacterSelection {
 		String query = "SELECT characters.name FROM characters \r\n"
 					+ " WHERE characters.name = ? \r\n"
 					+ " UNION\r\n"
-					+ " SELECT name FROM gameCharacters \r\n"
+					+ " SELECT name FROM gamecharacters \r\n"
 					+ " WHERE name = ? \r\n"
 					+ " UNION \r\n"
 					+ " SELECT sonas.name FROM sonas\r\n"
 					+ " WHERE sonas.name =  ? AND sonas.server_Id = ?"
 					+ " UNION "
-					+ " SELECT customCharacters.name FROM customCharacters\r\n"
-					+ " WHERE customCharacters.name = ? AND customCharacters.server_Id = ? " ; 
+					+ " SELECT customcharacters.name FROM customcharacters\r\n"
+					+ " WHERE customcharacters.name = ? AND customcharacters.server_Id = ? " ; 
 	
 		
 		PreparedStatement stat = null;
@@ -1828,14 +1813,15 @@ public class CharacterSelection {
 	/* Insert orginal character into the custom character table */ 
 	public void insertOrginalCharacter(HashMap<String, String> map , Long userId, Long serverId )  
 	{
-		String queryOne = " INSERT INTO character_Ids(id) VALUES(NULL)"; 
-		String queryTwo =  " INSERT INTO customCharacters (cusChar_Id, name, user_Id, url, server_Id, inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, inGuess, inCollect) " +  
+		String queryOne = " INSERT INTO character_ids(id) VALUES(NULL)"; 
+		String queryTwo =  " INSERT INTO customcharacters (cusChar_Id, name, user_Id, url, server_Id, inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, inGuess, inCollect) " +  
 				 " VALUES (last_insert_id(),? , ? , " +"'{ \"links\" : [ {\"url\": " + "\""  + map.get("url") + "\""  + " , \"author_link\": \"\" , \"author_name\": \"\" ,  \"art_name\": \"\" } ]}'" + 
 				", ? , ? , ? ,?  , ? , ? , ? , ? , ? , ? )";  
-		
-		
+		String queryThree = "INSERT INTO chtr_jobs (occupation, char_Id ) "
+				+ " VALUES(? , last_insert_id() )";  
 		PreparedStatement statInsertId = null;
 		PreparedStatement statInsertCharacter = null;
+		PreparedStatement statInsertCharacterJobs = null;
 
 		Connection conn = null; 
 		try 
@@ -1848,7 +1834,6 @@ public class CharacterSelection {
 			conn.setAutoCommit(false);
 			
 			statInsertId = conn.prepareStatement(queryOne); 
-			statInsertId.execute(); 
 			// Insert Character next 
 			statInsertCharacter = conn.prepareStatement(queryTwo); 
 			statInsertCharacter.setString(1, map.get("name"));
@@ -1863,7 +1848,11 @@ public class CharacterSelection {
 			statInsertCharacter.setString(10, map.get("favorite"));
 			statInsertCharacter.setString(11, map.get("guess"));
 			statInsertCharacter.setString(12, map.get("collect"));
+			statInsertCharacterJobs = conn.prepareStatement(queryThree);
+			statInsertCharacterJobs.setString(1, map.get("job"));
+			statInsertId.execute(); 
 			statInsertCharacter.execute(); 
+			statInsertCharacterJobs.execute(); 
 			// Commit insertions 
 			conn.commit();
 		} 
@@ -1887,6 +1876,7 @@ public class CharacterSelection {
 		{
 			try {  if(statInsertId != null) { statInsertId.close(); } } catch(Exception e){} 
 			try {  if(statInsertCharacter != null) { statInsertCharacter.close(); } } catch(Exception e){} 
+			try {  if(statInsertCharacterJobs != null) { statInsertCharacterJobs.close(); } } catch(Exception e){} 
 			try {  if(conn != null) { conn.setAutoCommit(true); conn.close(); } } catch(Exception e){} 
 		}
 		
@@ -1898,7 +1888,8 @@ public class CharacterSelection {
 		Connection conn = null;
 		ResultSet res  = null; 
 		String query = "SELECT name , url , inKDM, inSP, inSimps, inShips, inKins, inWaifu, inFav, "
-				+ " inGuess, inCollect FROM customCharacters"
+				+ " inGuess, inCollect , occupation FROM customcharacters  "
+				+ " JOIN chtr_jobs ON chtr_jobs.char_Id = customcharacters.cusChar_Id "
 				+ " WHERE user_Id = ? AND server_Id = ? AND name = ?"; 
 		HashMap<String, String> fields = null; 
 		try 
@@ -1922,7 +1913,8 @@ public class CharacterSelection {
 			fields.put("favorite", res.getString("inFav")); 
 			fields.put("guess", res.getString("inGuess"));
 			fields.put("collect", res.getString("inCollect")); 
-		
+			fields.put("jobs", res.getString("occupation")); 
+
 		} 
 		catch(SQLException e) 
 		{
@@ -1941,12 +1933,15 @@ public class CharacterSelection {
 	public void updateOC(String name, long userId, long serverId, HashMap<String, String> newFields) 
 	{
 		PreparedStatement stat = null; 
+		PreparedStatement statTwo = null; 
+		
 		Connection conn = null; 
 		
 		String query = null; 
+		String queryTwo = null; 
 		try 
 		{
-			query = "UPDATE customCharacters "
+			query = "UPDATE customcharacters "
 					+ " SET "
 					+ " name = ? "
 					+ ", url = ? "
@@ -1961,8 +1956,14 @@ public class CharacterSelection {
 					+ ", inCollect = ? "
 					+ " WHERE user_Id = ? AND server_Id = ? AND name = ? "; 
 			
+			queryTwo = "UPDATE chtr_jobs "
+					+ " JOIN customcharacters ON chtr_jobs.char_Id = customcharacters.cusChar_Id AND customcharacters.name = ?  "
+					+ " JOIN chtr_jobs as cj ON cj.occupation = ? "
+					+ " SET chtr_jobs.occupation = ?"; 
+			
 			conn = dataSource.getConnection(); 
 			stat = conn.prepareStatement(query); 
+			statTwo = conn.prepareStatement(queryTwo); 
 			stat.setString(1, newFields.get("name"));
 			stat.setString(2, newFields.get("url"));
 			stat.setString(3, newFields.get("kdm"));
@@ -1978,6 +1979,10 @@ public class CharacterSelection {
 			stat.setLong(13, serverId); 
 			stat.setString(14, name); 
 			stat.execute(); 
+			statTwo.setString(1, newFields.get("name"));
+			statTwo.setString(2, newFields.get("jobs"));
+			statTwo.setString(3, newFields.get("jobs"));
+			statTwo.execute(); 
 		}
 		catch(SQLException  e)
 		{
@@ -1986,6 +1991,7 @@ public class CharacterSelection {
 		finally 
 		{
 			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+			try {  if(statTwo != null) { statTwo.close(); } } catch(Exception e){} 
 			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
 		}
 	}
@@ -1993,8 +1999,8 @@ public class CharacterSelection {
 	/* Check how many characters the user has in this server */ 
 	public boolean checkOCLimit(Long userId, Long serverId)  
 	{
-		String query = "SELECT COUNT(name) FROM customCharacters "
-				+ "WHERE customCharacters.user_Id = ? AND " + "customCharacters.server_Id = ?"; 
+		String query = "SELECT COUNT(name) FROM customcharacters "
+				+ "WHERE customcharacters.user_Id = ? AND " + "customcharacters.server_Id = ?"; 
 		
 		PreparedStatement stat = null;
 		ResultSet res = null ;
@@ -2027,9 +2033,9 @@ public class CharacterSelection {
 	/* Remove custom characters from the table */ 
 	public void removeCustomCharacter(String name, Long userId, Long serverId) 
 	{
-		String query =  "DELETE character_Ids FROM character_Ids \r\n"
-				+ "INNER JOIN customCharacters ON customCharacters.cusChar_Id = character_Ids.id\r\n"
-				+ "WHERE customCharacters.user_Id = ? AND customCharacters.server_Id = ? AND customCharacters.name = ?"; 
+		String query =  "DELETE character_ids FROM character_ids \r\n"
+				+ "INNER JOIN customcharacters ON customcharacters.cusChar_Id = character_ids.id\r\n"
+				+ "WHERE customcharacters.user_Id = ? AND customcharacters.server_Id = ? AND customcharacters.name = ?"; 
 		
 		
 		PreparedStatement stat = null;
@@ -2057,7 +2063,7 @@ public class CharacterSelection {
 	/* Search OC's name on the table */  
 	public boolean searchOC(String name, Long userId, Long serverId)  {
 		
-		String query = "SELECT * FROM customCharacters "  
+		String query = "SELECT * FROM customcharacters "  
 					+ "WHERE user_Id = ? AND server_Id = ? AND name = ? " ; 
 		PreparedStatement stat = null; 
 		ResultSet res = null;
@@ -2092,7 +2098,7 @@ public class CharacterSelection {
 	 * */ 
 	public ArrayList<Character> getOCList(Long userId, Long serverId) 
 	{
-		String query = "SELECT cusChar_Id , name, url  FROM customCharacters " + 
+		String query = "SELECT cusChar_Id , name, url  FROM customcharacters " + 
 				"WHERE user_Id = "  + userId + " AND server_Id = " + serverId  + 
 				" ORDER BY timeCreated DESC";  
 	 Statement stat = null ;
@@ -2140,7 +2146,7 @@ public class CharacterSelection {
 	public Character getOC(String characterName, Long userId, Long serverId)  
 	{
 		
-		String query = "SELECT cusChar_Id, name, url FROM customCharacters " 
+		String query = "SELECT cusChar_Id, name, url FROM customcharacters " 
 				+ "WHERE user_Id = ? AND server_Id = ? AND name = ?"; 
 		
 		PreparedStatement stat = null;
@@ -2194,7 +2200,7 @@ public class CharacterSelection {
 
 	/* Check if User has any Ocs */ 
 	public boolean searchAllUserOcs(Long userId, Long serverId)  {
-		String query = "SELECT * FROM customCharacters " 
+		String query = "SELECT * FROM customcharacters " 
 					+ "WHERE user_Id = ? AND server_Id = ?";  
 		PreparedStatement stat = null;
 		ResultSet res = null; 
@@ -2228,9 +2234,9 @@ public class CharacterSelection {
 	public void removeAllOcs(Long userId, Long serverId)  {
 		
 		
-		String query = "DELETE character_Ids FROM character_Ids \r\n"
-				+ "INNER JOIN customCharacters ON customCharacters.cusChar_Id = character_Ids.id \r\n"
-				+ " WHERE customCharacters.server_Id = ? AND customCharacters.user_Id = ?";
+		String query = "DELETE character_ids FROM character_ids \r\n"
+				+ "INNER JOIN customcharacters ON customcharacters.cusChar_Id = character_ids.id \r\n"
+				+ " WHERE customcharacters.server_Id = ? AND customcharacters.user_Id = ?";
 		
 		PreparedStatement stat = null;
 		Connection conn = null; 
@@ -2263,10 +2269,10 @@ public class CharacterSelection {
 			conn = dataSource.getConnection(); 
 			String listStr =  userIds.toString().replace("[", "(");
 			listStr = listStr.replace("]", ")"); 
-			String query = "DELETE character_Ids FROM character_Ids "
-					+ "	INNER JOIN customCharacters ON customCharacters.cusChar_Id = character_Ids.id "
-					+ "	WHERE customCharacters.user_Id IN " + listStr 
-					+ "    AND customCharacters.server_Id = " + serverId + " ";  
+			String query = "DELETE character_ids FROM character_ids "
+					+ "	INNER JOIN customcharacters ON customcharacters.cusChar_Id = character_ids.id "
+					+ "	WHERE customcharacters.user_Id IN " + listStr 
+					+ "    AND customcharacters.server_Id = " + serverId + " ";  
 			stat = conn.prepareStatement(query); 
 			stat.execute(); 
 		}
@@ -2327,12 +2333,10 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery(); 
-			res.next();	
-			do
+			while (res.next()) 
 			{
 				names.add(res.getString(1));
 			}
-			while(res.next()); 
 		} 
 		catch (SQLException e) 
 		{
@@ -2353,9 +2357,9 @@ public class CharacterSelection {
 	{
 		
 		Statement stat = null; 
-		String query = "DELETE character_Ids FROM character_Ids \r\n"
-				+ "INNER JOIN customCharacters ON customCharacters.cusChar_Id = character_Ids.id \r\n"
-				+ " WHERE customCharacters.server_Id = " + guildId;
+		String query = "DELETE character_ids FROM character_ids \r\n"
+				+ "INNER JOIN customcharacters ON customcharacters.cusChar_Id = character_ids.id \r\n"
+				+ " WHERE customcharacters.server_Id = " + guildId;
 		Connection conn = null; 
 		
 		try 
@@ -2401,7 +2405,7 @@ public class CharacterSelection {
 	/* Search for collection list from database */
 	public boolean checkCollectLimit(Long userId, Long serverId)  
 	{
-		String query = "SELECT COUNT(col_Id) FROM playersCollection "
+		String query = "SELECT COUNT(col_Id) FROM playerscollection "
 				+ "WHERE user_Id =  ?  AND  server_Id =  ? "; 
 		
 		PreparedStatement stat = null;
@@ -2439,7 +2443,7 @@ public class CharacterSelection {
 		ArrayList<String > list = new ArrayList<String>(); 
 		long id =-1; 
 		String temp = null; 
-		String queryCollectList = "SELECT col_Id FROM playersCollection " 
+		String queryCollectList = "SELECT col_Id FROM playerscollection " 
 				+ " WHERE user_Id = ? AND server_Id = ? ORDER BY timeCreated DESC ";
 		
 		String queryGetCharacter  = null; 
@@ -2455,8 +2459,7 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery(); 
-			res.next(); 
-			do 
+			while(res.next())
 			{ 
 				id = Long.valueOf(res.getString(1)); 
 				
@@ -2465,13 +2468,13 @@ public class CharacterSelection {
 						 " SELECT  characters.name FROM characters"
 						+ " WHERE char_id = ?" 
 						+ " UNION" 
-						+ " SELECT name  FROM gameCharacters "
+						+ " SELECT name  FROM gamecharacters "
 						+ " WHERE gameCharacter_Id = ?"
 						+ " UNION"
 						+ " SELECT  sonas.name FROM sonas "
 						+ " WHERE  sona_Id = ?" 
 						+ " UNION"
-						+ " SELECT  name FROM customCharacters "
+						+ " SELECT  name FROM customcharacters "
 						+ " WHERE  cusChar_Id = ?";  
 				
 				stat2 = conn.prepareStatement(queryGetCharacter); 
@@ -2483,8 +2486,7 @@ public class CharacterSelection {
 				res2.next(); 
 				temp = res2.getString(1); 
 				list.add(temp); 
-			} 
-			while(res.next()); 
+			}  
 		} catch (SQLException e)
 		{
 			// TODO Auto-generated catch block
@@ -2593,11 +2595,11 @@ public class CharacterSelection {
 				+ " claims = (CASE WHEN claims > 0 THEN claims - 1 ELSE claims END) "
 				+ " WHERE server_id = " + serverId + " AND user_id = " + userId;  
 		
-		String quertyTwo = " INSERT INTO playersCollection (col_Id , user_Id , server_Id ) \r\n"
+		String quertyTwo = " INSERT INTO playerscollection (col_Id , user_Id , server_Id ) \r\n"
 				+ " SELECT * FROM ( SELECT " + characterId + " ,  " + userId +" , " + serverId +" ) AS tmp "
 				+ " WHERE NOT EXISTS "
 				+ " ( "
-				+ "	SELECT col_Id,server_Id FROM playersCollection \r\n"
+				+ "	SELECT col_Id,server_Id FROM playerscollection \r\n"
 				+ "    WHERE col_Id = " + characterId + " AND server_Id = " + serverId 
 				+ "  ) LIMIT 1; " ;
 		PreparedStatement updateStat = null ;
@@ -2790,30 +2792,7 @@ public class CharacterSelection {
 
 	
 	
-	/* Inserts user into playersInCollect if they haven't been already */ 
-	public void insertUserIntoCollect(long userId, long serverId)  {
-		String query = "INSERT IGNORE playersInCollect (user_Id, server_Id) " + 
-				" VALUES ( ? , ? )";
-		PreparedStatement stat = null;
-		Connection conn =null; 
-		try 
-		{
-			conn = dataSource.getConnection(); 
-			stat = conn.prepareStatement(query);
-			stat.setLong(1, userId);
-			stat.setLong(2, serverId);
-			stat.execute();
-		} catch (SQLException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		 finally 
-		 {
-				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
-				try { if (conn != null) {conn.close();} } catch (Exception e ) {} 
-		 }
-	}
+	
 
 	/* Decrement player roll in playerInCollect table */ 
 	public void decPlayerRoll(long userId, long serverId) 
@@ -2848,7 +2827,7 @@ public class CharacterSelection {
 	/* Check if character has already been claimed in the server */ 
 	public Long hasBeenClaimed(long charId, long serverId ) 
 	{
-		String query = "SELECT user_Id FROM playersCollection " + 
+		String query = "SELECT user_Id FROM playerscollection " + 
 				"WHERE server_Id = ? AND col_Id = ? " ; 
 		
 		PreparedStatement stat = null;
@@ -2885,7 +2864,7 @@ public class CharacterSelection {
 		
 		
 		
-		String query = "SELECT user_Id FROM playersCollection " + 
+		String query = "SELECT user_Id FROM playerscollection " + 
 				"WHERE server_Id = ?  AND col_Id = ?"; 
 		
 		PreparedStatement stat  = null; 
@@ -2918,7 +2897,7 @@ public class CharacterSelection {
 
 
 	public boolean hasCollectList(long userId, long serverId)  {
-		String query = "SELECT * FROM playersCollection " + 
+		String query = "SELECT * FROM playerscollection " + 
 				"WHERE server_Id = ? AND user_Id = ?"; 
 		
 		PreparedStatement stat = null;
@@ -2954,7 +2933,7 @@ public class CharacterSelection {
 	public void removeCollectCharacter(String characterName , long userId, long serverId)  
 	{
 		long id = this.getCharacterId(characterName,serverId); 
-		String query = "DELETE FROM playersCollection " + 
+		String query = "DELETE FROM playerscollection " + 
 				" WHERE col_Id = ?  AND user_Id = ? AND server_Id = ?"; 
 		PreparedStatement stat = null;
 		Connection conn = null ; 
@@ -2984,7 +2963,7 @@ public class CharacterSelection {
 	{
 		
 		long id = this.getCharacterId(characterName,serverId);
-		String query = "SELECT * FROM playersCollection " + 
+		String query = "SELECT * FROM playerscollection " + 
 				" WHERE col_Id = ?  AND user_Id = ? AND server_Id = ?";  
 		PreparedStatement stat = null;
 		boolean result = false; 
@@ -3016,7 +2995,7 @@ public class CharacterSelection {
 	/* Return list of characters of a user in collect game */ 
 	public ArrayList<String> getCollectNamesOfUser(long userId, long serverId) 
 	{
-		String query = " SELECT col_Id FROM playersCollection " 
+		String query = " SELECT col_Id FROM playerscollection " 
 					+ " WHERE user_Id = ? AND server_Id = ? "; 
 		
 		ArrayList<String > names = new ArrayList<String>(); 
@@ -3030,12 +3009,10 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery();
-			res.next(); 
-			do 
+			while(res.next())
 			{
 				names.add ( getCharacterNameById(res.getLong(1))) ; 
 			}
-			while(res.next()); 
 		} 
 		catch (SQLException e)
 		{
@@ -3057,11 +3034,11 @@ public class CharacterSelection {
 	public void swapUserCollectible(long trader, long tradee, long traderCharacterId, long tradeeCharacterId, long serverId) 
 	{
 		
-		String queryTrader = "UPDATE playersCollection " 
+		String queryTrader = "UPDATE playerscollection " 
 				+ " SET col_Id = "+ tradeeCharacterId +" WHERE col_Id = " + traderCharacterId +"  AND user_Id = " + trader +
 				"  AND server_Id = " + serverId; 
 		
-		String queryTradee = "UPDATE playersCollection " 
+		String queryTradee = "UPDATE playerscollection " 
 				+ " SET col_Id = " + traderCharacterId +" WHERE col_Id = " + tradeeCharacterId +" AND user_Id = " + tradee +
 				" AND server_Id = " + serverId; 
 		
@@ -3108,7 +3085,7 @@ public class CharacterSelection {
 	/* Void method sets the collect character as default image by updating its date */ 
 	public void setDefCollectCharacter(long charId, long userId, long serverId)  
 	{
-		String query = "UPDATE playersCollection " 
+		String query = "UPDATE playerscollection " 
 					+ " SET timeCreated = CURRENT_TIMESTAMP " 
 					+ " WHERE col_Id = ? "
 					+ " AND  user_Id = ?  "
@@ -3139,7 +3116,7 @@ public class CharacterSelection {
 	/* Method searches user has a character in the collect list */ 
 	public boolean getSearchCharIdSelect(int characterId, long userId, long serverId)  
 	{
-		String query = "SELECT * FROM playersCollection "
+		String query = "SELECT * FROM playerscollection "
 					+ " WHERE col_Id = " + characterId + " AND server_Id = " + serverId + " AND user_Id = " + userId; 
 		Statement stat = null;
 		ResultSet res = null; 
@@ -3169,7 +3146,7 @@ public class CharacterSelection {
 	/* Add character to wish list */ 
 	public void addToWishList(long charId, long userId, long serverId) 
 	{
-		String query = "INSERT INTO wishList (wish_Id, user_Id , server_Id)" 
+		String query = "INSERT INTO wishlist (wish_Id, user_Id , server_Id)" 
 					+ "  VALUES ( ? , ? , ? )";  
 		PreparedStatement stat = null;
 		Connection conn = null; 
@@ -3193,10 +3170,10 @@ public class CharacterSelection {
 	}
 	
 	/* Method checks limit and returns if reached */ 
-	public boolean wishListLimit(long userId, long serverId)  
+	public boolean wishlistLimit(long userId, long serverId)  
 	{
 		
-		String query = "SELECT COUNT(wish_Id) FROM wishList "
+		String query = "SELECT COUNT(wish_Id) FROM wishlist "
 				+ "WHERE user_Id = ? AND  server_Id = ? "; 
 		
 		PreparedStatement stat = null;
@@ -3233,7 +3210,7 @@ public class CharacterSelection {
 	{
 		CharacterSelection select = new CharacterSelection(); 
 		ArrayList<Character > list = new ArrayList<Character>(); 
-		String query = "SELECT wish_Id FROM wishList " 
+		String query = "SELECT wish_Id FROM wishlist " 
 				+ "WHERE user_Id = ? " + 
 				" AND server_Id = ?" ; 
 		PreparedStatement stat = null;
@@ -3246,15 +3223,12 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery(); 
-			res.next(); 
-			do 
-			{ 
+			while(res.next()) 
+			{
 				Long id = Long.valueOf(res.getString(1)); 
 				Character temp = select.getCharacterById(id); 
-				list.add(temp); 
-			} 
-			while(res.next()); 
-		
+				list.add(temp);
+			}
 		} catch (SQLException e) 
 		{
 			// TODO Auto-generated catch block
@@ -3272,7 +3246,7 @@ public class CharacterSelection {
 	/* Check user has any character in wishlist table */ 
 	public boolean hasWishList(long userId, long serverId) 
 	{
-		String query = "SELECT * FROM wishList " + 
+		String query = "SELECT * FROM wishlist " + 
 				"WHERE server_Id = ? AND user_Id = ?"; 
 		
 		PreparedStatement stat = null;
@@ -3306,7 +3280,7 @@ public class CharacterSelection {
 	public boolean searchWishList(String characterName, long userId, long serverId) 
 	{
 		long id = this.getCharacterId(characterName,serverId);
-		String query = "SELECT * FROM wishList " + 
+		String query = "SELECT * FROM wishlist " + 
 				" WHERE wish_Id = ?  AND user_Id = ?  AND server_Id = ?";  
 		PreparedStatement stat = null;
 		ResultSet res = null; 
@@ -3340,7 +3314,7 @@ public class CharacterSelection {
 	{
 		long id = this.getCharacterId(characterName,serverId);
 
-		String query = "DELETE FROM wishList " + 
+		String query = "DELETE FROM wishlist " + 
 				" WHERE wish_Id = ?  AND user_Id = ?  AND server_Id = ?" ;  
 		PreparedStatement stat = null;
 		Connection conn = null; 
@@ -3367,7 +3341,7 @@ public class CharacterSelection {
 
 	public ArrayList<String> getWishListNames(long userId, long serverId) 
 	{
-		String query = " SELECT wish_Id FROM wishList" 
+		String query = " SELECT wish_Id FROM wishlist" 
 				+ " WHERE user_Id = ?  AND server_Id = ? "; 
 	
 		ArrayList<String > names = new ArrayList<String>(); 
@@ -3381,12 +3355,10 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			res = stat.executeQuery();
-			res.next(); 
-			do 
+			while( res.next())
 			{
 				names.add ( getCharacterNameById(res.getLong(1))) ; 
-			}
-			while(res.next()); 
+			} 
 		} 
 		catch (SQLException e) 
 		{
@@ -3407,7 +3379,7 @@ public class CharacterSelection {
 	public ArrayList<String> getUsersOfWish(long charId, long serverId) 
 	{
 		
-		String query = "SELECT user_Id FROM wishList " 
+		String query = "SELECT user_Id FROM wishlist " 
 					+ " WHERE server_Id =  ? AND wish_Id = ?"; 
 		
 		PreparedStatement stat = null;
@@ -3457,7 +3429,7 @@ public class CharacterSelection {
 	/* Delete users wish list*/ 
 	public void clearWishList(long userId, long serverId) 
 	{
-		String query = "DELETE FROM wishList "
+		String query = "DELETE FROM wishlist "
 				+ " WHERE user_Id = ?" + " AND server_Id = ?"; 
 		PreparedStatement stat = null;
 		Connection conn = null ; 
@@ -3483,11 +3455,10 @@ public class CharacterSelection {
 	/* Method will delete all players and corresponding collection and wish list of a guild */ 
 	public void removeAllPlayersCollectInGuild(long serverId) 
 	{
-		String queryOne = " DELETE FROM playersInCollect "
-				+ "WHERE server_Id = " + serverId;
-		String queryTwo = "DELETE FROM playersCollection "
+		
+		String queryTwo = "DELETE FROM playerscollection "
 				+ "WHERE server_Id = " + serverId; 
-		String queryThree = "DELETE FROM wishList "
+		String queryThree = "DELETE FROM wishlist "
 				+ "WHERE server_Id = " + serverId; 
 		Statement stat = null;
 		Connection conn = null; 
@@ -3496,7 +3467,6 @@ public class CharacterSelection {
 			conn = dataSource.getConnection(); 
 			conn.setAutoCommit(false); // atomic
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-			stat.addBatch(queryOne); 
 			stat.addBatch(queryTwo);
 			stat.addBatch(queryThree);
 			stat.executeBatch(); 
@@ -3525,14 +3495,14 @@ public class CharacterSelection {
 		
 	}
 
-	/* Method will remove a particular user from tables playersInCollect , playersCollection and wishlist*/ 
+	/* Method will remove a particular user from tables playersincollect , playerscollection and wishlist*/ 
 	public void removeCollect(Long userId, Long serverId) 
 	{
-		String queryOne = " DELETE FROM playersInCollect "
+		String queryOne = " DELETE FROM playersincollect "
 				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
-		String queryTwo = "DELETE FROM playersCollection "
+		String queryTwo = "DELETE FROM playerscollection "
 				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
-		String queryThree = "DELETE FROM wishList "
+		String queryThree = "DELETE FROM wishlist "
 				+ "WHERE server_Id = " + serverId + " AND user_Id = " + userId;
 		Statement stat = null;
 		Connection conn = null; 
@@ -3559,19 +3529,19 @@ public class CharacterSelection {
 		}
 	}
 	
-	/* Method will remove a particular user from tables playersInCollect , playersCollection and wishlist*/ 
+	/* Method will remove a particular user from tables playersincollect , playerscollection and wishlist*/ 
 	public void removeCollectList(ArrayList<Long> userIds, Long serverId) 
 	{
 		
 		String listStr =  userIds.toString().replace("[", "(");
 		listStr = listStr.replace("]", ")"); 
-		String queryOne = "DELETE FROM playersInCollect "
+		String queryOne = "DELETE FROM playersincollect "
 				+ "WHERE user_Id IN " + listStr + " " 
 				+ "	 AND server_Id = " + serverId ;
-		String queryTwo = "DELETE FROM playersCollection "
+		String queryTwo = "DELETE FROM playerscollection "
 				+ "	WHERE user_Id IN " + listStr + " " 
 				+ "    AND server_Id = " + serverId;
-		String queryThree = "DELETE FROM wishList "
+		String queryThree = "DELETE FROM wishlist "
 				+ "	WHERE user_Id IN " + listStr + " "
 				+ "	AND server_Id = " + serverId;
 		Statement stat = null;
@@ -3602,16 +3572,7 @@ public class CharacterSelection {
 	/* Get all user ids from the server */ 
 	public ArrayList<Long> getServerUsers(long serverId )  
 	{
-		String query = "SELECT DISTINCT user_Id FROM sonas \r\n"
-				+ "  WHERE sonas.server_Id = " + serverId +" \r\n"
-				+ "  UNION SELECT DISTINCT user_Id FROM favorites\r\n"
-				+ "  WHERE favorites.server_Id = "+ serverId +" \r\n"
-				+ "  UNION SELECT DISTINCT user_Id FROM customCharacters\r\n"
-				+ "  WHERE customCharacters.server_Id = "+ serverId +" \r\n"
-				+ "  UNION SELECT DISTINCT user_Id FROM playersInCollect \r\n"
-				+ "  WHERE playersInCollect.server_Id = "+serverId+" \r\n"
-				+ "  UNION	SELECT DISTINCT user_Id FROM playersCollection \r\n"
-				+ "  WHERE playersCollection.server_Id = "+serverId+" ; "; 
+		String query = "SELECT user_id FROM unq_users WHERE server_id = " + serverId ;
 		Statement stat = null;
 		ResultSet res = null; 
 		Connection conn = null; 
@@ -3621,17 +3582,12 @@ public class CharacterSelection {
 		{
 			conn = dataSource.getConnection(); 
 			stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-			
 			res = stat.executeQuery(query); 
 			
 			users = new ArrayList<Long>(); 
-			if(res.next())
+			while(res.next())
 			{
-				do 
-				{ 
-					users.add(res.getLong(1)); 
-				}
-				while(res.next()); 
+				users.add(res.getLong(1)); 
 			}
 		} catch (SQLException e) 
 		{
@@ -3679,17 +3635,17 @@ public class CharacterSelection {
 			stat5 = conn.createStatement();
 			stat6 = conn.createStatement();
 			stat7 = conn.createStatement(); 
-			String query = "SELECT server_Id FROM playersInCollect";
+			String query = "SELECT server_Id FROM playersincollect";
 			res = stat.executeQuery(query); 
-			query = "SELECT server_Id FROM playersCollection"; 
+			query = "SELECT server_Id FROM playerscollection"; 
 			res2 = stat2.executeQuery(query); 
 			query = "SELECT server_Id FROM sonas";
 			res3 = stat3.executeQuery(query); 
 			query = "SELECT server_Id FROM waifus"; 
 			res4 = stat4.executeQuery(query); 
-			query = "SELECT server_Id FROM wishList"; 
+			query = "SELECT server_Id FROM wishlist"; 
 			res5 = stat5.executeQuery(query); 
-			query = "SELECT server_Id FROM customCharacters"; 
+			query = "SELECT server_Id FROM customcharacters"; 
 			res6 = stat6.executeQuery(query); 
 			query = "SELECT server_Id FROM favorites"; 
 			res7 = stat7.executeQuery(query); 
@@ -3893,7 +3849,7 @@ public class CharacterSelection {
 	 * 	field */ 
 	public void setDefOcCharacter(String name, long userId, long serverId) 
 	{
-		String query = "UPDATE customCharacters " + 
+		String query = "UPDATE customcharacters " + 
 						" SET timeCreated = CURRENT_TIMESTAMP " + 
 						" WHERE name = ?  AND user_Id = ? AND server_Id = ?";
 		
@@ -3927,9 +3883,9 @@ public class CharacterSelection {
 		
 			// Remove character from givers database
 			long characterId = this.getCharacterIdFromPlayersCollect(giftCharacterName, giverId, serverId); 
-			String queryOne = "DELETE FROM playersCollection "
+			String queryOne = "DELETE FROM playerscollection "
 					+ " WHERE user_Id = ? AND server_Id = ? AND col_Id = ?"; 
-			String quertyTwo = "INSERT INTO playersCollection(col_Id ,user_Id , server_Id ) " 
+			String quertyTwo = "INSERT INTO playerscollection(col_Id ,user_Id , server_Id ) " 
 					+ " VALUES ( ? , ? , ? )" ;
 			PreparedStatement statDelete = null;
 			PreparedStatement statInsert = null; 
@@ -4008,7 +3964,7 @@ public class CharacterSelection {
 
 	public ArrayList<String> CharacterGameModesOc(Long userId, Long serverId, long charId) 
 	{
-		String query = "SELECT * FROM customCharacters "
+		String query = "SELECT * FROM customcharacters "
 				+ "WHERE user_Id = ? AND server_Id = ?  AND cusChar_Id = ?";
 	
 		Connection conn = null; 
@@ -4132,30 +4088,6 @@ public class CharacterSelection {
 		}
 	}
 	
-	/* Update number of members estimated of each server */ 
-	public void updateMemberCount(int memberCount) 
-	{
-		String query = "REPLACE INTO server_info VALUES (1, ?)"; 
-		Connection conn = null; 
-		PreparedStatement stat = null; 
-		try 
-		{
-			conn = dataSource.getConnection(); 
-			stat = conn.prepareStatement(query);
-			stat.setInt(1, memberCount);
-			stat.execute(); 
-			
-		}
-		catch(SQLException e) 
-		{
-			e.printStackTrace();
-		}
-		finally 
-		{
-			try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
-			try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
-		}
-	}
 	
 	/*Get a random job returns its fields as string */
 	public ArrayList<String> getJob()
@@ -4171,7 +4103,7 @@ public class CharacterSelection {
 			stat = conn.prepareStatement(query);
 			res = stat.executeQuery(); 
 			res.next(); 
-			result.add(res.getString("job_id")); 
+			result.add( res.getString("job_id")); 
 			result.add( res.getString("occupation")); 
 			result.add( res.getString("job_desc")); 
 			result.add( res.getString("min")); 
@@ -4196,9 +4128,18 @@ public class CharacterSelection {
 	public HashMap<String , JSONObject > getJobCharacters(Long userId,Long serverId, String occupation)
 	{
 		HashMap<String, JSONObject> result = new HashMap<String,JSONObject>(); 
-		String query = "SELECT c.name, c.perks From characters as c "
-				+ "INNER JOIN playerscollection as pc ON c.char_Id AND pc.user_Id = ? AND pc.server_Id = ? "
-				+ " INNER JOIN chtr_jobs as cj ON c.char_Id = cj.char_Id AND cj.occupation = ?"; 
+		String query = 
+				" SELECT c.name, c.perks From characters as c \r\n"
+				+ "INNER JOIN playerscollection as pc ON c.char_Id = pc.col_Id AND pc.user_Id = ? AND pc.server_Id = ? \r\n"
+				+ "INNER JOIN chtr_jobs as cj ON c.char_Id = cj.char_Id AND cj.occupation = ?  \r\n"
+				+ "UNION \r\n"
+				+ "SELECT s.name , s.perks FROM sonas as s\r\n"
+				+ "INNER JOIN playerscollection as pc ON s.sona_Id = pc.col_Id AND pc.user_Id = ? AND pc.server_Id = ? \r\n"
+				+ "INNER JOIN chtr_jobs as cj ON s.sona_Id = cj.char_Id AND cj.occupation = ? "
+				+ "UNION \r\n"
+				+ "SELECT cc.name , cc.perks FROM customcharacters as cc\r\n"
+				+ "INNER JOIN playerscollection as pc ON cc.cusChar_Id  = pc.col_Id AND pc.user_Id = ? AND pc.server_Id = ? \r\n"
+				+ "INNER JOIN chtr_jobs as cj ON cc.cusChar_Id = cj.char_Id AND cj.occupation = ?"; 
 		Connection conn = null; 
 		PreparedStatement stat = null;
 		ResultSet res = null; 
@@ -4209,6 +4150,12 @@ public class CharacterSelection {
 			stat.setLong(1, userId);
 			stat.setLong(2, serverId);
 			stat.setString(3, occupation);
+			stat.setLong(4, userId);
+			stat.setLong(5, serverId);
+			stat.setString(6, occupation);
+			stat.setLong(7, userId);
+			stat.setLong(8, serverId);
+			stat.setString(9, occupation);
 			res = stat.executeQuery(); 
 			// iterate through rows 
 			while(res.next()) 
@@ -4826,4 +4773,1031 @@ public class CharacterSelection {
 			return images;
 		}
 		
+		
+		/*Add users in the unq_users table by batch */
+		public void addUsersToUnqueUsers(Long serverId, ArrayList<Member> users) 
+		{
+			String queryInsert ="INSERT IGNORE  INTO unq_users(server_id, user_id, cash, bank,  consumable_rolls, consumable_claims) "
+					+ " VALUES (" + serverId + " , ? , 0 , 0 , 0 , 0 ) "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert); 
+				conn.setAutoCommit(false); // make atmoic 
+				
+				for (Member id : users) 
+				{
+					statTrans.setLong(1, id.getIdLong());
+					statTrans.addBatch();
+				}
+				
+				statTrans.executeBatch(); 
+				// now commit 
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				if (conn != null) 
+				{
+					try {
+						conn.rollback();
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} 
+				}
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { ;statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.setAutoCommit(true);;conn.close(); } } catch(Exception e){} 
+			}
+		}
+		
+		
+		public void addServers(Long serverId) 
+		{
+			String queryInsert ="INSERT IGNORE INTO servers (server_id) VALUES (?)"; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert);  
+				statTrans.setLong(1, serverId);
+				statTrans.execute(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+		}
+
+		public ArrayList<Long> getServers() {
+
+			String query = "SELECT * FROM servers";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			ArrayList<Long> servers = new ArrayList<Long>(); 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				res = stat.executeQuery(); 
+				
+				while(res.next()) 
+				{
+					servers.add(res.getLong(1));  
+				}
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return servers;
+		}
+
+		public void deleteServer(ArrayList<Long> deleteServers)
+		{
+
+			String queryInsert ="DELETE FROM servers "
+					+ " WHERE server_id = ? "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert); 
+				conn.setAutoCommit(false); // make atmoic 
+				
+				for (Long serverId : deleteServers) 
+				{
+					statTrans.setLong(1, serverId);
+					statTrans.addBatch();
+				}
+				
+				statTrans.executeBatch(); 
+				// now commit 
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				try {
+					if (conn != null) { 
+					conn.rollback();
+					} 
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} 
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.setAutoCommit(true);;conn.close(); } } catch(Exception e){} 
+			}			
+		}
+
+		public HashMap<Long, ArrayList<Long>> getUsers() {
+			String query = "SELECT server_id, user_id FROM unq_users ";  
+			Connection conn = null; 
+			PreparedStatement stat = null; 
+			ResultSet res = null;
+			HashMap<Long, ArrayList<Long>> map = new HashMap<Long, ArrayList<Long>>() ; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				res = stat.executeQuery(); 
+				
+				while(res.next()) 
+				{
+					map.computeIfAbsent(res.getLong(1), k -> new ArrayList<Long>()).add(res.getLong(2)); 
+				}
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}		
+			return map; 
+		}
+
+		public void initalDeleteUsers(Long serverId, ArrayList<Member> users) {
+			
+			Connection conn = null; 
+			PreparedStatement statsDeleteUser = null;  
+			PreparedStatement statDeleteSona = null; 
+			PreparedStatement statDeleteOcs= null; 
+			PreparedStatement statWaifus  = null; 
+			PreparedStatement statFavorites = null; 
+			PreparedStatement statCollect = null; 
+			PreparedStatement statWish = null; 
+			
+			ArrayList<Long> ids = new ArrayList<>(); 
+			for(int i =0; i < users.size(); ++i ) 
+			{
+				ids.add(users.get(i).getIdLong()); 
+			}
+			
+			String listStr =  ids.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statsDeleteUser = conn.prepareStatement("DELETE FROM unq_users  "
+						+ " WHERE server_id = ? AND user_id NOT IN " + listStr ); 
+				statDeleteSona = conn.prepareStatement("DELETE FROM sonas WHERE  "
+						+ " server_Id = ? AND user_Id NOT IN " + listStr );
+				statDeleteOcs = conn.prepareStatement("DELETE c FROM character_ids c"
+						+ " INNER JOIN customcharacters cc ON cc.cusChar_Id = c.id "
+						+ " WHERE cc.user_Id NOT IN " + listStr + "  AND cc.server_Id = ? "); 
+				statWaifus = conn.prepareStatement("DELETE FROM waifus "
+						+ " WHERE server_Id = ? AND user_Id NOT IN " + listStr );
+				statFavorites  =conn.prepareStatement(" DELETE FROM favorites "
+						+ "WHERE server_Id = ? AND user_Id NOT IN " + listStr );
+				statCollect = conn.prepareStatement("DELETE FROM playerscollection "
+						+ " WHERE server_Id = ? AND user_Id NOT IN  " + listStr); 
+				
+				statWish = conn.prepareStatement("DELETE FROM wishlist "
+						+ " WHERE server_Id = ? AND user_Id NOT IN  " + listStr); 
+				conn.setAutoCommit(false); // make atmoic 
+				
+				
+				statsDeleteUser.setLong(1, serverId);
+				statsDeleteUser.addBatch();
+				
+				statDeleteSona.setLong(1, serverId);
+				statDeleteSona.addBatch();
+				
+				statDeleteOcs.setLong(1, serverId);
+				statDeleteOcs.addBatch();
+				
+				statWaifus.setLong(1, serverId);
+				statWaifus.addBatch();
+				
+				
+				statFavorites.setLong(1, serverId);
+				statFavorites.addBatch();
+				
+				statCollect.setLong(1, serverId);
+				statCollect.addBatch();
+				
+				statWish.setLong(1, serverId);
+				statWish.addBatch(); 
+				
+				statsDeleteUser.execute(); 
+				statDeleteSona.execute(); 
+				statDeleteOcs.execute(); 
+				statWaifus.execute(); 
+				statFavorites.execute(); 
+				statCollect.execute(); 	
+				statWish.execute(); 
+				// now commit 
+			
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				if(conn != null) {
+					try {
+						conn.rollback();
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+			finally 
+			{
+				
+				try {  if(statsDeleteUser != null) { statsDeleteUser.close(); } } catch(Exception e){} 
+				try {  if(statDeleteSona != null) { statDeleteSona.close(); } } catch(Exception e){} 
+				try {  if(statDeleteOcs != null) { statDeleteOcs.close(); } } catch(Exception e){} 
+				try {  if(statWaifus != null) { statWaifus.close(); } } catch(Exception e){} 
+				try {  if(statFavorites != null) { statFavorites.close(); } } catch(Exception e){} 
+				try {  if(statCollect != null) { statCollect.close(); } } catch(Exception e){} 
+				try {  if(statWish != null) { statWish.close(); } } catch(Exception e){} 
+
+				
+				try {  if(conn != null) { conn.setAutoCommit(true); conn.close(); } } catch(Exception e){} 
+			}
+			
+		}
+
+		public void deleteUser(Long serverId, ArrayList<Long> users) {
+			Connection conn = null; 
+			PreparedStatement statsDeleteUser = null;  
+			PreparedStatement statDeleteSona = null; 
+			PreparedStatement statDeleteOcs= null; 
+			PreparedStatement statWaifus  = null; 
+			PreparedStatement statFavorites = null; 
+			PreparedStatement statCollect = null; 
+			PreparedStatement statWishList = null; 
+
+			String listStr =  users.toString().replace("[", "(");
+			listStr = listStr.replace("]", ")"); 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statsDeleteUser = conn.prepareStatement("DELETE FROM unq_users  "
+						+ " WHERE server_id = ? AND user_id  IN " + listStr ); 
+				statDeleteSona = conn.prepareStatement("DELETE FROM sonas WHERE  "
+						+ " server_Id = ? AND user_Id  IN " + listStr );
+				statDeleteOcs = conn.prepareStatement("DELETE c FROM character_ids c"
+						+ " INNER JOIN customcharacters cc ON cc.cusChar_Id = c.id "
+						+ " WHERE cc.user_Id  IN " + listStr + "  AND cc.server_Id = ? "); 
+				statWaifus = conn.prepareStatement("DELETE FROM waifus "
+						+ " WHERE server_Id = ? AND user_Id  IN " + listStr );
+				statFavorites  =conn.prepareStatement(" DELETE FROM favorites "
+						+ "WHERE server_Id = ? AND user_Id  IN " + listStr );
+				statCollect = conn.prepareStatement("DELETE FROM playerscollection "
+						+ " WHERE server_Id = ? AND user_Id  IN  " + listStr); 
+				statWishList = conn.prepareStatement("DELETE FROM wishlist "
+						+ " WHERE server_Id = ? AND user_Id  IN  " + listStr); 
+				conn.setAutoCommit(false); // make atmoic 
+				
+				
+				statsDeleteUser.setLong(1, serverId);
+				statsDeleteUser.addBatch();
+				
+				statDeleteSona.setLong(1, serverId);
+				statDeleteSona.addBatch();
+				
+				statDeleteOcs.setLong(1, serverId);
+				statDeleteOcs.addBatch();
+				
+				statWaifus.setLong(1, serverId);
+				statWaifus.addBatch();
+				
+				
+				statFavorites.setLong(1, serverId);
+				statFavorites.addBatch();
+				
+				statCollect.setLong(1, serverId);
+				statCollect.addBatch();
+				
+				statWishList.setLong(1, serverId);
+				statWishList.addBatch();
+				
+				statsDeleteUser.execute(); 
+				statDeleteSona.execute(); 
+				statDeleteOcs.execute(); 
+				statWaifus.execute(); 
+				statFavorites.execute(); 
+				statCollect.execute(); 	
+				statWishList.execute();
+
+				// now commit 
+			
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				if(conn != null) {
+					try {
+						conn.rollback();
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+			finally 
+			{
+				
+				try {  if(statsDeleteUser != null) { statsDeleteUser.close(); } } catch(Exception e){} 
+				try {  if(statDeleteSona != null) { statDeleteSona.close(); } } catch(Exception e){} 
+				try {  if(statDeleteOcs != null) { statDeleteOcs.close(); } } catch(Exception e){} 
+				try {  if(statWaifus != null) { statWaifus.close(); } } catch(Exception e){} 
+				try {  if(statFavorites != null) { statFavorites.close(); } } catch(Exception e){} 
+				try {  if(statCollect != null) { statCollect.close(); } } catch(Exception e){} 
+				try {  if(statWishList != null) { statWishList.close(); } } catch(Exception e){} 
+				
+				try {  if(conn != null) { conn.setAutoCommit(true); conn.close(); } } catch(Exception e){} 
+			}
+			
+		}
+
+		public void resetMoney(Long serverId) {
+			String queryInsert =" UPDATE unq_users  "
+					+ " SET cash = 0 , bank = 0 "
+					+ " WHERE server_id = ? "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert); 
+				conn.setAutoCommit(false); // make atmoic 
+				statTrans.setLong(1, serverId);
+				statTrans.execute(); 
+				// now commit 
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				try {
+					if (conn != null) { 
+					conn.rollback();
+					} 
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} 
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.setAutoCommit(true);;conn.close(); } } catch(Exception e){} 
+			}						
+		}
+		
+		
+		
+		public void resetConsumClaims(Long serverId) {
+			String queryInsert =" UPDATE unq_users  "
+					+ " SET consumable_claims = 0 , claims = 1 "
+					+ " WHERE server_id = ? "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert); 
+				conn.setAutoCommit(false); // make atmoic 
+				statTrans.setLong(1, serverId);
+				statTrans.execute(); 
+				// now commit 
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				try {
+					if (conn != null) { 
+					conn.rollback();
+					} 
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} 
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.setAutoCommit(true);;conn.close(); } } catch(Exception e){} 
+			}						
+		}
+		
+		
+		public void resetConsumRolls(Long serverId) {
+			String queryInsert =" UPDATE unq_users  "
+					+ " SET consumable_rolls = 0 , rolls = 3 "
+					+ " WHERE server_id = ? "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;  
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryInsert); 
+				conn.setAutoCommit(false); // make atmoic 
+				statTrans.setLong(1, serverId);
+				statTrans.execute(); 
+				// now commit 
+				conn.commit(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+				try {
+					if (conn != null) { 
+					conn.rollback();
+					} 
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} 
+			}
+			finally 
+			{
+				
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.setAutoCommit(true);;conn.close(); } } catch(Exception e){} 
+			}						
+		}
+		
+		
+		/*Method to updgrade a selected characters perk */ 
+		public boolean upgradePerk(Long userId, Long serverId, String characterName, String perk) {
+			String queryUpdate ="WITH item as \r\n"
+					+ "(\r\n"
+					+ "	SELECT * FROM items \r\n"
+					+ "    WHERE items.item_name = ? \r\n"
+					+ ")\r\n"
+					+ "UPDATE unq_users u \r\n"
+					+ "LEFT JOIN customcharacters  cc ON \r\n"
+					+ "u.user_id = cc.user_Id AND u.server_id = cc.server_id\r\n"
+					+ "LEFT JOIN sonas as s ON\r\n"
+					+ "u.user_id = s.user_Id AND u.server_id = s.server_Id\r\n"
+					+ "SET \r\n"
+					+ "	u.cash = CASE \r\n"
+					+ "				WHEN u.cash >= (SELECT price FROM item) THEN u.cash - (SELECT price FROM item)\r\n"
+					+ "                ELSE u.cash \r\n"
+					+ "                END, \r\n"
+					+ "	cc.perks = CASE \r\n"
+					+ "				WHEN cc.name = ? THEN\r\n"
+					+ "				JSON_SET(cc.perks, '$."+perk+"', JSON_EXTRACT(cc.perks, '$."+ perk +"') + 1)\r\n"
+					+ "                ELSE cc.perks\r\n"
+					+ "				END,\r\n"
+					+ "	s.perks = CASE \r\n"
+					+ "				WHEN s.name= ? THEN\r\n"
+					+ "				JSON_SET(s.perks, '$."+ perk +"', JSON_EXTRACT(s.perks, '$." + perk +"') + 1)\r\n"
+					+ "                ELSE s.perks\r\n"
+					+ "				END\r\n"
+					+ "WHERE u.user_id = ? AND u.cash >= (SELECT price FROM item) AND u.server_id = ? "; 
+			
+			String decPerkSona  = "With target as \r\n"
+					+ "(\r\n"
+					+ "	SELECT sonas.sona_Id as id FROM sonas \r\n"
+					+ "    WHERE sonas.server_Id = ? AND sonas.user_Id = ?\r\n"
+					+ "    AND sonas.name = ? \r\n"
+					+ "    UNION\r\n"
+					+ "    SELECT customcharacters.cusChar_Id as id FROM customcharacters \r\n"
+					+ "    WHERE customcharacters.server_Id = ? AND customcharacters.user_Id = ?\r\n"
+					+ "    AND customcharacters.name = ?\r\n"
+					+ ") \r\n"
+					+ "UPDATE sonas \r\n"
+					+ "SET upgrade_limit = upgrade_limit - 1 \r\n"
+					+ "WHERE sonas.sona_Id = (SELECT id FROM target) ";
+			
+			String decPerkOc = "With target as \r\n"
+					+ "(\r\n"
+					+ "	SELECT sonas.sona_Id as id FROM sonas \r\n"
+					+ "    WHERE sonas.server_Id = ? AND sonas.user_Id = ?\r\n"
+					+ "    AND sonas.name = ?\r\n"
+					+ "    UNION\r\n"
+					+ "    SELECT customcharacters.cusChar_Id as id FROM customcharacters \r\n"
+					+ "    WHERE customcharacters.server_Id = ? AND customcharacters.user_Id = ? \r\n"
+					+ "    AND customcharacters.name = ? \r\n"
+					+ ") \r\n"
+					+ "UPDATE customcharacters \r\n"
+					+ "SET upgrade_limit = upgrade_limit - 1 \r\n"
+					+ "WHERE customcharacters.cusChar_Id= (SELECT id FROM target)"; 
+			
+			Connection conn = null; 
+			PreparedStatement statTrans = null;
+			PreparedStatement statDecPerkSonaStat = null;
+			PreparedStatement statDecPerkOcStat = null;
+			
+			int rows = 0 ; 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(queryUpdate);
+				statTrans.setString(1,perk);
+				statTrans.setString(2,characterName);
+				statTrans.setString(3,characterName);
+				statTrans.setLong(4,userId);
+				statTrans.setLong(5,serverId);
+				
+				statDecPerkSonaStat = conn.prepareStatement(decPerkSona);
+				statDecPerkSonaStat.setLong(1, serverId);
+				statDecPerkSonaStat.setLong(2, userId);
+				statDecPerkSonaStat.setString(3, characterName);
+				statDecPerkSonaStat.setLong(4, serverId);
+				statDecPerkSonaStat.setLong(5, userId);
+				statDecPerkSonaStat.setString(6, characterName);
+				
+				
+				statDecPerkOcStat = conn.prepareStatement(decPerkOc);
+				statDecPerkOcStat.setLong(1, serverId);
+				statDecPerkOcStat.setLong(2, userId);
+				statDecPerkOcStat.setString(3, characterName);
+				statDecPerkOcStat.setLong(4, serverId);
+				statDecPerkOcStat.setLong(5, userId);
+				statDecPerkOcStat.setString(6, characterName);
+				
+				rows = statTrans.executeUpdate() ;
+				statDecPerkSonaStat.execute(); 
+				statDecPerkOcStat.execute(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+			}
+			finally 
+			{
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(statDecPerkSonaStat != null) { statDecPerkSonaStat.close(); } } catch(Exception e){} 
+				try {  if(statDecPerkOcStat != null ) { statDecPerkOcStat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return (rows > 0);
+		}
+
+		public ArrayList<String> getUsersCustomNames(long userId, long serverId) {
+			ArrayList<String> names = new ArrayList<String>();
+			
+			String query = "SELECT name FROM customcharacters " 
+			+ " WHERE user_Id = ? AND server_Id = ? " 
+			 + "UNION "
+			 + "SELECT name FROM sonas "
+			 + "WHERE user_Id = ? AND server_Id = ? "; 
+
+			
+			PreparedStatement stat = null;
+			ResultSet res = null; 
+			Connection conn = null; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setLong(1, userId);
+				stat.setLong(2, serverId);
+				stat.setLong(3, userId);
+				stat.setLong(4, serverId);
+				res = stat.executeQuery(); 
+				while( res.next())
+				{
+					names.add(res.getString(1));
+				} 
+			} 
+			catch (SQLException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			finally
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			
+			return names; 
+		}
+
+		public ArrayList<String> getOccupation(Long characterId) {
+			ArrayList<String> jobs = new ArrayList<String>();
+			
+			String query = "SELECT occupation "
+					+ "FROM chtr_jobs  "
+					+ " WHERE char_Id = ? "; 
+
+			
+			PreparedStatement stat = null;
+			ResultSet res = null; 
+			Connection conn = null; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				stat.setLong(1, characterId);
+				res = stat.executeQuery(); 
+				while(res.next())
+				{
+					jobs.add(res.getString(1));
+				} 
+			} 
+			catch (SQLException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			finally
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			
+			return jobs; 
+		}
+		
+		
+		/*Method to updgrade a selected characters perk */ 
+		public boolean perkLimit(Long userId, Long serverId, String characterName, String perk) {
+			String querySelect ="WITH flag as \r\n"
+					+ "(\r\n"
+					+ "	\r\n"
+					+ "     SELECT JSON_EXTRACT(perks, '$."+perk+"') as bonus FROM customcharacters \r\n"
+					+ "    WHERE name= ? AND user_Id = ? AND server_Id = ? \r\n"
+					+ "    UNION\r\n"
+					+ "    SELECT JSON_EXTRACT(perks, '$."+perk+"') as bonus FROM sonas \r\n"
+					+ "    WHERE name = ?  AND user_Id =? AND server_Id = ?  \r\n"
+					+ ")\r\n"
+					+ "SELECT * FROM flag , perklimit\r\n"
+					+ "WHERE perklimit.name = ? AND (flag.bonus + 1 ) <= perklimit.max; "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;
+			ResultSet res= null; 
+			boolean result = false; 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(querySelect);
+				statTrans.setString(1,characterName);
+				statTrans.setLong(2,userId);
+				statTrans.setLong(3,serverId);
+				statTrans.setString(4,characterName);
+				statTrans.setLong(5,userId);
+				statTrans.setLong(6,serverId);
+				statTrans.setString(7,perk);
+				res = statTrans.executeQuery() ;
+				result = res.next(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return result ;
+		}
+
+		public Date nextInterestReset() {
+		
+			
+			PreparedStatement statTime = null;
+
+			ResultSet res = null; 
+			Connection conn = null;
+			Date date = null; 
+			try 
+			{	
+				String query = "SELECT LAST_EXECUTED FROM INFORMATION_SCHEMA.events\r\n"
+						+ "WHERE EVENT_NAME = \"resetInterest\"";
+				conn = dataSource.getConnection(); 
+				
+				statTime = conn.prepareStatement(query);
+				res = statTime.executeQuery(); 
+				res.next(); 
+				date = res.getTimestamp(1, Calendar.getInstance(TimeZone.getTimeZone("GMT")));  
+				
+			} 
+			catch (SQLException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			finally 
+			{
+				
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(statTime != null) { statTime.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return date;
+			
+		}
+
+		public Integer  getBankInterest(Long userId, Long serverId) {
+			
+			PreparedStatement statInterestRest = null;
+
+			ResultSet res = null; 
+			Connection conn = null;
+			Integer  result = null; 
+			try 
+			{	
+				String query = "SELECT bank FROM unq_users "
+						+ " WHERE user_id = ? AND server_id = ? AND collect_interest = 'F' ";
+				String queryTwo = "UPDATE unq_users "
+						+ " SET collect_interest = 'T' "
+						+ " WHERE user_id = ? AND server_id = ? "; 
+				conn = dataSource.getConnection(); 
+				statInterestRest = conn.prepareStatement(query);
+				statInterestRest.setLong(1, userId);
+				statInterestRest.setLong(2, serverId);
+				res = statInterestRest.executeQuery();   
+				if(res.next()) 
+				{
+					result = res.getInt(1); 
+				}
+				
+				// now update
+				if(result != null) 
+				{
+					statInterestRest = conn.prepareStatement(queryTwo); 
+					statInterestRest.setLong(1, userId);
+					statInterestRest.setLong(2, serverId);
+					statInterestRest.executeUpdate(); 
+				}
+			} 
+			catch (SQLException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(statInterestRest != null) { statInterestRest.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return result;
+		}
+
+		public HashMap<String, JSONObject> getPCByPerk(Long userId, Long serverId, String string) {
+			PreparedStatement getChtr = null;
+
+			ResultSet res = null; 
+			Connection conn = null;
+			HashMap<String, JSONObject>  result = new HashMap<String,JSONObject>(); 
+			try 
+			{	
+				String query = "SELECT name,perks FROM characters as c\r\n"
+						+ "JOIN playerscollection as pc ON c.char_Id = pc.col_Id \r\n"
+						+ "AND  c.perks->> '$."+string+" ' <> 0 AND pc.user_Id = ? AND pc.server_Id = ? \r\n"
+						+ "UNION\r\n"
+						+ "SELECT name,perks FROM customcharacters as cc\r\n"
+						+ "JOIN playerscollection as pc ON cc.cusChar_Id = pc.col_Id \r\n"
+						+ "AND  cc.perks->> '$."+string+"' <> 0 \r\n"
+						+ "AND cc.user_Id = ? AND cc.server_Id = ? \r\n"
+						+ "UNION\r\n"
+						+ "SELECT name,perks FROM sonas as s\r\n"
+						+ "JOIN playerscollection as pc ON s.sona_Id= pc.col_Id \r\n"
+						+ "AND  s.perks->> '$."+string+"' <> 0 AND s.user_Id = ? AND\r\n"
+						+ "s.server_Id =  ?   "; 
+				conn = dataSource.getConnection(); 
+				getChtr = conn.prepareStatement(query);
+				getChtr.setLong(1, userId);
+				getChtr.setLong(2, serverId);
+				getChtr.setLong(3, userId);
+				getChtr.setLong(4, serverId);
+				getChtr.setLong(5, userId);
+				getChtr.setLong(6, serverId);
+				res = getChtr.executeQuery();  
+				
+				while(res.next())
+				{
+					result.put(res.getString(1), new JSONObject(  res.getString(2))); 
+				}
+				
+			} 
+			catch (SQLException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(getChtr != null) { getChtr.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return result;
+		}
+		
+		/*Get a random crime returns its fields as string */
+		public ArrayList<String> getCrime()
+		{
+			ArrayList<String> result = new ArrayList<String>(); 
+			String query = "WITH chosen_crime AS \r\n"
+					+ "(\r\n"
+					+ "	SELECT name \r\n"
+					+ "    FROM crimeprob \r\n"
+					+ "    ORDER BY RAND()/weight \r\n"
+					+ "    LIMIT 1\r\n"
+					+ ") \r\n"
+					+ "SELECT * FROM crimes\r\n"
+					+ "WHERE crimes.type = (SELECT name FROM chosen_crime)\r\n"
+					+ "ORDER BY RAND() LIMIT 1 "; 
+			Connection conn = null; 
+			PreparedStatement stat = null;
+			ResultSet res = null; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				res = stat.executeQuery(); 
+				res.next(); 
+				result.add( res.getString("type"));  
+				result.add( res.getString("job_desc")); 
+				result.add( res.getString("min")); 
+				result.add( res.getString("max")); 
+				
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			
+			return result; 
+		}
+		
+		/*Upgrade limit */  
+		public boolean upgradeLimit(Long userId, Long serverId, String characterName) {
+			String querySelect ="SELECT name  FROM sonas \r\n"
+					+ "WHERE sonas.user_Id = ? AND \r\n"
+					+ "sonas.server_Id = ? AND \r\n"
+					+ " name = ?\r\n AND "
+					+ "upgrade_limit - 1 >= 0 \r\n"
+					+ " UNION \r\n"
+					+ " SELECT name FROM customcharacters \r\n"
+					+ " WHERE customcharacters.user_Id = ? AND \r\n"
+					+ " customcharacters.server_Id = ? AND\r\n"
+					+ "name = ? \r\n AND "
+					+ "upgrade_limit - 1 >= 0 "; 
+			Connection conn = null; 
+			PreparedStatement statTrans = null;
+			ResultSet res= null; 
+			boolean result = false; 
+			try
+			{
+				conn = dataSource.getConnection(); 
+				statTrans = conn.prepareStatement(querySelect);
+				statTrans.setLong(1,userId);
+				statTrans.setLong(2,serverId);
+				statTrans.setString(3,characterName);
+				statTrans.setLong(4,userId);
+				statTrans.setLong(5,serverId);
+				statTrans.setString(6,characterName);
+				res = statTrans.executeQuery() ;
+				result = res.next(); 
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace(); 
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(statTrans != null) { statTrans.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return result ;
+		}
+		
+		/* Return all distinct jobs from the db */ 
+		public ArrayList<String> getJobs() {
+			ArrayList<String> result = new ArrayList<String>(); 
+			String query = " SELECT DISTINCT occupation FROM chtr_jobs "; 
+			Connection conn = null; 
+			PreparedStatement stat = null;
+			ResultSet res = null; 
+			try 
+			{
+				conn = dataSource.getConnection(); 
+				stat = conn.prepareStatement(query);
+				res = stat.executeQuery(); 
+				while(res.next())
+				{
+					result.add(res.getString(1));
+				}
+				
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+			}
+			finally 
+			{
+				try {  if(res != null) { res.close(); } } catch(Exception e){} 
+				try {  if(stat != null) { stat.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			return result; 
+		}
+
+		/* Insert guilds and delete non-exising guilds */ 
+		public void insertExistingGuilds(ArrayList<Long> guildIds) 
+		{
+			String placeholder= guildIds.toString().replace("[", "").replace("]", ""); 
+			String queryInsert ="INSERT IGNORE INTO servers (server_id) VALUES (?)"; 
+			String queryDelete = "DELETE FROM servers WHERE server_id NOT IN " + "(" + placeholder + ") "; 
+			Connection conn = null; 
+			PreparedStatement statsInsert = null;  
+			PreparedStatement statsDelete = null;  
+
+			try
+			{
+				/* Insert servers */ 
+				conn = dataSource.getConnection(); 
+				conn.setAutoCommit(false);
+				statsInsert = conn.prepareStatement(queryInsert);  
+				for (int i =0 ; i < guildIds.size() ; ++i) 
+				{
+					statsInsert.setLong(1, guildIds.get(i));
+					statsInsert.addBatch();
+				}
+				statsInsert.executeBatch(); 
+				/* Delete non-existing serves */
+				statsDelete  = conn.prepareCall(queryDelete); 
+				statsDelete.execute(); 
+				conn.setAutoCommit(true);
+
+			}
+			catch(SQLException e) 
+			{
+				e.printStackTrace();
+				if(conn != null) {
+					try {
+						conn.rollback();
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					finally 
+					{
+						try {
+							conn.setAutoCommit(true);
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					} 
+				}
+			}
+			finally 
+			{
+				
+				try {  if(statsInsert != null) { statsInsert.close(); } } catch(Exception e){} 
+				try {  if(statsDelete!= null) { statsInsert.close(); } } catch(Exception e){} 
+				try {  if(conn != null) { conn.close(); } } catch(Exception e){} 
+			}
+			
+		}
+
+
 }

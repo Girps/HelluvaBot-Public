@@ -1,22 +1,26 @@
 package events;
 
 import java.awt.Color;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
+import java.util.Date; 
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 
 import CharactersPack.CharacterSelection;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -27,8 +31,10 @@ public class EconomyCommand extends ListenerAdapter{
 	
 	private  ExecutorService executor;
 	private ScheduledExecutorService sexecutor; 
-	private volatile ConcurrentHashMap<Pair<Long, Long>, Instant > map = new ConcurrentHashMap<Pair<Long, Long>, Instant>(); 
-	private final String souls = "<:souls:1352010110997762103>";
+	private volatile ConcurrentHashMap<Pair<Long, Long>, Instant > jobsTracker = new ConcurrentHashMap<Pair<Long, Long>, Instant>(); 
+	private volatile ConcurrentHashMap<Pair<Long, Long>, Instant > crimeTracker = new ConcurrentHashMap<Pair<Long, Long>, Instant>(); 
+
+	private final String souls = "<:souls:1352007660144431215>";
 	public EconomyCommand(ExecutorService executor, ScheduledExecutorService sexecutor) 
 	{ 
 		this.executor = executor; 
@@ -37,13 +43,13 @@ public class EconomyCommand extends ListenerAdapter{
 		// use scheduler to clear hashmap every few minutes. 
 		this.sexecutor.scheduleAtFixedRate( () -> 
 		{
-			Map<Pair<Long,Long>, Instant> mapIt = map; 
+			Map<Pair<Long,Long>, Instant> mapIt = jobsTracker; 
 			mapIt.forEach( (key, value) -> 
 			{
 				// if off duration get rid of it
 				if(Instant.now().getEpochSecond() -  value.getEpochSecond() > 900) 
 				{
-					map.remove(key); 
+					jobsTracker.remove(key); 
 				}
 			}); 
 		}, 0, 15, TimeUnit.MINUTES); 
@@ -70,15 +76,21 @@ public class EconomyCommand extends ListenerAdapter{
 			
 			for (Map.Entry<String, JSONObject> en : chtrs.entrySet()) 
 			{
-				double bonus = (en.getValue().getDouble("bonus") / 100 ); // bonus percentage 
-				int bonusRes = (int)( pay * bonus); // get bonus 
-				bonusesCal += bonusRes; 
-				expression += " + " + en.getKey() + " bonus " + bonusRes;  
+				if (en.getValue().getInt("bonus") != 0  )
+				{ 
+					double bonus = (en.getValue().getDouble("bonus") / 100 ); // bonus percentage 
+					int bonusRes = (int)( pay * bonus); // get bonus 
+					bonusesCal += bonusRes; 
+				}
 			}
 		}
-		
+		if (bonusesCal > 0) {
+		expression +=  bonusesCal; 
+		} 
 		int earned = pay + bonusesCal; 
-		String result = "Earned: " + earned + " = " + " Paid " + pay  + expression; 
+		
+		String result = "Earned: " + earned + " = " + " Paid " 
+		+ pay  + (  !expression.equalsIgnoreCase("") ?  (" + character bonus: " + expression ) : "" );  
 		// now add money to user's cash 
 		select.sendCash(userId, serverId, earned);
 		// return builder 
@@ -103,20 +115,24 @@ public class EconomyCommand extends ListenerAdapter{
 				event.deferReply().queue(); 
 				Long userId = event.getUser().getIdLong(); 
 				Long serverId = event.getGuild().getIdLong(); 
+				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				// initally add user in the map  
-				if (!map.containsKey(Pair.of(serverId, userId))) 
+				if (!jobsTracker.containsKey(Pair.of(serverId, userId))) 
 				{
 					// add it 
 					Instant start = Instant.now().minus(Duration.ofSeconds(1000)); 
-					map.put(Pair.of(serverId, userId), start); 
+					jobsTracker.put(Pair.of(serverId, userId), start); 
 				}
-				
+
 				// if within duration do the job otherwise deny
-				if(Instant.now().getEpochSecond() - map.get(Pair.of(serverId, userId)).getEpochSecond()  > 900)  
+				if(Instant.now().getEpochSecond() - jobsTracker.get(Pair.of(serverId, userId)).getEpochSecond()  > 900)  
 				{
 					// do the job 
 					Instant start = Instant.now(); 
-					map.put(Pair.of(serverId, userId), start); 
+					jobsTracker.put(Pair.of(serverId, userId), start); 
 					// method to send get job id, characters involved , and send embed with money modified by characters in collect 
 					EmbedBuilder builder = doJob(userId, event.getGuild().getIdLong());
 					builder.setAuthor(event.getUser().getName(), event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
@@ -124,7 +140,7 @@ public class EconomyCommand extends ListenerAdapter{
 				}
 				else // not done 
 				{
-					Long time =   map.get(Pair.of(serverId, userId)).plus(Duration.ofSeconds(900)).getEpochSecond() - Instant.now().getEpochSecond(); 
+					Long time =   jobsTracker.get(Pair.of(serverId, userId)).plus(Duration.ofSeconds(900)).getEpochSecond() - Instant.now().getEpochSecond(); 
 					int minutes = (int) (time / 60);
 					int seconds = (int)(time % 60); 
 					event.getHook().sendMessage( event.getUser().getAsMention() + " you have to wait " + minutes + 
@@ -140,17 +156,22 @@ public class EconomyCommand extends ListenerAdapter{
 				event.deferReply().queue(); 
 				Long userId = event.getUser().getIdLong(); 
 				Long serverId = event.getGuild().getIdLong(); 
-				
-				CharacterSelection select = new CharacterSelection(); 
+				DecimalFormat form = new DecimalFormat("#,###"); 
+				CharacterSelection select = new CharacterSelection();
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				ArrayList<String> fields = select.getBalance(userId, serverId);
-				String cashStr = MarkdownUtil.bold("Cash: ") + souls + " " + fields.get(0);
-				String bankChecking = MarkdownUtil.bold("Bank: ") +  fields.get(1);
-				String totalStr = MarkdownUtil.bold("Total: ") + ( Integer.valueOf(fields.get(0)) 
-						+ Integer.valueOf(fields.get(1))); 
+				String cashStr = MarkdownUtil.bold("Cash: "); 
+				String bankChecking = MarkdownUtil.bold("Bank: "); 
+				String totalStr = MarkdownUtil.bold("Total: "); 
+				Integer total = Integer.valueOf(fields.get(0)) +  Integer.valueOf(fields.get(1)); 
 				EmbedBuilder builder = new EmbedBuilder(); 
 				builder.setColor(event.getMember().getColor()); 
 				builder.setAuthor(event.getUser().getName()); 
-				builder.setDescription( totalStr + "\n"+ bankChecking + "\n" + cashStr); 
+				builder.addField(totalStr, souls + String.format("%,d", total) , true);
+				builder.addField(bankChecking, souls +  String.format("%,d", Integer.valueOf( fields.get(1)) ) , true);
+				builder.addField(cashStr, souls +   String.format( "%,d", Integer.valueOf( fields.get(0))), true);
 				builder.setAuthor(event.getUser().getName(), 
 						event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
 				event.getHook().sendMessageEmbeds(builder.build()).queue(); 
@@ -170,7 +191,11 @@ public class EconomyCommand extends ListenerAdapter{
 				try 
 				{ 
 					int num = Integer.parseInt(amount);
+					amount = String.format("%,d", num); 
 					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 					if ( num > 0 && select.checkDeposit(userId, serverId, num) ) 
 					{
 						// has enough , now deposit it 
@@ -206,7 +231,11 @@ public class EconomyCommand extends ListenerAdapter{
 				Long serverId = event.getGuild().getIdLong(); 
 				String amount = event.getOption("amount").getAsString(); 
 				CharacterSelection select = new CharacterSelection(); 
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				int num = Integer.parseInt(amount); 
+				amount = String.format("%,d", num); 
 				// check a valid amount 
 				if(num > 0 && select.checkWithDraw(userId, serverId, num) ) 
 				{
@@ -233,7 +262,9 @@ public class EconomyCommand extends ListenerAdapter{
 				String choice = event.getOption("item").getAsString(); 
 				CharacterSelection select = new CharacterSelection(); 
 				// get price of the item 
-				
+				ArrayList<Member> memebers = new ArrayList<Member>(); 
+				memebers.add(event.getMember()); 
+				select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
 				switch(choice) 
 				{
 					case "consumable rolls": 
@@ -252,7 +283,8 @@ public class EconomyCommand extends ListenerAdapter{
 						{
 							
 							event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have enough " 
-									+ souls + " to purchase a " + choice.replace("_"," ") + "." + " The " + choice.replace("_"," ") + " costs " + price + " " +souls+ "!").queue(); 
+									+ souls + " to purchase a " + choice.replace("_"," ") + "." + " The " + choice.replace("_"," ") + " costs " + 
+									String.format("%,d", price) + " " +souls+ "!").queue(); 
 						}
 					}
 						break;
@@ -270,7 +302,8 @@ public class EconomyCommand extends ListenerAdapter{
 						else 
 						{
 							event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have enough " 
-									+ souls + " to purchase a " + choice.replace("_"," ") + "." + " The " + choice.replace("_"," ") + " costs " + price + " " +souls+ "!").queue(); 
+									+ souls + " to purchase a " + choice.replace("_"," ") + "." + " The " + choice.replace("_"," ") + " costs " +
+									String.format("%,d", price) + " " +souls+ "!").queue(); 
 						}
 						
 					}
@@ -289,7 +322,8 @@ public class EconomyCommand extends ListenerAdapter{
 						else 
 						{
 							event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have enough " 
-									+ souls + " to purchase a " + choice + "." + " The " + choice + " costs " + price + " " +souls+ "!").queue(); 
+									+ souls + " to purchase a " + choice + "." + " The " + choice + " costs " +  
+									String.format("%,d", price) + " " +souls+ "!").queue(); 
 						}
 						// yes remove waifu amount CASH
 						// perform kill waifu
@@ -307,29 +341,280 @@ public class EconomyCommand extends ListenerAdapter{
 		{
 			this.executor.submit(() -> 
 			{
-				event.deferReply().queue(); 
-				CharacterSelection select = new CharacterSelection(); 
-				HashMap<String, Pair<String, Integer>> map = select.getItems(); 
-				String result = "";
-				
-				
-				for(Map.Entry<String, Pair<String,Integer>> ent : map.entrySet()) 
+				try 
+				{ 
+					event.deferReply().queue(); 
+					CharacterSelection select = new CharacterSelection(); 
+					HashMap<String, Pair<String, Integer>> map = select.getItems(); 
+					String result = "";
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+					
+					for(Map.Entry<String, Pair<String,Integer>> ent : map.entrySet()) 
+					{
+						result += MarkdownUtil.bold(ent.getKey()) + " : " + ent.getValue().getLeft() + " Price - " + souls 
+								+ " " + MarkdownUtil.bold(   String.format("%,d", ent.getValue().getRight() )) + "\n"; 
+					}
+					
+					// just return all items  
+					EmbedBuilder builder = new EmbedBuilder(); 
+					builder.setTitle("Items");
+					builder.setDescription(result); 
+					builder.setAuthor(event.getUser().getName(), 
+							event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
+					builder.setColor(Color.RED); 
+					event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+					} 
+				catch(Exception e)
 				{
-					result += MarkdownUtil.bold(ent.getKey()) + " : " + ent.getValue().getLeft() + " Price - " + souls 
-							+ " " + MarkdownUtil.bold(ent.getValue().getRight().toString()) + "\n"; 
+					e.printStackTrace(); 
+					event.getHook().sendMessage("Something went wrong!").queue(); 
 				}
-				
-				// just return all items  
-				EmbedBuilder builder = new EmbedBuilder(); 
-				builder.setTitle("Items");
-				builder.setDescription(result); 
-				builder.setAuthor(event.getUser().getName(), 
-						event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
-				builder.setColor(Color.RED); 
-				event.getHook().sendMessageEmbeds(builder.build()).queue(); 
-				
 			}); 
 		} 
+			break; 
+		
+		case "upgrade-oc": 
+		{
+			this.executor.submit(() -> 
+			{
+				try 
+				{ 
+					event.deferReply().queue(); 
+					CharacterSelection select = new CharacterSelection();
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+					String perk = event.getOption("perk").getAsString(); 
+					String characterName = event.getOption("character").getAsString();
+					Long userId = event.getUser().getIdLong(); 
+					Long serverId = event.getGuild().getIdLong(); 
+					// now upgrade 
+					int price = select.getItemPrice(perk);
+					// check if enough for upgrade 
+					if(select.checkItemPrice(userId, serverId, perk)) 
+					{
+						// check if perk limit is reached
+						if(!select.perkLimit(userId,serverId, characterName, perk)) 
+						{
+							event.getHook().sendMessage(event.getUser().getAsMention() + " your character " 
+									+ characterName +  " has reached its upgrade limit for perk "  + MarkdownUtil.bold(perk) ).queue(); 
+						} // check upgrade limit 
+						else if(!select.upgradeLimit(userId, serverId, characterName)) 
+						{
+							event.getHook().sendMessage(event.getUser().getAsMention() + " you have reached the total upgrade limit for " 
+									+ characterName + "!").queue(); 
+						}
+						// performs transaction
+						else if ( select.upgradePerk(userId, serverId, characterName, perk)) 
+						{
+							event.getHook().sendMessage(event.getUser().getAsMention() + " your character " 
+									+ characterName + "'s " + MarkdownUtil.bold(perk)+ " has been upgraded!").queue(); 
+						}
+						else 
+						{
+							event.getHook().sendMessage(event.getUser().getAsMention() + 
+									" an error occured in the upgrade transaction of " +MarkdownUtil.bold(perk)+ " for character " + characterName).queue(); 
+						}
+					} 
+					else 
+					{
+						event.getHook().sendMessage(event.getUser().getAsMention() + " you don't have enough " 
+								+ souls + " to purchase a " + MarkdownUtil.bold(perk) + "." + " The " + MarkdownUtil.bold(perk) + " costs " +  
+								String.format("%,d", price) + " " +souls+ "!").queue(); 					
+					}
+				} 
+				catch(Exception e)
+				{
+					e.printStackTrace(); 
+					event.getHook().sendMessage("Something went wrong!").queue(); 
+				}
+			}); 
+		}
+			break; 
+		case "collect-interest": 
+		{
+			this.executor.submit(() -> 
+			{
+				try 
+				{
+					event.deferReply().queue(); 
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+					Long userId = event.getUser().getIdLong(); 
+					Long serverId = event.getGuild().getIdLong(); 
+					Integer bankMoney = select.getBankInterest(userId, serverId); 
+					EmbedBuilder builder = new EmbedBuilder(); 
+					if(bankMoney != null) 
+					{
+						Double interest = 0.0 ;
+						// get players characters that have have interest
+						HashMap<String, JSONObject> chtrs= select.getPCByPerk(userId, serverId ,"interest"); 
+						if (chtrs.isEmpty() || bankMoney <=0 ) 
+						{
+							// they get 0 dollars 
+							builder.setColor(Color.RED);
+							builder.setTitle("Interest"); 
+							builder.addField("Collected", souls + interest.toString(), false); 
+							builder.setAuthor(event.getUser().getName(), 
+									event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
+							event.getHook().sendMessageEmbeds(builder.build()).queue();
+						}
+						else 
+						{
+							String expression =""; 
+							for(Map.Entry<String, JSONObject> k : chtrs.entrySet()) 
+							{
+								interest += (double)( (k.getValue().getDouble("interest") / 100 )); 
+								expression += " * " + k.getKey() + " bonus " +  "%"+ k.getValue().getDouble("interest");  
+							}
+							interest = Math.min(50, interest); 
+							Integer resultIncome = (int) ( bankMoney * interest); 
+							String result = "Interest " + String.format("%,d", resultIncome ) + " = " + bankMoney + expression; 
+
+							if(result.length() >= 4000) 
+							{
+								result.substring(0, 4000); 
+							}
+							// now get compute interest send it 
+							builder.setColor(Color.RED);
+							builder.setTitle("Interest"); 
+							builder.addField("Collected", souls + resultIncome.toString(), false); 
+							builder.setDescription(result);
+							builder.setAuthor(event.getUser().getName(), 
+									event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
+							select.sendCash(userId, serverId, resultIncome); 
+							event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+						}
+					}
+					else 
+					{
+						// get the time till next reset 
+						Date date = select.nextInterestReset(); 
+						Date now = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime(); 
+						
+						Long millDelta = (date.getTime() + 86400000L ) - now.getTime(); 
+						
+						Long min = millDelta / (60000) % 60; 
+						Long hour = millDelta / (3600000); 
+						String time = ""; 
+						if(hour == 1L) 
+						{
+							time = hour.toString() + " hour and " + min.toString() + " minutes"; 
+						}
+						else if(hour == 0L) 
+						{
+							time =  min.toString() + " minutes"; 
+						}
+						else 
+						{
+							time = hour.toString() + " hours and " + min.toString() + " minutes"; 
+						}
+						event.getHook().sendMessage( event.getUser().getAsMention() + " next interest collect in " + time + "!").queue(); 
+						
+					}
+				}
+				catch(Exception e) 
+				{
+					e.printStackTrace(); 
+					event.getHook().sendMessage("Something went wrong!").queue(); 
+				}
+			}); 
+		}
+			break; 
+		case "crime": 
+		{
+			this.executor.submit(() -> 
+			{
+				try 
+				{ 
+					event.deferReply().queue(); 
+					Long serverId = event.getGuild().getIdLong(); 
+					Long userId = event.getUser().getIdLong();
+					CharacterSelection select = new CharacterSelection(); 
+					ArrayList<Member> memebers = new ArrayList<Member>(); 
+					memebers.add(event.getMember()); 
+					select.addUsersToUnqueUsers(event.getGuild().getIdLong(), memebers ); // add users to the db
+					// doesnt contrain add it 
+					if (!this.crimeTracker.containsKey(Pair.of(serverId,userId))) 
+					{ 
+						Instant start = Instant.now().minus(Duration.ofSeconds(1860)); 
+						this.crimeTracker.put(Pair.of(serverId, userId), start); 
+					}  
+					// within time 
+					if(Instant.now().getEpochSecond() - crimeTracker.get(Pair.of(serverId, userId)).getEpochSecond()  > 1800) 
+					{
+						Instant start = Instant.now(); 
+						this.crimeTracker.put(Pair.of(serverId, userId), start); 
+
+						// do the crime 
+						ArrayList<String> crime = select.getCrime(); 
+						Random rand = new Random(); 
+						int pay = rand.nextInt(Integer.valueOf(crime.get(2)), Integer.valueOf( crime.get(3)) + 1);
+						// get players characters that have have interest
+						HashMap<String, JSONObject> chtrs= select.getPCByPerk(userId, serverId ,"crime"); 
+						Double interest = 0.0;
+						String expression = ""; 
+						if (!chtrs.isEmpty() ) 
+						{
+							for(Map.Entry<String, JSONObject> k : chtrs.entrySet()) 
+							{
+								interest += (double)( (k.getValue().getDouble("crime") / 100 )); 
+							}
+							expression += " * " + "bonus " + "%" + interest*100; 
+
+						}
+						
+						// limit it 
+						interest = Math.min(interest, 50.0); 
+						if(crime.get(0).equals("fail")) 
+						{
+							pay *= -1;
+							// so negative 
+							int bonusRes = (int) ( Math.abs(pay) * interest); 
+							pay += bonusRes; 
+						}
+						else
+						{
+							// so postive
+							int bonusRes = (int) ( Math.abs(pay) * interest); 
+							pay += bonusRes; 
+						} 
+						// send the pay
+						select.sendCash(userId, serverId, pay); 
+						EmbedBuilder builder = new EmbedBuilder(); 
+						builder.setColor(Color.RED);
+						builder.setTitle("Crime"); 
+						builder.setDescription(crime.get(1) + souls +  String.format( "%,d", Integer.valueOf( pay)) ); 
+						if(expression.length() >= 2400) 
+						{
+							expression = expression.substring(0, 2400); 
+						}
+						builder.setFooter(expression); 
+						builder.setAuthor(event.getUser().getName(), 
+								event.getMember().getEffectiveAvatarUrl(), event.getMember().getEffectiveAvatarUrl()); 
+						event.getHook().sendMessageEmbeds(builder.build()).queue(); 
+					}  
+					else // not yet
+					{
+						Long time =   crimeTracker.get(Pair.of(serverId, userId)).plus(Duration.ofSeconds(1800)).getEpochSecond() - Instant.now().getEpochSecond(); 
+						int minutes = (int) (time / 60);
+						int seconds = (int)(time % 60); 
+						event.getHook().sendMessage( event.getUser().getAsMention() + " you have to wait " + minutes + 
+								" minutes and " + seconds + " seconds till you can do your next crime!").queue(); 
+					}
+				} 
+				catch(Exception ex) 
+				{
+					ex.printStackTrace();
+					event.getHook().sendMessage("Something went wrong!").queue() ;
+				}
+			}); 
+		}
+		break; 
 		}
 	} 
 	

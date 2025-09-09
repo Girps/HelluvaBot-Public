@@ -3,6 +3,8 @@ package events;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +21,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -32,7 +35,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 public class UserManager extends ListenerAdapter  
 {
 	
-	final int MAX = 5000;
+	final int MAX = 10000;
 	static volatile int shards  = 0; 
 	private ExecutorService executor; 
 	public UserManager(ExecutorService executor) 
@@ -54,156 +57,64 @@ public class UserManager extends ListenerAdapter
 	{
 		
 		
+		try { 
 		int total = event.getJDA().getShardManager().getShardsTotal(); 
 		int shardReady = getIncrement(); 
 		if (total == shardReady) 
 		{ 
-			/* Delete all user data that has left Guild when the bot is offline */ 
+		
+			/* Add all servers in the shard into the db */ 
 			this.executor.submit( () -> 
-			{	
-				ShardInfo shardInfo = event.getJDA().getShardInfo(); 
-				int guildSize = event.getJDA().getShardManager().getGuilds().size(); 
+			{
 				ShardManager shardManager = event.getJDA().getShardManager(); 
-				shardManager.setActivity(Activity.listening("/help | " + guildSize + " servers"));
 				CharacterSelection select = new CharacterSelection(); 
-				
-				// iterate every guild from every shard 
-				for(int i = 0; i < guildSize; ++i) 
+				List<Guild> guilds = shardManager.getGuilds();
+				Integer guildSize = guilds.size(); 
+				ArrayList<Long> guildIds = new ArrayList<Long>(); 
+				for (int i =0; i < guildSize; ++i ) 
 				{
-					// Get users from current guild from the database
-					ArrayList<Long> userIds = select.getServerUsers(shardManager.getGuilds().get(i).getIdLong()); 
-					if(!userIds.isEmpty()) 
-					{
-						// load current members from give guild index
-						shardManager.getGuilds().get(i).loadMembers().onSuccess( users -> 
+					guildIds.add(guilds.get(i).getIdLong()); 
+				}
+				// we have the guilds now add and delete non-existing servers  
+				select.insertExistingGuilds(guildIds);
+				
+				for (int i= 0; i < guildSize; ++i) 
+				{
+					ArrayList<Long> getUsers = select.getServerUsers(guilds.get(i).getIdLong()); 
+					for (int j =0 ; j < getUsers.size(); ++j)
+					{  
+						final int x  = j ; 
+						Long id = guilds.get(i).getIdLong(); 
+						guilds.get(i).retrieveMemberById(getUsers.get(j)).queue(  (member) -> 
 						{
-							ArrayList<Long> nonMemberIds = new ArrayList<Long>(); 
-							ArrayList<Long> memberIds = new ArrayList<Long>(); 
-							// get all users from current server using their ids.
-							for(Member user : users)
-							{
-								memberIds.add(user.getIdLong()); 
-							}
-							
-							for (int x = 0; x < userIds.size(); ++x) 
-							{
-								// Check if current guild has this member if not delete their data
-								if(memberIds.contains(userIds.get(x)) == false)
-								{
-									nonMemberIds.add(userIds.get(x)); 
-								}
-							}	
-								// if array list not empty excute queries 
-								if (!nonMemberIds.isEmpty()) 
-								{
-									// Excutute queries in parallel 
-									CompletableFuture<Void> rmSonaFuture = CompletableFuture.runAsync( () 
-											-> select.removeSonaList(nonMemberIds, users.get(0).getGuild().getIdLong()) , this.executor); 
-									CompletableFuture<Void> rmOcsFuture = CompletableFuture.runAsync(() 
-											-> select.removeAllOcsList(nonMemberIds, users.get(0).getGuild().getIdLong()) , this.executor) ; 
-						    		CompletableFuture<Void> rmWaifuFuture = CompletableFuture.runAsync( () 
-						    				-> select.removeWaifuList(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor); 
-									CompletableFuture<Void> rmFavFuture = CompletableFuture.runAsync( () 
-											-> select.removeFavListArr(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor); 
-									CompletableFuture<Void> rmCollectFuture = CompletableFuture.runAsync(() 
-											-> select.removeCollectList(nonMemberIds, users.get(0).getGuild().getIdLong()), this.executor);
-									
-									List<CompletableFuture<Void>> futures = List.of(rmSonaFuture, rmOcsFuture
-											, rmWaifuFuture, rmFavFuture, rmCollectFuture );
-									
-									CompletableFuture.allOf( futures.toArray( new CompletableFuture[0])).thenAccept( (v) -> 
-									{
-									}).exceptionally((ex) -> 
-									{
-										ex.printStackTrace(); 
-										return null;
-									}); 
-								}
-						} ); 
+							// exists do nothing they are in the server 
+						} , error -> 
+						{
+ 
+							// not exist delete them 
+							ArrayList<Long> user = new ArrayList<Long>(); 
+							user.add(getUsers.get(x)); 
+							select.deleteUser(id, user); 
+						}) ;
 					}
 				}
-				
-			});
-	
-	
-			/*Get all guilds if bot was kicked from the server when offline it must detect this and delete any 
-			 * tuples corresponding to those tuples 
-			 * */ 
-			
-			this.executor.submit( () -> 
-			{
-				CharacterSelection select=  new CharacterSelection(); 
-				ShardManager shardManager = event.getJDA().getShardManager(); 
-				// each server from the database 
-				Map<Long, Long> dbServers = select.getAllServersDB(); 
-				for(Map.Entry<Long, Long> server : dbServers.entrySet()) 
-				{
-					
-					long idGuild = server.getValue();   
-					
-					// Now delete server gamedata that is not in any shards 
-					if ( shardManager.getGuildById(idGuild) == null) 
-					{
-						
-	
-						// Excutute queries in parallel 
-						CompletableFuture<Void> rmSonaFuture = CompletableFuture.runAsync( () 
-								-> 	select.removeAllSonas(idGuild), this.executor); 
-						CompletableFuture<Void> rmOcsFuture = CompletableFuture.runAsync(() 
-								-> 	select.removeAllOcsInGuild(idGuild), this.executor) ; 
-			    		CompletableFuture<Void> rmWaifuFuture = CompletableFuture.runAsync( () 
-			    				-> select.removeAllWaifus(idGuild), this.executor); 
-						CompletableFuture<Void> rmFavFuture = CompletableFuture.runAsync( () 
-								-> select.removeFavListGuild(idGuild), this.executor); 
-						CompletableFuture<Void> rmCollectFuture = CompletableFuture.runAsync(() 
-								-> select.removeAllPlayersCollectInGuild(idGuild), this.executor);
-						CompletableFuture<Void> rmWhiteListFuture = CompletableFuture.runAsync( () 
-								-> select.removeFromWhiteList(idGuild), this.executor); 
-						
-						List<CompletableFuture<Void>> futures = List.of(rmSonaFuture, rmOcsFuture
-								, rmWaifuFuture, rmFavFuture, rmCollectFuture, rmWhiteListFuture );
-						CompletableFuture.allOf( futures.toArray( new CompletableFuture[0])).thenAccept( (v) -> 
-						{
-						}).exceptionally((ex) -> 
-						{
-							ex.printStackTrace(); 
-							return null;
-						});
-						
-					} 
-				}	
-			});
-			
-			// Now get total number of users in each guild 
-			
-			
-			this.executor.submit(() -> 
-			{
-				List<Guild> guilds = event.getJDA().getShardManager().getGuilds(); 
-				int memberCount = 0; 
-				int size = guilds.size();
-				for(int i =0; i < size; i++) 
-				{
-					memberCount += guilds.get(i).getMemberCount(); 
-				}
-				
-				// have all members count 
-				CharacterSelection select = new CharacterSelection(); // update member count to data base
-				select.updateMemberCount(memberCount); 
-				
-			}); 
-		
-		} 
+				// now record amount of servers 
+				event.getJDA().getShardManager().setActivity(Activity.listening("/help | " + guildSize + " servers"));
 
+			}); 
+						
 		
-		// if not here remove them from database 
-		
-		// Now get total number of users in each guild. 
+		}
+		} 
+		catch(Exception e)
+		{
+			e.printStackTrace(); 
+		}
 		
 	
 	}
 	
-	// Update number of server bot is in 
+	// Update number of servers bot is in 
 	public void onGuildJoin(GuildJoinEvent event) 
 	{
 		
@@ -218,6 +129,14 @@ public class UserManager extends ListenerAdapter
 			}
 			else 
 			{
+				
+				// add server into db 
+				CharacterSelection select = new CharacterSelection(); 
+				// now add members into the database 
+				Long serverId = event.getGuild().getIdLong(); 
+				select.addServers(serverId); // add server to db
+					
+				
 				// update amount of servers   
 				event.getJDA().getShardManager().setActivity(Activity.listening("/help | " + guildSize + " servers"));
 				// Leave server if number exceeds  a const 
@@ -262,24 +181,25 @@ public class UserManager extends ListenerAdapter
 			Long idGuild = event.getGuild().getIdLong();
 			// Now delete all sonas and waifus from the server 
 			
-				CharacterSelection select = new CharacterSelection();
-				
-				List<CompletableFuture<Void>> futures = List.of(
-						CompletableFuture.runAsync( () ->	select.removeAllSonas(idGuild) , this.executor ),
-						CompletableFuture.runAsync( () ->	select.removeAllOcsInGuild(idGuild) , this.executor) ,
-						CompletableFuture.runAsync( () ->	select.removeAllWaifus(idGuild), this.executor) ,
-						CompletableFuture.runAsync( () ->	select.removeFavListGuild(idGuild), this.executor ),
-						CompletableFuture.runAsync( () ->	select.removeAllPlayersCollectInGuild(idGuild) , this.executor), 
-						CompletableFuture.runAsync( () -> 	select.removeFromWhiteList(idGuild), this.executor)
-						); 
-				
-				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept( v-> 
-				{
-				}).exceptionally( (ex) -> 
-				{
-					return null ;
-				}); 
+			CharacterSelection select = new CharacterSelection();
+			ArrayList<Long> server = new ArrayList<Long>(); 
+			server.add(idGuild); 
+			select.deleteServer(server); 
 		}); 	
+	}
+	
+	@Override 
+	public void onGuildMemberJoin(GuildMemberJoinEvent event) 
+	{
+		this.executor.submit(() -> 
+		{
+			CharacterSelection select = new CharacterSelection();
+			Long serverId = event.getGuild().getIdLong(); 
+			ArrayList<Member> memebers = new ArrayList<Member>(); 
+			memebers.add(event.getMember()); 
+			select.addUsersToUnqueUsers(serverId, memebers ); // add users to the db
+
+		}); 
 	}
 	
 	/* User leaves guild remove there sonas, ocs , waifus and favorite lists, playesInCollect, playersCollection 
@@ -292,28 +212,14 @@ public class UserManager extends ListenerAdapter
 		this.executor.submit( () -> 
 		{
 			Long serverId = event.getGuild().getIdLong(); 
-			Long userId = event.getUser().getIdLong(); 
 			
 				CharacterSelection select = new CharacterSelection();
-				
 				// parallel the queries 
-				
-				List<CompletableFuture<Void>> futures = List.of(
-						CompletableFuture.runAsync( () ->	select.removeSona(userId, serverId), this.executor),
-						CompletableFuture.runAsync( () ->	select.removeAllOcs(userId, serverId) , this.executor) ,
-						CompletableFuture.runAsync( () ->	select.removeFavList(userId, serverId), this.executor) ,
-						CompletableFuture.runAsync( () ->	select.removeCollect(userId, serverId) , this.executor),
-						CompletableFuture.runAsync( () ->	select.removeWaifu(userId, serverId) , this.executor)
-						); 
-				
-				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept( v-> 
-				{
-				}).exceptionally( (ex) -> 
-				{
-					ex.printStackTrace(); 
-					return null; 
-				}); 				
-			
+				ArrayList<Long> user = new ArrayList<Long>();
+				Long id = event.getUser().getIdLong(); 
+				user.add(id); 
+				select.deleteUser(serverId, user); 
+
 		}); 
 	}
 	
